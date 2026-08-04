@@ -4,66 +4,133 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Weatherwise — Hyderabad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  #radar-map { height: 320px; border-radius: 1rem; }
+  :root {
+    --accent: #C9701C;
+  }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow-x: hidden;
+  }
+  .font-display { font-family: 'Space Grotesk', sans-serif; }
+  .font-mono { font-family: 'IBM Plex Mono', monospace; }
+
+  #radar-map { height: 320px; border-radius: 1.25rem; }
+
+  /* Signature element: ambient drifting sky glow behind the hero */
+  .glow-field {
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    height: 480px;
+    z-index: 0;
+    pointer-events: none;
+    filter: blur(60px);
+  }
+  .glow-blob {
+    position: absolute;
+    border-radius: 9999px;
+    opacity: 0.55;
+    animation: drift 18s ease-in-out infinite alternate;
+  }
+  .glow-blob.b2 { animation-duration: 24s; animation-delay: -6s; }
+  .glow-blob.b3 { animation-duration: 30s; animation-delay: -12s; }
+
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(4%, 6%) scale(1.08); }
+    100% { transform: translate(-5%, -3%) scale(0.96); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .glow-blob { animation: none; }
+    * { transition: none !important; }
+  }
+
+  .fade-in {
+    animation: fadeIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .fade-in.delay-1 { animation-delay: 0.08s; }
+  .fade-in.delay-2 { animation-delay: 0.16s; }
+  .fade-in.delay-3 { animation-delay: 0.24s; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-hover {
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-3px);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
 </style>
 </head>
 <body class="min-h-screen transition-colors duration-700" id="page-body">
 
-<div class="max-w-2xl mx-auto px-6 py-10 sm:py-16">
+<div class="max-w-2xl mx-auto px-6 py-10 sm:py-16 relative">
+
+  <!-- Signature ambient glow -->
+  <div class="glow-field" id="glow-field">
+    <div class="glow-blob b1" style="width:280px;height:280px;left:10%;top:0;"></div>
+    <div class="glow-blob b2" style="width:220px;height:220px;right:8%;top:10%;"></div>
+    <div class="glow-blob b3" style="width:200px;height:200px;left:40%;top:20%;"></div>
+  </div>
 
   <!-- Hero -->
-  <p class="text-xs uppercase tracking-[0.2em] font-medium text-center opacity-50 mb-6">
-    Hyderabad Today
-  </p>
+  <div class="relative z-10">
+    <p class="fade-in text-xs uppercase tracking-[0.25em] font-medium text-center opacity-50 mb-7">
+      Hyderabad Today
+    </p>
 
-  <div class="flex items-center justify-center gap-4 mb-8">
-    <i data-lucide="cloud-rain" id="hero-icon" class="w-16 h-16" stroke-width="1.5"></i>
-    <span class="text-7xl sm:text-8xl font-bold tracking-tight" id="hero-temp">--°C</span>
+    <div class="fade-in delay-1 flex items-center justify-center gap-4 mb-8">
+      <i data-lucide="cloud-rain" id="hero-icon" class="w-14 h-14 sm:w-16 sm:h-16" stroke-width="1.4"></i>
+      <span class="font-display text-7xl sm:text-8xl font-bold tracking-tight" id="hero-temp">--°C</span>
+    </div>
+
+    <p class="fade-in delay-2 font-display text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.15] text-center max-w-xl mx-auto" id="hero-summary">
+      Loading today's weather...
+    </p>
   </div>
-
-  <p class="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight text-center max-w-xl mx-auto" id="hero-summary">
-    Loading today's weather...
-  </p>
 
   <!-- Timeline -->
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-10 sm:my-14" id="timeline">
-    <!-- filled by JS -->
-  </div>
+  <div class="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-3 my-10 sm:my-14" id="timeline"></div>
 
   <!-- Live Radar -->
-  <div class="mb-10">
+  <div class="relative z-10 mb-10">
     <p class="text-xs uppercase tracking-wide font-medium opacity-50 mb-3">Live Radar — last 30 min</p>
-    <div id="radar-map"></div>
-    <p class="text-xs opacity-50 mt-2">Radar data: RainViewer. Watch which way the rain is moving.</p>
+    <div id="radar-map" class="border border-current/10"></div>
+    <p class="text-xs opacity-45 mt-2">Radar data: RainViewer. Watch which way the rain is moving.</p>
   </div>
 
   <!-- Geek toggle -->
-  <div class="pb-4">
-    <button id="tech-toggle" class="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-current/10 bg-white/30 backdrop-blur-sm text-sm font-medium opacity-70">
+  <div class="relative z-10 pb-4">
+    <button id="tech-toggle" class="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-current/10 bg-white/30 backdrop-blur-sm text-sm font-medium opacity-70 card-hover">
       <span>Show Technical Details</span>
       <i data-lucide="chevron-down" id="tech-chevron" class="w-4 h-4 transition-transform"></i>
     </button>
-    <div id="tech-panel" class="hidden mt-3 rounded-xl border border-current/10 bg-white/30 backdrop-blur-sm p-4 grid grid-cols-2 gap-4 text-sm">
-      <div><p class="opacity-50 text-xs">Humidity</p><p class="font-semibold" id="stat-humidity">--</p></div>
-      <div><p class="opacity-50 text-xs">Wind Speed</p><p class="font-semibold" id="stat-wind">--</p></div>
-      <div><p class="opacity-50 text-xs">Chance of Rain</p><p class="font-semibold" id="stat-rain">--</p></div>
-      <div><p class="opacity-50 text-xs">Data Sources</p><p class="font-semibold">Open-Meteo, WeatherAPI</p></div>
+    <div id="tech-panel" class="hidden mt-3 rounded-xl border border-current/10 bg-white/30 backdrop-blur-sm p-4 grid grid-cols-2 gap-4 text-sm font-mono">
+      <div><p class="opacity-50 text-xs">Humidity</p><p class="font-medium" id="stat-humidity">--</p></div>
+      <div><p class="opacity-50 text-xs">Wind Speed</p><p class="font-medium" id="stat-wind">--</p></div>
+      <div><p class="opacity-50 text-xs">Chance of Rain</p><p class="font-medium" id="stat-rain">--</p></div>
+      <div><p class="opacity-50 text-xs">Data Sources</p><p class="font-medium">Open-Meteo, WeatherAPI</p></div>
     </div>
   </div>
 
 </div>
 
 <script>
-// ---------------------------------------------------------------
-// MOCK DATA — will be replaced by real weather.json once the
-// backend script + automation is finished.
-// ---------------------------------------------------------------
 const mockData = {
   temp: 24,
   condition: "rainy", // "sunny" | "rainy" | "cloudy"
@@ -78,10 +145,6 @@ const mockData = {
   ],
 };
 
-// ---------------------------------------------------------------
-// Rule-based sentence generator — NOT AI. Deterministic, free,
-// always works. Swap this out later once AI access is stable.
-// ---------------------------------------------------------------
 function generateSummary(data) {
   const { temp, condition, chanceOfRain } = data;
   if (condition === "rainy" && chanceOfRain > 50) {
@@ -99,37 +162,56 @@ function generateSummary(data) {
   return `Overcast today at ${temp}°C, with no significant rain expected. Light jacket weather.`;
 }
 
-// ---------------------------------------------------------------
-// Theme per condition — matches our design brief
-// ---------------------------------------------------------------
 const themes = {
-  sunny: { bg: "bg-gradient-to-b from-amber-50 to-amber-100 text-stone-900", icon: "sun" },
-  rainy: { bg: "bg-gradient-to-b from-slate-800 to-slate-900 text-white", icon: "cloud-rain" },
-  cloudy: { bg: "bg-gradient-to-b from-gray-200 to-gray-300 text-gray-800", icon: "cloud" },
+  sunny: {
+    bg: "bg-gradient-to-b from-[#FDF6E3] to-[#F5D590] text-[#402F1C]",
+    icon: "sun",
+    accent: "#C9701C",
+    glow: ["#F7B733", "#F5D590", "#E8942C"],
+  },
+  rainy: {
+    bg: "bg-gradient-to-b from-[#1B2A4A] to-[#0B1220] text-[#F1F5F9]",
+    icon: "cloud-rain",
+    accent: "#5EEAD4",
+    glow: ["#3B5A8A", "#5EEAD4", "#1E3A5F"],
+  },
+  cloudy: {
+    bg: "bg-gradient-to-b from-[#E4E7EB] to-[#C7CCD1] text-[#2B2F36]",
+    icon: "cloud",
+    accent: "#64748B",
+    glow: ["#AEB6BF", "#CBD2D9", "#9AA5B1"],
+  },
 };
 
 function render(data) {
   const theme = themes[data.condition];
   document.getElementById("page-body").className =
     "min-h-screen transition-colors duration-700 " + theme.bg;
+  document.documentElement.style.setProperty("--accent", theme.accent);
 
   document.getElementById("hero-temp").textContent = `${data.temp}°C`;
   document.getElementById("hero-summary").textContent = generateSummary(data);
   document.getElementById("hero-icon").setAttribute("data-lucide", theme.icon);
+  document.getElementById("hero-icon").style.color = theme.accent;
 
   document.getElementById("stat-humidity").textContent = `${data.humidity}%`;
   document.getElementById("stat-wind").textContent = `${data.wind} km/h`;
   document.getElementById("stat-rain").textContent = `${data.chanceOfRain}%`;
 
+  const blobs = document.querySelectorAll(".glow-blob");
+  blobs.forEach((b, i) => {
+    b.style.background = `radial-gradient(circle, ${theme.glow[i]} 0%, transparent 70%)`;
+  });
+
   const timeline = document.getElementById("timeline");
   timeline.innerHTML = "";
-  data.periods.forEach((p) => {
+  data.periods.forEach((p, i) => {
     const card = document.createElement("div");
-    card.className = "rounded-2xl border border-current/10 bg-white/30 backdrop-blur-md p-4 flex flex-col items-center gap-2 text-center";
+    card.className = `fade-in delay-${Math.min(i + 1, 3)} card-hover rounded-2xl border border-current/10 bg-white/30 backdrop-blur-md p-4 flex flex-col items-center gap-2 text-center`;
     card.innerHTML = `
       <span class="text-xs uppercase tracking-wide font-medium opacity-50">${p.name}</span>
-      <i data-lucide="${p.icon}" class="w-7 h-7"></i>
-      <span class="text-2xl font-bold">${p.temp}°</span>
+      <i data-lucide="${p.icon}" class="w-7 h-7" style="color:${theme.accent}"></i>
+      <span class="font-display text-2xl font-bold">${p.temp}°</span>
       <span class="text-xs font-medium opacity-70">${p.condition}</span>
     `;
     timeline.appendChild(card);
@@ -140,19 +222,17 @@ function render(data) {
 
 render(mockData);
 
-// Geek toggle
 document.getElementById("tech-toggle").addEventListener("click", () => {
-  const panel = document.getElementById("tech-panel");
-  const chevron = document.getElementById("tech-chevron");
-  panel.classList.toggle("hidden");
-  chevron.classList.toggle("rotate-180");
+  document.getElementById("tech-panel").classList.toggle("hidden");
+  document.getElementById("tech-chevron").classList.toggle("rotate-180");
 });
 
-// ---------------------------------------------------------------
-// Live radar — RainViewer (free, no API key)
-// ---------------------------------------------------------------
-const map = L.map("radar-map", { zoomControl: false, attributionControl: false })
-  .setView([17.385, 78.4867], 9);
+const map = L.map("radar-map", {
+  zoomControl: false,
+  attributionControl: false,
+  minZoom: 6,
+  maxZoom: 11,
+}).setView([17.385, 78.4867], 9);
 
 L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
   subdomains: "abcd",
@@ -163,7 +243,7 @@ fetch("https://api.rainviewer.com/public/weather-maps.json")
   .then((data) => {
     const latestFrame = data.radar.past[data.radar.past.length - 1];
     const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${latestFrame.time}/256/{z}/{x}/{y}/2/1_1.png`;
-    L.tileLayer(tileUrl, { opacity: 0.6 }).addTo(map);
+    L.tileLayer(tileUrl, { opacity: 0.6, maxNativeZoom: 10, minZoom: 6 }).addTo(map);
   });
 </script>
 
