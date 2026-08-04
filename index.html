@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Weatherwise — Hyderabad</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  #radar-map { height: 320px; border-radius: 1rem; }
+</style>
+</head>
+<body class="min-h-screen transition-colors duration-700" id="page-body">
+
+<div class="max-w-2xl mx-auto px-6 py-10 sm:py-16">
+
+  <!-- Hero -->
+  <p class="text-xs uppercase tracking-[0.2em] font-medium text-center opacity-50 mb-6">
+    Hyderabad Today
+  </p>
+
+  <div class="flex items-center justify-center gap-4 mb-8">
+    <i data-lucide="cloud-rain" id="hero-icon" class="w-16 h-16" stroke-width="1.5"></i>
+    <span class="text-7xl sm:text-8xl font-bold tracking-tight" id="hero-temp">--°C</span>
+  </div>
+
+  <p class="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight text-center max-w-xl mx-auto" id="hero-summary">
+    Loading today's weather...
+  </p>
+
+  <!-- Timeline -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-10 sm:my-14" id="timeline">
+    <!-- filled by JS -->
+  </div>
+
+  <!-- Live Radar -->
+  <div class="mb-10">
+    <p class="text-xs uppercase tracking-wide font-medium opacity-50 mb-3">Live Radar — last 30 min</p>
+    <div id="radar-map"></div>
+    <p class="text-xs opacity-50 mt-2">Radar data: RainViewer. Watch which way the rain is moving.</p>
+  </div>
+
+  <!-- Geek toggle -->
+  <div class="pb-4">
+    <button id="tech-toggle" class="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-current/10 bg-white/30 backdrop-blur-sm text-sm font-medium opacity-70">
+      <span>Show Technical Details</span>
+      <i data-lucide="chevron-down" id="tech-chevron" class="w-4 h-4 transition-transform"></i>
+    </button>
+    <div id="tech-panel" class="hidden mt-3 rounded-xl border border-current/10 bg-white/30 backdrop-blur-sm p-4 grid grid-cols-2 gap-4 text-sm">
+      <div><p class="opacity-50 text-xs">Humidity</p><p class="font-semibold" id="stat-humidity">--</p></div>
+      <div><p class="opacity-50 text-xs">Wind Speed</p><p class="font-semibold" id="stat-wind">--</p></div>
+      <div><p class="opacity-50 text-xs">Chance of Rain</p><p class="font-semibold" id="stat-rain">--</p></div>
+      <div><p class="opacity-50 text-xs">Data Sources</p><p class="font-semibold">Open-Meteo, WeatherAPI</p></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ---------------------------------------------------------------
+// MOCK DATA — will be replaced by real weather.json once the
+// backend script + automation is finished.
+// ---------------------------------------------------------------
+const mockData = {
+  temp: 24,
+  condition: "rainy", // "sunny" | "rainy" | "cloudy"
+  humidity: 85,
+  wind: 15,
+  chanceOfRain: 62,
+  periods: [
+    { name: "Morning", icon: "cloud", temp: 22, condition: "Overcast" },
+    { name: "Afternoon", icon: "cloud-rain", temp: 24, condition: "Heavy Rain" },
+    { name: "Evening", icon: "cloud-rain", temp: 21, condition: "Showers" },
+    { name: "Night", icon: "cloud-moon", temp: 19, condition: "Drizzle" },
+  ],
+};
+
+// ---------------------------------------------------------------
+// Rule-based sentence generator — NOT AI. Deterministic, free,
+// always works. Swap this out later once AI access is stable.
+// ---------------------------------------------------------------
+function generateSummary(data) {
+  const { temp, condition, chanceOfRain } = data;
+  if (condition === "rainy" && chanceOfRain > 50) {
+    return `Rain is likely today, with a ${chanceOfRain}% chance. Keep an umbrella handy and expect it to feel humid.`;
+  }
+  if (condition === "rainy") {
+    return `Scattered showers possible today. It may pass you by, but keep an umbrella within reach just in case.`;
+  }
+  if (condition === "sunny" && temp >= 33) {
+    return `Hot and clear today at ${temp}°C. Stay hydrated and avoid the sun during the early afternoon.`;
+  }
+  if (condition === "sunny") {
+    return `Clear skies and pleasant at ${temp}°C. A good day to be outdoors.`;
+  }
+  return `Overcast today at ${temp}°C, with no significant rain expected. Light jacket weather.`;
+}
+
+// ---------------------------------------------------------------
+// Theme per condition — matches our design brief
+// ---------------------------------------------------------------
+const themes = {
+  sunny: { bg: "bg-gradient-to-b from-amber-50 to-amber-100 text-stone-900", icon: "sun" },
+  rainy: { bg: "bg-gradient-to-b from-slate-800 to-slate-900 text-white", icon: "cloud-rain" },
+  cloudy: { bg: "bg-gradient-to-b from-gray-200 to-gray-300 text-gray-800", icon: "cloud" },
+};
+
+function render(data) {
+  const theme = themes[data.condition];
+  document.getElementById("page-body").className =
+    "min-h-screen transition-colors duration-700 " + theme.bg;
+
+  document.getElementById("hero-temp").textContent = `${data.temp}°C`;
+  document.getElementById("hero-summary").textContent = generateSummary(data);
+  document.getElementById("hero-icon").setAttribute("data-lucide", theme.icon);
+
+  document.getElementById("stat-humidity").textContent = `${data.humidity}%`;
+  document.getElementById("stat-wind").textContent = `${data.wind} km/h`;
+  document.getElementById("stat-rain").textContent = `${data.chanceOfRain}%`;
+
+  const timeline = document.getElementById("timeline");
+  timeline.innerHTML = "";
+  data.periods.forEach((p) => {
+    const card = document.createElement("div");
+    card.className = "rounded-2xl border border-current/10 bg-white/30 backdrop-blur-md p-4 flex flex-col items-center gap-2 text-center";
+    card.innerHTML = `
+      <span class="text-xs uppercase tracking-wide font-medium opacity-50">${p.name}</span>
+      <i data-lucide="${p.icon}" class="w-7 h-7"></i>
+      <span class="text-2xl font-bold">${p.temp}°</span>
+      <span class="text-xs font-medium opacity-70">${p.condition}</span>
+    `;
+    timeline.appendChild(card);
+  });
+
+  lucide.createIcons();
+}
+
+render(mockData);
+
+// Geek toggle
+document.getElementById("tech-toggle").addEventListener("click", () => {
+  const panel = document.getElementById("tech-panel");
+  const chevron = document.getElementById("tech-chevron");
+  panel.classList.toggle("hidden");
+  chevron.classList.toggle("rotate-180");
+});
+
+// ---------------------------------------------------------------
+// Live radar — RainViewer (free, no API key)
+// ---------------------------------------------------------------
+const map = L.map("radar-map", { zoomControl: false, attributionControl: false })
+  .setView([17.385, 78.4867], 9);
+
+L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+  subdomains: "abcd",
+}).addTo(map);
+
+fetch("https://api.rainviewer.com/public/weather-maps.json")
+  .then((res) => res.json())
+  .then((data) => {
+    const latestFrame = data.radar.past[data.radar.past.length - 1];
+    const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${latestFrame.time}/256/{z}/{x}/{y}/2/1_1.png`;
+    L.tileLayer(tileUrl, { opacity: 0.6 }).addTo(map);
+  });
+</script>
+
+</body>
+</html>
