@@ -183,6 +183,15 @@ const themes = {
   },
 };
 
+// Initialize map FIRST so it exists when render() runs
+const map = L.map("radar-map", {
+  zoomControl: false,
+  attributionControl: false,
+  minZoom: 6,
+  maxZoom: 11,
+}).setView([17.385, 78.4867], 9);
+
+// Function to update the page based on weather data
 function render(data) {
   const theme = themes[data.condition];
   document.getElementById("page-body").className =
@@ -217,33 +226,55 @@ function render(data) {
     timeline.appendChild(card);
   });
 
+  // Dynamic Theme-Aware Map Base Layer
+  const mapStyle = data.condition === 'rainy' ? 'dark_all' : 'light_all';
+  L.tileLayer(`https://{s}.basemaps.cartocdn.com/${mapStyle}/{z}/{x}/{y}{r}.png`, {
+    subdomains: "abcd",
+  }).addTo(map);
+
   lucide.createIcons();
 }
 
+// Render the mock data immediately
 render(mockData);
 
+// Tech Details Toggle
 document.getElementById("tech-toggle").addEventListener("click", () => {
   document.getElementById("tech-panel").classList.toggle("hidden");
   document.getElementById("tech-chevron").classList.toggle("rotate-180");
 });
 
-const map = L.map("radar-map", {
-  zoomControl: false,
-  attributionControl: false,
-  minZoom: 6,
-  maxZoom: 11,
-}).setView([17.385, 78.4867], 9);
-
-L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-  subdomains: "abcd",
-}).addTo(map);
-
+// Fetch and Animate Radar Loop
 fetch("https://api.rainviewer.com/public/weather-maps.json")
   .then((res) => res.json())
   .then((data) => {
-    const latestFrame = data.radar.past[data.radar.past.length - 1];
-    const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${latestFrame.time}/256/{z}/{x}/{y}/2/1_1.png`;
-    L.tileLayer(tileUrl, { opacity: 0.6, maxNativeZoom: 10, minZoom: 6 }).addTo(map);
+    const pastFrames = data.radar.past;
+    let currentFrameIndex = 0;
+    let activeLayer = null;
+
+    function showFrame(index) {
+      if (activeLayer) {
+        map.removeLayer(activeLayer); // Remove old frame to prevent overlap buildup
+      }
+      
+      const frame = pastFrames[index];
+      const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`;
+      
+      activeLayer = L.tileLayer(tileUrl, { 
+        opacity: 0.6, 
+        maxNativeZoom: 8, // Fixes the grey zoom tiles error
+        minZoom: 6 
+      }).addTo(map);
+    }
+
+    // Change frame every 1 second (1000ms)
+    setInterval(() => {
+      showFrame(currentFrameIndex);
+      currentFrameIndex = (currentFrameIndex + 1) % pastFrames.length;
+    }, 1000);
+
+    // Initial call to show the first frame right away
+    showFrame(0);
   });
 </script>
 
