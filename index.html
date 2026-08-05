@@ -22,6 +22,7 @@
   .font-display { font-family: 'Space Grotesk', sans-serif; }
   .font-mono { font-family: 'IBM Plex Mono', monospace; }
 
+  /* Map container with better visibility in dark themes */
   #radar-map { height: 340px; border-radius: 1.25rem; }
 
   #bg-decor {
@@ -89,13 +90,14 @@
 
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+  /* Dropdown styling fix so options are always readable */
   #locality-select {
     appearance: none;
     -webkit-appearance: none;
   }
   #locality-select option {
-    background-color: #111827; /* Dark slate background for options */
-    color: #f3f4f6;            /* Crisp white text for readability */
+    background-color: #111827; 
+    color: #f3f4f6;            
     padding: 8px;
   }
 </style>
@@ -162,12 +164,15 @@
         Loading Doppler feed...
       </span>
     </div>
-    <div id="radar-map" class="border border-current/10 shadow-lg"></div>
+    
+    <!-- Radar Map Container -->
+    <div id="radar-map" class="border border-current/20 shadow-lg bg-gray-100"></div>
+    
     <p class="text-xs opacity-50 mt-2 ml-1">
       Data: IMD Doppler / RainViewer. Real-time clouds & 30-min predictive nowcast.
     </p>
 
-    <!-- NEW: Radar Analysis Box -->
+    <!-- Radar Analysis Box -->
     <div class="mt-4 p-4 rounded-xl border border-current/10 bg-white/10 backdrop-blur-md flex items-start gap-3">
       <i data-lucide="radar" class="w-5 h-5 opacity-70 shrink-0 mt-0.5" style="color: var(--accent)"></i>
       <div>
@@ -284,10 +289,13 @@ const map = L.map("radar-map", {
 let baseLayer = null;
 let localityMarker = null;
 
-function setBaseLayer(dark) {
+function setBaseLayer() {
   if (baseLayer) map.removeLayer(baseLayer);
-  const style = dark ? "dark_all" : "light_all";
-  baseLayer = L.tileLayer(`https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`, {
+  
+  // FIX: Permanently use "voyager" tile style. It guarantees a bright, high-contrast, 
+  // beautiful map where streets, lakes, and labels are always legible, 
+  // even against the dark UI theme.
+  baseLayer = L.tileLayer(`https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png`, {
     subdomains: "abcd",
   }).addTo(map);
 }
@@ -408,7 +416,7 @@ function render(data) {
     timeline.appendChild(card);
   });
 
-  setBaseLayer(!data.isDay || data.condition === "rainy");
+  setBaseLayer();
 
   // Update the Radar Analysis text
   document.getElementById("radar-analysis-title").textContent = `${data.locationName} Radar Analysis`;
@@ -420,16 +428,15 @@ function render(data) {
 function generateRadarAnalysis(data) {
   const loc = data.locationName;
   const isRainingNow = data.condition === "rainy";
-  const rainSoon = data.chanceOfRain > 40; 
+  const rainChance = data.chanceOfRain;
 
-  if (isRainingNow && rainSoon) {
-    return `Active storm cells are directly over ${loc}. Expect steady precipitation to continue.`;
-  } else if (isRainingNow && !rainSoon) {
-    return `There is light rain over ${loc} right now, but the radar shows the cell moving away. It should clear up shortly.`;
-  } else if (!isRainingNow && rainSoon) {
-    return `It is dry in ${loc} at the moment, but the radar shows storm cells moving in your direction. Expect rain soon.`;
+  // FIX: Make the text honest about what the map vs. the forecast is doing.
+  if (isRainingNow && rainChance > 60) {
+    return `Forecast models indicate high rain probability (${rainChance}%) for ${loc}. If the Doppler map above is clear, clouds are building up but rain hasn't hit the radar beam yet.`;
+  } else if (isRainingNow || rainChance > 40) {
+    return `Scattered cloud cover detected around ${loc} with a ${rainChance}% rain chance. Monitor the animated map loop above for any incoming precipitation blobs.`;
   } else {
-    return `The radar is completely clear over ${loc}. No incoming rain cells detected.`;
+    return `The Doppler radar shows clear conditions over ${loc}. No active rain cells detected by the radar network right now.`;
   }
 }
 
