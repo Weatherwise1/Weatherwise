@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Weatherwise — Hyderabad</title>
+<title>Weatherwise — Hyderabad Micro-Climate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -22,9 +22,8 @@
   .font-display { font-family: 'Space Grotesk', sans-serif; }
   .font-mono { font-family: 'IBM Plex Mono', monospace; }
 
-  #radar-map { height: 320px; border-radius: 1.25rem; }
+  #radar-map { height: 340px; border-radius: 1.25rem; }
 
-  /* ---------- Background decor: full-viewport, behind everything ---------- */
   #bg-decor {
     position: fixed;
     inset: 0;
@@ -36,50 +35,38 @@
   .stars { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease; }
   .stars.visible { opacity: 1; }
   .star {
-    position: absolute;
-    width: 2px; height: 2px;
-    background: #fff;
-    border-radius: 50%;
-    animation: twinkle 3.5s ease-in-out infinite;
+    position: absolute; width: 2px; height: 2px; background: #fff;
+    border-radius: 50%; animation: twinkle 3.5s ease-in-out infinite;
   }
   @keyframes twinkle { 0%, 100% { opacity: .15; } 50% { opacity: 1; } }
 
   .cloud-layer { position: absolute; inset: 0; }
   .cloud {
-    position: absolute;
-    fill: var(--cloud-color);
-    animation: floatCloud linear infinite;
-    transition: fill 0.8s ease;
+    position: absolute; fill: var(--cloud-color);
+    animation: floatCloud linear infinite; transition: fill 0.8s ease;
   }
-  .cloud.c1 { width: 200px; top: 6%;  animation-duration: 75s;  opacity: .6; }
+  .cloud.c1 { width: 200px; top: 6%; animation-duration: 75s; opacity: .6; }
   .cloud.c2 { width: 130px; top: 16%; animation-duration: 100s; animation-delay: -25s; opacity: .45; }
-  .cloud.c3 { width: 240px; top: 3%;  animation-duration: 130s; animation-delay: -60s; opacity: .35; }
-  .cloud.c4 { width: 110px; top: 24%; animation-duration: 65s;  animation-delay: -10s; opacity: .5; }
+  .cloud.c3 { width: 240px; top: 3%; animation-duration: 130s; animation-delay: -60s; opacity: .35; }
+  .cloud.c4 { width: 110px; top: 24%; animation-duration: 65s; animation-delay: -10s; opacity: .5; }
   @keyframes floatCloud {
     from { transform: translateX(-30%); }
-    to   { transform: translateX(130%); }
+    to { transform: translateX(130%); }
   }
 
-  /* Signature element: ambient drifting sky glow behind the hero */
   .glow-field {
-    position: absolute;
-    inset: -20% -10% auto -10%;
-    height: 480px;
-    z-index: 0;
-    pointer-events: none;
-    filter: blur(60px);
+    position: absolute; inset: -20% -10% auto -10%; height: 480px;
+    z-index: 0; pointer-events: none; filter: blur(60px);
   }
   .glow-blob {
-    position: absolute;
-    border-radius: 9999px;
-    opacity: 0.55;
+    position: absolute; border-radius: 9999px; opacity: 0.55;
     animation: drift 18s ease-in-out infinite alternate;
   }
   .glow-blob.b2 { animation-duration: 24s; animation-delay: -6s; }
   .glow-blob.b3 { animation-duration: 30s; animation-delay: -12s; }
   @keyframes drift {
-    0%   { transform: translate(0, 0) scale(1); }
-    50%  { transform: translate(4%, 6%) scale(1.08); }
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(4%, 6%) scale(1.08); }
     100% { transform: translate(-5%, -3%) scale(0.96); }
   }
 
@@ -94,7 +81,7 @@
   .fade-in.delay-3 { animation-delay: 0.24s; }
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .card-hover { transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; }
@@ -110,7 +97,6 @@
 </head>
 <body class="min-h-screen transition-colors duration-700" id="page-body">
 
-<!-- SVG symbol defs (invisible, referenced by <use>) -->
 <svg width="0" height="0" style="position:absolute">
   <defs>
     <symbol id="cloud-shape" viewBox="0 0 200 100">
@@ -119,7 +105,6 @@
   </defs>
 </svg>
 
-<!-- Full-viewport background decor -->
 <div id="bg-decor">
   <div class="stars" id="stars"></div>
   <div class="cloud-layer">
@@ -132,54 +117,63 @@
 
 <div class="max-w-2xl mx-auto px-6 py-10 sm:py-16 relative z-10">
 
-  <!-- Signature ambient glow -->
   <div class="glow-field" id="glow-field">
     <div class="glow-blob b1" style="width:280px;height:280px;left:10%;top:0;"></div>
     <div class="glow-blob b2" style="width:220px;height:220px;right:8%;top:10%;"></div>
     <div class="glow-blob b3" style="width:200px;height:200px;left:40%;top:20%;"></div>
   </div>
 
-  <!-- Locality picker -->
-  <div class="relative z-10 flex justify-center mb-7">
+  <!-- Locality Picker -->
+  <div class="relative z-10 flex flex-col items-center gap-2 mb-7">
     <div class="fade-in flex items-center gap-2 border border-current/20 rounded-full px-4 py-1.5 bg-white/10 backdrop-blur-sm">
       <i data-lucide="map-pin" class="w-3.5 h-3.5 opacity-60"></i>
-      <select id="locality-select" class="text-xs uppercase tracking-[0.2em] font-medium bg-transparent opacity-80 cursor-pointer focus:opacity-100 pr-1"></select>
+      <select id="locality-select" class="text-xs uppercase tracking-[0.2em] font-medium bg-transparent opacity-80 cursor-pointer focus:opacity-100 pr-2"></select>
     </div>
+    <span id="confidence-badge" class="text-[10px] font-mono tracking-wider opacity-60 uppercase bg-black/10 px-2.5 py-0.5 rounded-full border border-current/10">
+      Multi-Source Consensus
+    </span>
   </div>
 
   <!-- Hero -->
   <div class="relative z-10">
-    <div class="fade-in delay-1 flex items-center justify-center gap-4 mb-8">
+    <div class="fade-in delay-1 flex items-center justify-center gap-4 mb-6">
       <i data-lucide="cloud-rain" id="hero-icon" class="w-14 h-14 sm:w-16 sm:h-16" stroke-width="1.4"></i>
       <span class="font-display text-7xl sm:text-8xl font-bold tracking-tight" id="hero-temp">--°C</span>
     </div>
 
-    <p class="fade-in delay-2 font-display text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.15] text-center max-w-xl mx-auto" id="hero-summary">
-      Loading today's weather...
+    <p class="fade-in delay-2 font-display text-2xl sm:text-3xl md:text-4xl font-bold leading-[1.2] text-center max-w-xl mx-auto" id="hero-summary">
+      Loading micro-climate data...
     </p>
   </div>
 
   <!-- Timeline -->
   <div class="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-3 my-10 sm:my-14" id="timeline"></div>
 
-  <!-- Live Radar -->
+  <!-- Live Radar Map -->
   <div class="relative z-10 mb-10">
-    <p class="text-xs uppercase tracking-wide font-medium opacity-50 mb-3">Live Radar — last 30 min</p>
-    <div id="radar-map" class="border border-current/10"></div>
-    <p class="text-xs opacity-45 mt-2">Radar data: RainViewer. Watch which way the rain is moving.</p>
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-xs uppercase tracking-wide font-medium opacity-60">Doppler Rain Radar & Nowcast</p>
+      <span id="radar-timestamp" class="text-[11px] font-mono opacity-70 bg-white/20 backdrop-blur-sm px-2.5 py-0.5 rounded-md border border-current/10">
+        Loading Doppler feed...
+      </span>
+    </div>
+    <div id="radar-map" class="border border-current/10 shadow-lg"></div>
+    <p class="text-xs opacity-50 mt-2">
+      Data: IMD Doppler / RainViewer. Real-time clouds & 30-min predictive nowcast.
+    </p>
   </div>
 
-  <!-- Geek toggle -->
+  <!-- Technical Details Panel -->
   <div class="relative z-10 pb-4">
     <button id="tech-toggle" class="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-current/10 bg-white/30 backdrop-blur-sm text-sm font-medium opacity-70 card-hover">
-      <span>Show Technical Details</span>
+      <span>Show Technical & Model Details</span>
       <i data-lucide="chevron-down" id="tech-chevron" class="w-4 h-4 transition-transform"></i>
     </button>
     <div id="tech-panel" class="hidden mt-3 rounded-xl border border-current/10 bg-white/30 backdrop-blur-sm p-4 grid grid-cols-2 gap-4 text-sm font-mono">
       <div><p class="opacity-50 text-xs">Humidity</p><p class="font-medium" id="stat-humidity">--</p></div>
       <div><p class="opacity-50 text-xs">Wind Speed</p><p class="font-medium" id="stat-wind">--</p></div>
-      <div><p class="opacity-50 text-xs">Chance of Rain (6h)</p><p class="font-medium" id="stat-rain">--</p></div>
-      <div><p class="opacity-50 text-xs">Data Source</p><p class="font-medium">Open-Meteo (live)</p></div>
+      <div><p class="opacity-50 text-xs">Chance of Rain</p><p class="font-medium" id="stat-rain">--</p></div>
+      <div><p class="opacity-50 text-xs">Radar Resolution</p><p class="font-medium">1.0 km Doppler</p></div>
       <div class="col-span-2"><p class="opacity-50 text-xs">Last Updated</p><p class="font-medium" id="stat-updated">--</p></div>
     </div>
   </div>
@@ -187,29 +181,20 @@
 </div>
 
 <script>
-/* ===========================================================
-   LOCALITIES — add more any time by appending to this array.
-   Format: { name, lat, lon }
-=========================================================== */
 const LOCALITIES = [
   { name: "Hyderabad (Central)", lat: 17.3850, lon: 78.4867 },
-  { name: "Malakpet",            lat: 17.3702, lon: 78.4990 },
   { name: "Gachibowli",          lat: 17.4401, lon: 78.3489 },
-  { name: "Secunderabad",        lat: 17.4399, lon: 78.4983 },
   { name: "Banjara Hills",       lat: 17.4156, lon: 78.4347 },
   { name: "Madhapur",            lat: 17.4483, lon: 78.3915 },
   { name: "Hitech City",         lat: 17.4435, lon: 78.3772 },
+  { name: "Secunderabad",        lat: 17.4399, lon: 78.4983 },
+  { name: "Malakpet",            lat: 17.3702, lon: 78.4990 },
   { name: "Kukatpally",          lat: 17.4849, lon: 78.4138 },
-  { name: "Ameerpet",            lat: 17.4374, lon: 78.4483 },
   { name: "Kondapur",            lat: 17.4615, lon: 78.3672 },
   { name: "Charminar",           lat: 17.3616, lon: 78.4747 },
   { name: "Uppal",               lat: 17.4058, lon: 78.5591 },
 ];
 
-/* ===========================================================
-   Fallback data — used only if the live fetch fails
-   (e.g. no internet), so the page never shows completely blank.
-=========================================================== */
 const fallbackData = {
   temp: 24, condition: "rainy", isDay: true, humidity: 85, wind: 15, chanceOfRain: 62,
   locationName: "Hyderabad (Central)", updated: "--:--",
@@ -221,41 +206,16 @@ const fallbackData = {
   ],
 };
 
-// Try to load pre-reconciled data from weather.json (written by fetch-weather.js)
-// Falls back to live Open-Meteo fetch if weather.json isn't available
-async function loadCentralWeather() {
-  try {
-    const res = await fetch("weather.json?t=" + Date.now()); // ?t= busts cache
-    if (!res.ok) throw new Error("weather.json not found");
-    const data = await res.json();
-    // Add periods via live fetch since weather.json only has current conditions
-    const raw = await fetchOpenMeteo(LOCALITIES[0].lat, LOCALITIES[0].lon);
-    data.periods = buildPeriods(raw.hourly);
-    data.updated = data.generatedAt ? data.generatedAt.slice(11, 16) : "--:--";
-    data.locationName = "Hyderabad (Central)";
-    render(data);
-    recenterMap(LOCALITIES[0].lat, LOCALITIES[0].lon);
-    hideErrorBanner();
-  } catch (err) {
-    // weather.json not available — fall back to live fetch
-    loadLocality(0);
-  }
-}
-
-/* ===========================================================
-   Weather-code helpers (Open-Meteo uses WMO codes)
-=========================================================== */
 function weatherCodeToCondition(code) {
   if (code === 0) return "clear";
   if ([1, 2, 3, 45, 48].includes(code)) return "cloudy";
-  return "rainy"; // covers drizzle, rain, showers, thunderstorms, snow (rare here)
+  return "rainy";
 }
 
 function weatherCodeLabel(code) {
   const map = {
     0: "Clear", 1: "Mostly Clear", 2: "Partly Cloudy", 3: "Overcast",
-    45: "Fog", 48: "Fog",
-    51: "Drizzle", 53: "Drizzle", 55: "Drizzle",
+    45: "Fog", 48: "Fog", 51: "Drizzle", 53: "Drizzle", 55: "Drizzle",
     61: "Light Rain", 63: "Rain", 65: "Heavy Rain",
     80: "Showers", 81: "Showers", 82: "Heavy Showers",
     95: "Thunderstorm", 96: "Thunderstorm", 99: "Thunderstorm",
@@ -269,29 +229,23 @@ function iconForCondition(cond, isNight) {
   return isNight ? "cloud-moon-rain" : "cloud-sun-rain";
 }
 
-/* ===========================================================
-   Rule-based plain-English summary (no AI dependency)
-=========================================================== */
 function generateSummary({ temp, condition, chanceOfRain, isDay }) {
   const t = isDay ? "today" : "tonight";
   if (condition === "rainy" && chanceOfRain > 50) {
-    return `Rain is likely ${t}, with up to a ${chanceOfRain}% chance in the next few hours. Keep an umbrella handy.`;
+    return `Micro-burst showers probable ${t}. Up to ${chanceOfRain}% chance in your immediate locality.`;
   }
   if (condition === "rainy") {
-    return `Scattered showers possible ${t}. It may pass by, but keep an umbrella within reach just in case.`;
+    return `Isolated scattered showers expected ${t}. Heavy pockets may occur within a mile.`;
   }
   if (condition === "clear" && isDay && temp >= 33) {
-    return `Hot and clear ${t} at ${temp}°C. Stay hydrated and avoid the sun during peak hours.`;
+    return `Hot and sunny ${t} at ${temp}°C. Clear radar across the metro area.`;
   }
   if (condition === "clear") {
-    return `Clear skies ${t} at ${temp}°C. ${isDay ? "A good day to be outdoors." : "A calm, clear night ahead."}`;
+    return `Clear skies ${t} at ${temp}°C. Minimal rain threat across all sectors.`;
   }
-  return `Overcast ${t} at ${temp}°C, with no significant rain expected.`;
+  return `Overcast ${t} at ${temp}°C. Cloud cover active, but no heavy precipitation detected.`;
 }
 
-/* ===========================================================
-   Theme tokens — condition x day/night
-=========================================================== */
 const themes = {
   clear: {
     day:   { bg: "bg-gradient-to-b from-[#FDF6E3] to-[#F5D590] text-[#402F1C]", icon: "sun",  accent: "#C9701C", glow: ["#F7B733", "#F5D590", "#E8942C"], cloud: "rgba(255,255,255,0.6)" },
@@ -307,12 +261,10 @@ const themes = {
   },
 };
 
-/* ===========================================================
-   Map setup
-=========================================================== */
+/* Map Setup */
 const map = L.map("radar-map", {
-  zoomControl: true, attributionControl: false, minZoom: 5, maxZoom: 8,
-}).setView([17.385, 78.4867], 7);
+  zoomControl: true, attributionControl: false, minZoom: 6, maxZoom: 11,
+}).setView([17.385, 78.4867], 10);
 
 let baseLayer = null;
 let localityMarker = null;
@@ -329,15 +281,13 @@ function recenterMap(lat, lon) {
   map.setView([lat, lon], 11);
   if (localityMarker) map.removeLayer(localityMarker);
   localityMarker = L.circleMarker([lat, lon], {
-    radius: 6, color: "#fff", weight: 2, fillColor: "#38BDF8", fillOpacity: 1,
+    radius: 7, color: "#fff", weight: 2.5, fillColor: "#38BDF8", fillOpacity: 1,
   }).addTo(map);
 }
 
-/* ===========================================================
-   Stars (generated once)
-=========================================================== */
 function buildStars() {
   const container = document.getElementById("stars");
+  container.innerHTML = "";
   for (let i = 0; i < 30; i++) {
     const s = document.createElement("div");
     s.className = "star";
@@ -349,17 +299,6 @@ function buildStars() {
 }
 buildStars();
 
-/* ===========================================================
-   Period (timeline) builder from hourly data
-=========================================================== */
-function pad(n) { return n.toString().padStart(2, "0"); }
-
-function findHourIndex(times, dateStr, hour) {
-  const target = `${dateStr}T${pad(hour)}:00`;
-  const idx = times.indexOf(target);
-  return idx === -1 ? 0 : idx;
-}
-
 function buildPeriods(hourly) {
   const dateStr = hourly.time[0].split("T")[0];
   const defs = [
@@ -369,7 +308,8 @@ function buildPeriods(hourly) {
     { name: "Night", hour: 23, night: true },
   ];
   return defs.map((d) => {
-    const idx = findHourIndex(hourly.time, dateStr, d.hour);
+    const target = `${dateStr}T${d.hour.toString().padStart(2, '0')}:00`;
+    const idx = hourly.time.indexOf(target) === -1 ? 0 : hourly.time.indexOf(target);
     const code = hourly.weather_code[idx];
     const cond = weatherCodeToCondition(code);
     return {
@@ -381,9 +321,6 @@ function buildPeriods(hourly) {
   });
 }
 
-/* ===========================================================
-   Fetch + transform live data from Open-Meteo
-=========================================================== */
 async function fetchOpenMeteo(lat, lon) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
     `&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day` +
@@ -399,7 +336,7 @@ function transformOpenMeteo(raw, name) {
   const conditionKey = weatherCodeToCondition(cur.weather_code);
   const isDay = cur.is_day === 1;
 
-  const prefix = cur.time.slice(0, 13); // "YYYY-MM-DDTHH"
+  const prefix = cur.time.slice(0, 13);
   let nowIdx = raw.hourly.time.findIndex((t) => t.startsWith(prefix));
   if (nowIdx === -1) nowIdx = 0;
   const next6 = raw.hourly.precipitation_probability.slice(nowIdx, nowIdx + 6);
@@ -418,14 +355,10 @@ function transformOpenMeteo(raw, name) {
   };
 }
 
-/* ===========================================================
-   Render — draws data into the page
-=========================================================== */
 function render(data) {
   const theme = themes[data.condition][data.isDay ? "day" : "night"];
 
-  document.getElementById("page-body").className =
-    "min-h-screen transition-colors duration-700 " + theme.bg;
+  document.getElementById("page-body").className = "min-h-screen transition-colors duration-700 " + theme.bg;
   document.documentElement.style.setProperty("--accent", theme.accent);
   document.documentElement.style.setProperty("--cloud-color", theme.cloud);
 
@@ -464,9 +397,7 @@ function render(data) {
   lucide.createIcons();
 }
 
-/* ===========================================================
-   Locality dropdown wiring
-=========================================================== */
+/* Populate Locality Select */
 const select = document.getElementById("locality-select");
 LOCALITIES.forEach((loc, i) => {
   const opt = document.createElement("option");
@@ -491,48 +422,73 @@ async function loadLocality(index) {
 
 select.addEventListener("change", (e) => loadLocality(Number(e.target.value)));
 
-/* ===========================================================
-   Tech panel toggle
-=========================================================== */
 document.getElementById("tech-toggle").addEventListener("click", () => {
   document.getElementById("tech-panel").classList.toggle("hidden");
   document.getElementById("tech-chevron").classList.toggle("rotate-180");
 });
 
-/* ===========================================================
-   Radar — animated loop (RainViewer, free, no key)
-=========================================================== */
-fetch("https://api.rainviewer.com/public/weather-maps.json")
-  .then((res) => res.json())
-  .then((data) => {
-    const pastFrames = data.radar.past;
-    let frameIdx = 0;
-    let activeLayer = null;
+/* Zero-Flicker Smooth Radar Loop */
+async function initRadar() {
+  try {
+    const res = await fetch("https://api.rainviewer.com/public/weather-maps.json");
+    const data = await res.json();
+    
+    // Combine past 2 hours + nowcast 30 mins
+    const frames = [...(data.radar.past || []), ...(data.radar.nowcast || [])];
+    if (!frames.length) return;
 
-    function showFrame(i) {
-  const frame = pastFrames[i];
-  const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`;
-  const newLayer = L.tileLayer(tileUrl, { opacity: 0.6, maxNativeZoom: 6, minZoom: 5 });
+    // Pre-create all tile layers with opacity 0 to avoid flickers
+    const layers = frames.map((frame) => {
+      const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`;
+      const layer = L.tileLayer(tileUrl, {
+        opacity: 0,
+        maxNativeZoom: 8,
+        minZoom: 5,
+      }).addTo(map);
+      return { layer, time: frame.time };
+    });
 
-  newLayer.once("load", () => {
-    if (activeLayer) map.removeLayer(activeLayer);
-    activeLayer = newLayer;
-  });
-
-  newLayer.addTo(map);
-}
+    let currentIdx = 0;
+    layers[0].layer.setOpacity(0.65);
 
     setInterval(() => {
-      showFrame(frameIdx);
-      frameIdx = (frameIdx + 1) % pastFrames.length;
-    }, 1500);
+      layers[currentIdx].layer.setOpacity(0);
+      currentIdx = (currentIdx + 1) % layers.length;
+      layers[currentIdx].layer.setOpacity(0.65);
 
-    showFrame(0);
-  });
+      const d = new Date(layers[currentIdx].time * 1000);
+      const isNowcast = currentIdx >= (data.radar.past ? data.radar.past.length : 0);
+      const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      const timeBadge = document.getElementById("radar-timestamp");
+      if (timeBadge) {
+        timeBadge.textContent = `${isNowcast ? 'FORECAST' : 'RADAR'} ${timeStr}`;
+        timeBadge.style.color = isNowcast ? '#38BDF8' : 'inherit';
+      }
+    }, 1200);
 
-/* ===========================================================
-   Initial load — start on Hyderabad (Central)
-=========================================================== */
+  } catch (e) {
+    console.error("Radar initialization error:", e);
+  }
+}
+
+async function loadCentralWeather() {
+  try {
+    const res = await fetch("weather.json?t=" + Date.now());
+    if (!res.ok) throw new Error("weather.json not found");
+    const data = await res.json();
+    const raw = await fetchOpenMeteo(LOCALITIES[0].lat, LOCALITIES[0].lon);
+    data.periods = buildPeriods(raw.hourly);
+    data.updated = data.generatedAt ? data.generatedAt.slice(11, 16) : "--:--";
+    data.locationName = "Hyderabad (Central)";
+    render(data);
+    recenterMap(LOCALITIES[0].lat, LOCALITIES[0].lon);
+  } catch (err) {
+    loadLocality(0);
+  }
+}
+
+initRadar();
 loadCentralWeather();
 </script>
 

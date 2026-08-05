@@ -1,10 +1,10 @@
 import { writeFileSync } from "fs";
 
-// ─── Coordinates for Hyderabad ───────────────────────────────────────────────
-const LAT = 17.385;
-const LON = 78.4867;
+// ─── Default Coordinates (Hyderabad Central) ─────────────────────────────────
+const DEFAULT_LAT = 17.385;
+const DEFAULT_LON = 78.4867;
 
-// ─── Fetch helpers ────────────────────────────────────────────────────────────
+// ─── Fetch Helper with Timeout ───────────────────────────────────────────────
 async function fetchWithTimeout(url, options = {}, ms = 8000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
@@ -19,14 +19,12 @@ async function fetchWithTimeout(url, options = {}, ms = 8000) {
   }
 }
 
-// ─── Source 1: Open-Meteo ICON model (no key needed) ─────────────────────────
-async function getOpenMeteoICON() {
-  const url = `https://api.open-meteo.com/v1/forecast` +
-    `?latitude=${LAT}&longitude=${LON}` +
+// ─── Data Fetchers ───────────────────────────────────────────────────────────
+async function getOpenMeteoICON(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
     `&current=temperature_2m,precipitation,weather_code,wind_speed_10m,relative_humidity_2m,is_day` +
     `&hourly=precipitation_probability,temperature_2m,weather_code` +
-    `&models=icon_seamless` +
-    `&forecast_days=1&timezone=Asia%2FKolkata`;
+    `&models=icon_seamless&forecast_days=1&timezone=Asia%2FKolkata`;
   const data = await fetchWithTimeout(url);
   const cur = data.current;
   const nowIdx = data.hourly.time.findIndex(t => t.startsWith(cur.time.slice(0, 13)));
@@ -43,14 +41,11 @@ async function getOpenMeteoICON() {
   };
 }
 
-// ─── Source 2: Open-Meteo ECMWF model (no key needed) ────────────────────────
-async function getOpenMeteoECMWF() {
-  const url = `https://api.open-meteo.com/v1/forecast` +
-    `?latitude=${LAT}&longitude=${LON}` +
+async function getOpenMeteoECMWF(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
     `&current=temperature_2m,precipitation,weather_code,wind_speed_10m,relative_humidity_2m` +
     `&hourly=precipitation_probability,temperature_2m,weather_code` +
-    `&models=ecmwf_ifs025` +
-    `&forecast_days=1&timezone=Asia%2FKolkata`;
+    `&models=ecmwf_ifs025&forecast_days=1&timezone=Asia%2FKolkata`;
   const data = await fetchWithTimeout(url);
   const cur = data.current;
   const nowIdx = data.hourly.time.findIndex(t => t.startsWith(cur.time.slice(0, 13)));
@@ -66,10 +61,10 @@ async function getOpenMeteoECMWF() {
   };
 }
 
-// ─── Source 3: WeatherAPI.com ─────────────────────────────────────────────────
-async function getWeatherAPI() {
+async function getWeatherAPI(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   const key = process.env.WEATHERAPI_KEY;
-  const url = `https://api.weatherapi.com/v1/forecast.json?key=${key}&q=${LAT},${LON}&days=1&aqi=yes`;
+  if (!key) throw new Error("Missing WEATHERAPI_KEY");
+  const url = `https://api.weatherapi.com/v1/forecast.json?key=${key}&q=${lat},${lon}&days=1&aqi=yes`;
   const data = await fetchWithTimeout(url);
   const cur = data.current;
   return {
@@ -88,22 +83,19 @@ async function getWeatherAPI() {
   };
 }
 
-// ─── Source 4: Tomorrow.io ────────────────────────────────────────────────────
-async function getTomorrow() {
+async function getTomorrow(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   const key = process.env.TOMORROW_KEY;
-  const url = `https://api.tomorrow.io/v4/weather/realtime?location=${LAT},${LON}&units=metric`;
-const data = await fetchWithTimeout(url, {
-  headers: { 
-    "apikey": key,
-    "Accept": "application/json"
-  }
-});
+  if (!key) throw new Error("Missing TOMORROW_KEY");
+  const url = `https://api.tomorrow.io/v4/weather/realtime?location=${lat},${lon}&units=metric`;
+  const data = await fetchWithTimeout(url, {
+    headers: { "apikey": key, "Accept": "application/json" }
+  });
   const v = data.data.values;
   return {
     source: "Tomorrow.io",
     temp: Math.round(v.temperature),
     humidity: Math.round(v.humidity),
-    wind: Math.round(v.windSpeed * 3.6), // m/s to km/h
+    wind: Math.round(v.windSpeed * 3.6),
     precipNow: v.precipitationIntensity > 0,
     chanceOfRain: Math.round(v.precipitationProbability),
     visibility: v.visibility,
@@ -112,30 +104,21 @@ const data = await fetchWithTimeout(url, {
   };
 }
 
-// ─── Reconciliation engine ────────────────────────────────────────────────────
+// ─── Reconciliation Engine ──────────────────────────────────────────────────
 function reconcile(results) {
   const good = results.filter(r => r.status === "ok").map(r => r.data);
   const failed = results.filter(r => r.status === "error").map(r => r.source);
 
-  if (good.length === 0) throw new Error("All sources failed");
+  if (good.length === 0) throw new Error("All weather sources failed.");
 
-  // Average temperature across all good sources
   const avgTemp = Math.round(good.reduce((s, d) => s + d.temp, 0) / good.length);
-
-  // Average humidity
   const avgHumidity = Math.round(good.reduce((s, d) => s + d.humidity, 0) / good.length);
-
-  // Average wind
   const avgWind = Math.round(good.reduce((s, d) => s + d.wind, 0) / good.length);
-
-  // Chance of rain: take the highest value (conservative — better to warn than miss)
   const maxRain = Math.max(...good.map(d => d.chanceOfRain));
 
-  // Temp spread — how much do sources disagree on temperature?
   const temps = good.map(d => d.temp);
   const tempSpread = Math.max(...temps) - Math.min(...temps);
 
-  // Rain agreement — are sources pointing the same direction?
   const wetVotes = good.filter(d => d.chanceOfRain > 40 || d.precipNow).length;
   const dryVotes = good.filter(d => d.chanceOfRain < 20 && !d.precipNow).length;
   const totalVotes = good.length;
@@ -158,20 +141,13 @@ function reconcile(results) {
     confidence = "low";
   }
 
-  // If sources disagree a lot on temp, downgrade confidence
   if (tempSpread >= 3) confidence = "low";
 
-  // Is it day or night?
   const isDay = good.find(d => d.isDay !== undefined)?.isDay ?? true;
-
-  // Extra fields from whichever source has them
-  const uv = good.find(d => d.uvIndex)?.uvIndex
-           ?? good.find(d => d.uv)?.uv
-           ?? null;
+  const uv = good.find(d => d.uvIndex)?.uvIndex ?? good.find(d => d.uv)?.uv ?? null;
   const feelsLike = good.find(d => d.feelsLike)?.feelsLike ?? null;
   const airQuality = good.find(d => d.airQuality)?.airQuality ?? null;
 
-  // Determine overall condition label
   let condition;
   if (rainAgreement === "all_wet" || rainAgreement === "mostly_wet") {
     condition = "rainy";
@@ -203,11 +179,10 @@ function reconcile(results) {
   };
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── Main Execution ─────────────────────────────────────────────────────────
 async function main() {
-  console.log("Fetching from all sources in parallel...\n");
+  console.log("Fetching weather data across multi-model cluster...\n");
 
-  // Run all 4 fetches at once — don't let one slow/failed source delay others
   const results = await Promise.all([
     getOpenMeteoICON().then(d => ({ status: "ok", source: "Open-Meteo ICON", data: d }))
       .catch(e => ({ status: "error", source: "Open-Meteo ICON", error: e.message })),
@@ -219,7 +194,6 @@ async function main() {
       .catch(e => ({ status: "error", source: "Tomorrow.io", error: e.message })),
   ]);
 
-  // Show individual source results
   results.forEach(r => {
     if (r.status === "ok") {
       console.log(`✓ ${r.source}: ${r.data.temp}°C, ${r.data.chanceOfRain}% rain`);
@@ -228,11 +202,12 @@ async function main() {
     }
   });
 
-  console.log("\n--- Reconciled Result ---");
   const reconciled = reconcile(results);
+  console.log("\n--- Reconciled Weather Payload ---");
   console.log(JSON.stringify(reconciled, null, 2));
+
   writeFileSync("weather.json", JSON.stringify(reconciled, null, 2));
-console.log("\n✓ weather.json written successfully");
+  console.log("\n✓ weather.json updated successfully");
 }
 
 main();
