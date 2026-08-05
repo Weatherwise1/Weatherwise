@@ -429,12 +429,17 @@ function generateRadarAnalysis(data) {
   const loc = data.locationName;
   const isRainingNow = data.condition === "rainy";
   const rainChance = data.chanceOfRain;
+  
+  // NEW: The "Drizzle Detector" threshold
+  const isSuperHumid = data.humidity >= 85; 
 
-  // FIX: Make the text honest about what the map vs. the forecast is doing.
   if (isRainingNow && rainChance > 60) {
-    return `Forecast models indicate high rain probability (${rainChance}%) for ${loc}. If the Doppler map above is clear, clouds are building up but rain hasn't hit the radar beam yet.`;
+    return `Forecast models indicate high rain probability (${rainChance}%) for ${loc}. If the Doppler map above is clear, heavy clouds are building up but rain hasn't hit the radar beam yet.`;
   } else if (isRainingNow || rainChance > 40) {
     return `Scattered cloud cover detected around ${loc} with a ${rainChance}% rain chance. Monitor the animated map loop above for any incoming precipitation blobs.`;
+  } else if (!isRainingNow && rainChance > 20 && isSuperHumid) {
+    // NEW: If radar is clear but air is saturated, warn about drizzle
+    return `Radar appears clear over ${loc}, but local humidity is extremely high (${data.humidity}%). Light drizzle or mist is highly possible, which often slips under the radar beam.`;
   } else {
     return `The Doppler radar shows clear conditions over ${loc}. No active rain cells detected by the radar network right now.`;
   }
