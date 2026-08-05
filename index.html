@@ -311,8 +311,8 @@ const themes = {
    Map setup
 =========================================================== */
 const map = L.map("radar-map", {
-  zoomControl: false, attributionControl: false, minZoom: 6, maxZoom: 11,
-}).setView([17.385, 78.4867], 11);
+  zoomControl: true, attributionControl: false, minZoom: 5, maxZoom: 8,
+}).setView([17.385, 78.4867], 7);
 
 let baseLayer = null;
 let localityMarker = null;
@@ -512,7 +512,7 @@ fetch("https://api.rainviewer.com/public/weather-maps.json")
     function showFrame(i) {
   const frame = pastFrames[i];
   const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`;
-  const newLayer = L.tileLayer(tileUrl, { opacity: 0.6, maxNativeZoom: 8, minZoom: 6 });
+  const newLayer = L.tileLayer(tileUrl, { opacity: 0.6, maxNativeZoom: 6, minZoom: 5 });
 
   newLayer.once("load", () => {
     if (activeLayer) map.removeLayer(activeLayer);
