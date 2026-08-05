@@ -510,11 +510,17 @@ fetch("https://api.rainviewer.com/public/weather-maps.json")
     let activeLayer = null;
 
     function showFrame(i) {
-      if (activeLayer) map.removeLayer(activeLayer);
-      const frame = pastFrames[i];
-      const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`;
-      activeLayer = L.tileLayer(tileUrl, { opacity: 0.6, maxNativeZoom: 8, minZoom: 6 }).addTo(map);
-    }
+  const frame = pastFrames[i];
+  const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`;
+  const newLayer = L.tileLayer(tileUrl, { opacity: 0.6, maxNativeZoom: 8, minZoom: 6 });
+
+  newLayer.once("load", () => {
+    if (activeLayer) map.removeLayer(activeLayer);
+    activeLayer = newLayer;
+  });
+
+  newLayer.addTo(map);
+}
 
     setInterval(() => {
       showFrame(frameIdx);
