@@ -158,9 +158,19 @@
       </span>
     </div>
     <div id="radar-map" class="border border-current/10 shadow-lg"></div>
-    <p class="text-xs opacity-50 mt-2">
+    <p class="text-xs opacity-50 mt-2 ml-1">
       Data: IMD Doppler / RainViewer. Real-time clouds & 30-min predictive nowcast.
     </p>
+
+    <!-- NEW: Radar Analysis Box -->
+    <div class="mt-4 p-4 rounded-xl border border-current/10 bg-white/10 backdrop-blur-md flex items-start gap-3">
+      <i data-lucide="radar" class="w-5 h-5 opacity-70 shrink-0 mt-0.5" style="color: var(--accent)"></i>
+      <div>
+        <p class="text-[10px] font-mono uppercase tracking-wider font-bold opacity-50 mb-1" id="radar-analysis-title">Local Radar Analysis</p>
+        <p class="text-sm font-medium leading-relaxed opacity-90" id="radar-analysis-text">Interpreting local radar data...</p>
+      </div>
+    </div>
+    
   </div>
 
   <!-- Technical Details Panel -->
@@ -394,7 +404,28 @@ function render(data) {
   });
 
   setBaseLayer(!data.isDay || data.condition === "rainy");
+
+  // Update the Radar Analysis text
+  document.getElementById("radar-analysis-title").textContent = `${data.locationName} Radar Analysis`;
+  document.getElementById("radar-analysis-text").textContent = generateRadarAnalysis(data);
+
   lucide.createIcons();
+}
+
+function generateRadarAnalysis(data) {
+  const loc = data.locationName;
+  const isRainingNow = data.condition === "rainy";
+  const rainSoon = data.chanceOfRain > 40; 
+
+  if (isRainingNow && rainSoon) {
+    return `Active storm cells are directly over ${loc}. Expect steady precipitation to continue.`;
+  } else if (isRainingNow && !rainSoon) {
+    return `There is light rain over ${loc} right now, but the radar shows the cell moving away. It should clear up shortly.`;
+  } else if (!isRainingNow && rainSoon) {
+    return `It is dry in ${loc} at the moment, but the radar shows storm cells moving in your direction. Expect rain soon.`;
+  } else {
+    return `The radar is completely clear over ${loc}. No incoming rain cells detected.`;
+  }
 }
 
 /* Populate Locality Select */
