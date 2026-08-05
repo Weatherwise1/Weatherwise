@@ -525,7 +525,7 @@ fetch("https://api.rainviewer.com/public/weather-maps.json")
     setInterval(() => {
       showFrame(frameIdx);
       frameIdx = (frameIdx + 1) % pastFrames.length;
-    }, 1000);
+    }, 1500);
 
     showFrame(0);
   });
