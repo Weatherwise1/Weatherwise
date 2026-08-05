@@ -12,17 +12,53 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <style>
-  :root {
-    --accent: #C9701C;
-  }
+  :root { --accent: #C9701C; --cloud-color: rgba(255,255,255,0.55); }
+  html, body { height: 100%; }
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     overflow-x: hidden;
+    position: relative;
   }
   .font-display { font-family: 'Space Grotesk', sans-serif; }
   .font-mono { font-family: 'IBM Plex Mono', monospace; }
 
   #radar-map { height: 320px; border-radius: 1.25rem; }
+
+  /* ---------- Background decor: full-viewport, behind everything ---------- */
+  #bg-decor {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .stars { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease; }
+  .stars.visible { opacity: 1; }
+  .star {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: #fff;
+    border-radius: 50%;
+    animation: twinkle 3.5s ease-in-out infinite;
+  }
+  @keyframes twinkle { 0%, 100% { opacity: .15; } 50% { opacity: 1; } }
+
+  .cloud-layer { position: absolute; inset: 0; }
+  .cloud {
+    position: absolute;
+    fill: var(--cloud-color);
+    animation: floatCloud linear infinite;
+    transition: fill 0.8s ease;
+  }
+  .cloud.c1 { width: 200px; top: 6%;  animation-duration: 75s;  opacity: .6; }
+  .cloud.c2 { width: 130px; top: 16%; animation-duration: 100s; animation-delay: -25s; opacity: .45; }
+  .cloud.c3 { width: 240px; top: 3%;  animation-duration: 130s; animation-delay: -60s; opacity: .35; }
+  .cloud.c4 { width: 110px; top: 24%; animation-duration: 65s;  animation-delay: -10s; opacity: .5; }
+  @keyframes floatCloud {
+    from { transform: translateX(-30%); }
+    to   { transform: translateX(130%); }
+  }
 
   /* Signature element: ambient drifting sky glow behind the hero */
   .glow-field {
@@ -41,7 +77,6 @@
   }
   .glow-blob.b2 { animation-duration: 24s; animation-delay: -6s; }
   .glow-blob.b3 { animation-duration: 30s; animation-delay: -12s; }
-
   @keyframes drift {
     0%   { transform: translate(0, 0) scale(1); }
     50%  { transform: translate(4%, 6%) scale(1.08); }
@@ -49,13 +84,11 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .glow-blob { animation: none; }
+    .glow-blob, .cloud, .star { animation: none; }
     * { transition: none !important; }
   }
 
-  .fade-in {
-    animation: fadeIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
+  .fade-in { animation: fadeIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
   .fade-in.delay-1 { animation-delay: 0.08s; }
   .fade-in.delay-2 { animation-delay: 0.16s; }
   .fade-in.delay-3 { animation-delay: 0.24s; }
@@ -64,22 +97,40 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  .card-hover {
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-  }
-  .card-hover:hover {
-    transform: translateY(-3px);
-  }
+  .card-hover { transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; }
+  .card-hover:hover { transform: translateY(-3px); }
 
-  :focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  #locality-select {
+    appearance: none;
+    -webkit-appearance: none;
   }
 </style>
 </head>
 <body class="min-h-screen transition-colors duration-700" id="page-body">
 
-<div class="max-w-2xl mx-auto px-6 py-10 sm:py-16 relative">
+<!-- SVG symbol defs (invisible, referenced by <use>) -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="cloud-shape" viewBox="0 0 200 100">
+      <path d="M50,90 Q10,90 10,60 Q10,30 45,30 Q50,10 80,10 Q115,10 120,35 Q150,35 155,60 Q160,90 120,90 Z"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- Full-viewport background decor -->
+<div id="bg-decor">
+  <div class="stars" id="stars"></div>
+  <div class="cloud-layer">
+    <svg class="cloud c1"><use href="#cloud-shape"></use></svg>
+    <svg class="cloud c2"><use href="#cloud-shape"></use></svg>
+    <svg class="cloud c3"><use href="#cloud-shape"></use></svg>
+    <svg class="cloud c4"><use href="#cloud-shape"></use></svg>
+  </div>
+</div>
+
+<div class="max-w-2xl mx-auto px-6 py-10 sm:py-16 relative z-10">
 
   <!-- Signature ambient glow -->
   <div class="glow-field" id="glow-field">
@@ -88,12 +139,16 @@
     <div class="glow-blob b3" style="width:200px;height:200px;left:40%;top:20%;"></div>
   </div>
 
+  <!-- Locality picker -->
+  <div class="relative z-10 flex justify-center mb-7">
+    <div class="fade-in flex items-center gap-2 border border-current/20 rounded-full px-4 py-1.5 bg-white/10 backdrop-blur-sm">
+      <i data-lucide="map-pin" class="w-3.5 h-3.5 opacity-60"></i>
+      <select id="locality-select" class="text-xs uppercase tracking-[0.2em] font-medium bg-transparent opacity-80 cursor-pointer focus:opacity-100 pr-1"></select>
+    </div>
+  </div>
+
   <!-- Hero -->
   <div class="relative z-10">
-    <p class="fade-in text-xs uppercase tracking-[0.25em] font-medium text-center opacity-50 mb-7">
-      Hyderabad Today
-    </p>
-
     <div class="fade-in delay-1 flex items-center justify-center gap-4 mb-8">
       <i data-lucide="cloud-rain" id="hero-icon" class="w-14 h-14 sm:w-16 sm:h-16" stroke-width="1.4"></i>
       <span class="font-display text-7xl sm:text-8xl font-bold tracking-tight" id="hero-temp">--°C</span>
@@ -123,20 +178,41 @@
     <div id="tech-panel" class="hidden mt-3 rounded-xl border border-current/10 bg-white/30 backdrop-blur-sm p-4 grid grid-cols-2 gap-4 text-sm font-mono">
       <div><p class="opacity-50 text-xs">Humidity</p><p class="font-medium" id="stat-humidity">--</p></div>
       <div><p class="opacity-50 text-xs">Wind Speed</p><p class="font-medium" id="stat-wind">--</p></div>
-      <div><p class="opacity-50 text-xs">Chance of Rain</p><p class="font-medium" id="stat-rain">--</p></div>
-      <div><p class="opacity-50 text-xs">Data Sources</p><p class="font-medium">Open-Meteo, WeatherAPI</p></div>
+      <div><p class="opacity-50 text-xs">Chance of Rain (6h)</p><p class="font-medium" id="stat-rain">--</p></div>
+      <div><p class="opacity-50 text-xs">Data Source</p><p class="font-medium">Open-Meteo (live)</p></div>
+      <div class="col-span-2"><p class="opacity-50 text-xs">Last Updated</p><p class="font-medium" id="stat-updated">--</p></div>
     </div>
   </div>
 
 </div>
 
 <script>
-const mockData = {
-  temp: 24,
-  condition: "rainy", // "sunny" | "rainy" | "cloudy"
-  humidity: 85,
-  wind: 15,
-  chanceOfRain: 62,
+/* ===========================================================
+   LOCALITIES — add more any time by appending to this array.
+   Format: { name, lat, lon }
+=========================================================== */
+const LOCALITIES = [
+  { name: "Hyderabad (Central)", lat: 17.3850, lon: 78.4867 },
+  { name: "Malakpet",            lat: 17.3702, lon: 78.4990 },
+  { name: "Gachibowli",          lat: 17.4401, lon: 78.3489 },
+  { name: "Secunderabad",        lat: 17.4399, lon: 78.4983 },
+  { name: "Banjara Hills",       lat: 17.4156, lon: 78.4347 },
+  { name: "Madhapur",            lat: 17.4483, lon: 78.3915 },
+  { name: "Hitech City",         lat: 17.4435, lon: 78.3772 },
+  { name: "Kukatpally",          lat: 17.4849, lon: 78.4138 },
+  { name: "Ameerpet",            lat: 17.4374, lon: 78.4483 },
+  { name: "Kondapur",            lat: 17.4615, lon: 78.3672 },
+  { name: "Charminar",           lat: 17.3616, lon: 78.4747 },
+  { name: "Uppal",               lat: 17.4058, lon: 78.5591 },
+];
+
+/* ===========================================================
+   Fallback data — used only if the live fetch fails
+   (e.g. no internet), so the page never shows completely blank.
+=========================================================== */
+const fallbackData = {
+  temp: 24, condition: "rainy", isDay: true, humidity: 85, wind: 15, chanceOfRain: 62,
+  locationName: "Hyderabad (Central)",
   periods: [
     { name: "Morning", icon: "cloud", temp: 22, condition: "Overcast" },
     { name: "Afternoon", icon: "cloud-rain", temp: 24, condition: "Heavy Rain" },
@@ -145,58 +221,192 @@ const mockData = {
   ],
 };
 
-function generateSummary(data) {
-  const { temp, condition, chanceOfRain } = data;
-  if (condition === "rainy" && chanceOfRain > 50) {
-    return `Rain is likely today, with a ${chanceOfRain}% chance. Keep an umbrella handy and expect it to feel humid.`;
-  }
-  if (condition === "rainy") {
-    return `Scattered showers possible today. It may pass you by, but keep an umbrella within reach just in case.`;
-  }
-  if (condition === "sunny" && temp >= 33) {
-    return `Hot and clear today at ${temp}°C. Stay hydrated and avoid the sun during the early afternoon.`;
-  }
-  if (condition === "sunny") {
-    return `Clear skies and pleasant at ${temp}°C. A good day to be outdoors.`;
-  }
-  return `Overcast today at ${temp}°C, with no significant rain expected. Light jacket weather.`;
+/* ===========================================================
+   Weather-code helpers (Open-Meteo uses WMO codes)
+=========================================================== */
+function weatherCodeToCondition(code) {
+  if (code === 0) return "clear";
+  if ([1, 2, 3, 45, 48].includes(code)) return "cloudy";
+  return "rainy"; // covers drizzle, rain, showers, thunderstorms, snow (rare here)
 }
 
+function weatherCodeLabel(code) {
+  const map = {
+    0: "Clear", 1: "Mostly Clear", 2: "Partly Cloudy", 3: "Overcast",
+    45: "Fog", 48: "Fog",
+    51: "Drizzle", 53: "Drizzle", 55: "Drizzle",
+    61: "Light Rain", 63: "Rain", 65: "Heavy Rain",
+    80: "Showers", 81: "Showers", 82: "Heavy Showers",
+    95: "Thunderstorm", 96: "Thunderstorm", 99: "Thunderstorm",
+  };
+  return map[code] || "Cloudy";
+}
+
+function iconForCondition(cond, isNight) {
+  if (cond === "clear") return isNight ? "moon" : "sun";
+  if (cond === "cloudy") return isNight ? "cloud-moon" : "cloud-sun";
+  return isNight ? "cloud-moon-rain" : "cloud-sun-rain";
+}
+
+/* ===========================================================
+   Rule-based plain-English summary (no AI dependency)
+=========================================================== */
+function generateSummary({ temp, condition, chanceOfRain, isDay }) {
+  const t = isDay ? "today" : "tonight";
+  if (condition === "rainy" && chanceOfRain > 50) {
+    return `Rain is likely ${t}, with up to a ${chanceOfRain}% chance in the next few hours. Keep an umbrella handy.`;
+  }
+  if (condition === "rainy") {
+    return `Scattered showers possible ${t}. It may pass by, but keep an umbrella within reach just in case.`;
+  }
+  if (condition === "clear" && isDay && temp >= 33) {
+    return `Hot and clear ${t} at ${temp}°C. Stay hydrated and avoid the sun during peak hours.`;
+  }
+  if (condition === "clear") {
+    return `Clear skies ${t} at ${temp}°C. ${isDay ? "A good day to be outdoors." : "A calm, clear night ahead."}`;
+  }
+  return `Overcast ${t} at ${temp}°C, with no significant rain expected.`;
+}
+
+/* ===========================================================
+   Theme tokens — condition x day/night
+=========================================================== */
 const themes = {
-  sunny: {
-    bg: "bg-gradient-to-b from-[#FDF6E3] to-[#F5D590] text-[#402F1C]",
-    icon: "sun",
-    accent: "#C9701C",
-    glow: ["#F7B733", "#F5D590", "#E8942C"],
-  },
-  rainy: {
-    bg: "bg-gradient-to-b from-[#1B2A4A] to-[#0B1220] text-[#F1F5F9]",
-    icon: "cloud-rain",
-    accent: "#5EEAD4",
-    glow: ["#3B5A8A", "#5EEAD4", "#1E3A5F"],
+  clear: {
+    day:   { bg: "bg-gradient-to-b from-[#FDF6E3] to-[#F5D590] text-[#402F1C]", icon: "sun",  accent: "#C9701C", glow: ["#F7B733", "#F5D590", "#E8942C"], cloud: "rgba(255,255,255,0.6)" },
+    night: { bg: "bg-gradient-to-b from-[#0B1024] to-[#030712] text-[#E5E7EB]", icon: "moon", accent: "#A5B4FC", glow: ["#6366F1", "#818CF8", "#3730A3"], cloud: "rgba(148,163,184,0.25)" },
   },
   cloudy: {
-    bg: "bg-gradient-to-b from-[#E4E7EB] to-[#C7CCD1] text-[#2B2F36]",
-    icon: "cloud",
-    accent: "#64748B",
-    glow: ["#AEB6BF", "#CBD2D9", "#9AA5B1"],
+    day:   { bg: "bg-gradient-to-b from-[#E4E7EB] to-[#C7CCD1] text-[#2B2F36]", icon: "cloud",      accent: "#64748B", glow: ["#AEB6BF", "#CBD2D9", "#9AA5B1"], cloud: "rgba(255,255,255,0.65)" },
+    night: { bg: "bg-gradient-to-b from-[#1F2937] to-[#111827] text-[#E5E7EB]", icon: "cloud-moon", accent: "#94A3B8", glow: ["#475569", "#64748B", "#334155"], cloud: "rgba(100,116,139,0.35)" },
+  },
+  rainy: {
+    day:   { bg: "bg-gradient-to-b from-[#1B2A4A] to-[#0B1220] text-[#F1F5F9]", icon: "cloud-rain",      accent: "#5EEAD4", glow: ["#3B5A8A", "#5EEAD4", "#1E3A5F"], cloud: "rgba(148,163,184,0.45)" },
+    night: { bg: "bg-gradient-to-b from-[#0F172A] to-[#020617] text-[#F1F5F9]", icon: "cloud-moon-rain", accent: "#38BDF8", glow: ["#1E3A8A", "#38BDF8", "#0F172A"], cloud: "rgba(71,85,105,0.5)" },
   },
 };
 
-// Initialize map FIRST so it exists when render() runs
+/* ===========================================================
+   Map setup
+=========================================================== */
 const map = L.map("radar-map", {
-  zoomControl: false,
-  attributionControl: false,
-  minZoom: 6,
-  maxZoom: 11,
-}).setView([17.385, 78.4867], 9);
+  zoomControl: false, attributionControl: false, minZoom: 6, maxZoom: 11,
+}).setView([17.385, 78.4867], 11);
 
-// Function to update the page based on weather data
+let baseLayer = null;
+let localityMarker = null;
+
+function setBaseLayer(dark) {
+  if (baseLayer) map.removeLayer(baseLayer);
+  const style = dark ? "dark_all" : "light_all";
+  baseLayer = L.tileLayer(`https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`, {
+    subdomains: "abcd",
+  }).addTo(map);
+}
+
+function recenterMap(lat, lon) {
+  map.setView([lat, lon], 11);
+  if (localityMarker) map.removeLayer(localityMarker);
+  localityMarker = L.circleMarker([lat, lon], {
+    radius: 6, color: "#fff", weight: 2, fillColor: "#38BDF8", fillOpacity: 1,
+  }).addTo(map);
+}
+
+/* ===========================================================
+   Stars (generated once)
+=========================================================== */
+function buildStars() {
+  const container = document.getElementById("stars");
+  for (let i = 0; i < 30; i++) {
+    const s = document.createElement("div");
+    s.className = "star";
+    s.style.top = Math.random() * 60 + "%";
+    s.style.left = Math.random() * 100 + "%";
+    s.style.animationDelay = (Math.random() * 3).toFixed(2) + "s";
+    container.appendChild(s);
+  }
+}
+buildStars();
+
+/* ===========================================================
+   Period (timeline) builder from hourly data
+=========================================================== */
+function pad(n) { return n.toString().padStart(2, "0"); }
+
+function findHourIndex(times, dateStr, hour) {
+  const target = `${dateStr}T${pad(hour)}:00`;
+  const idx = times.indexOf(target);
+  return idx === -1 ? 0 : idx;
+}
+
+function buildPeriods(hourly) {
+  const dateStr = hourly.time[0].split("T")[0];
+  const defs = [
+    { name: "Morning", hour: 9, night: false },
+    { name: "Afternoon", hour: 14, night: false },
+    { name: "Evening", hour: 18, night: false },
+    { name: "Night", hour: 23, night: true },
+  ];
+  return defs.map((d) => {
+    const idx = findHourIndex(hourly.time, dateStr, d.hour);
+    const code = hourly.weather_code[idx];
+    const cond = weatherCodeToCondition(code);
+    return {
+      name: d.name,
+      icon: iconForCondition(cond, d.night),
+      temp: Math.round(hourly.temperature_2m[idx]),
+      condition: weatherCodeLabel(code),
+    };
+  });
+}
+
+/* ===========================================================
+   Fetch + transform live data from Open-Meteo
+=========================================================== */
+async function fetchOpenMeteo(lat, lon) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+    `&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day` +
+    `&hourly=temperature_2m,precipitation_probability,weather_code` +
+    `&forecast_days=1&timezone=Asia%2FKolkata`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Open-Meteo request failed");
+  return res.json();
+}
+
+function transformOpenMeteo(raw, name) {
+  const cur = raw.current;
+  const conditionKey = weatherCodeToCondition(cur.weather_code);
+  const isDay = cur.is_day === 1;
+
+  const prefix = cur.time.slice(0, 13); // "YYYY-MM-DDTHH"
+  let nowIdx = raw.hourly.time.findIndex((t) => t.startsWith(prefix));
+  if (nowIdx === -1) nowIdx = 0;
+  const next6 = raw.hourly.precipitation_probability.slice(nowIdx, nowIdx + 6);
+  const chanceOfRain = next6.length ? Math.max(...next6) : 0;
+
+  return {
+    temp: Math.round(cur.temperature_2m),
+    condition: conditionKey,
+    isDay,
+    humidity: cur.relative_humidity_2m,
+    wind: Math.round(cur.wind_speed_10m),
+    chanceOfRain,
+    periods: buildPeriods(raw.hourly),
+    locationName: name,
+    updated: cur.time.slice(11, 16),
+  };
+}
+
+/* ===========================================================
+   Render — draws data into the page
+=========================================================== */
 function render(data) {
-  const theme = themes[data.condition];
+  const theme = themes[data.condition][data.isDay ? "day" : "night"];
+
   document.getElementById("page-body").className =
     "min-h-screen transition-colors duration-700 " + theme.bg;
   document.documentElement.style.setProperty("--accent", theme.accent);
+  document.documentElement.style.setProperty("--cloud-color", theme.cloud);
 
   document.getElementById("hero-temp").textContent = `${data.temp}°C`;
   document.getElementById("hero-summary").textContent = generateSummary(data);
@@ -206,6 +416,9 @@ function render(data) {
   document.getElementById("stat-humidity").textContent = `${data.humidity}%`;
   document.getElementById("stat-wind").textContent = `${data.wind} km/h`;
   document.getElementById("stat-rain").textContent = `${data.chanceOfRain}%`;
+  document.getElementById("stat-updated").textContent = data.updated || "--";
+
+  document.getElementById("stars").classList.toggle("visible", !data.isDay);
 
   const blobs = document.querySelectorAll(".glow-blob");
   blobs.forEach((b, i) => {
@@ -226,56 +439,74 @@ function render(data) {
     timeline.appendChild(card);
   });
 
-  // Dynamic Theme-Aware Map Base Layer
-  const mapStyle = data.condition === 'rainy' ? 'dark_all' : 'light_all';
-  L.tileLayer(`https://{s}.basemaps.cartocdn.com/${mapStyle}/{z}/{x}/{y}{r}.png`, {
-    subdomains: "abcd",
-  }).addTo(map);
-
+  setBaseLayer(!data.isDay || data.condition === "rainy");
   lucide.createIcons();
 }
 
-// Render the mock data immediately
-render(mockData);
+/* ===========================================================
+   Locality dropdown wiring
+=========================================================== */
+const select = document.getElementById("locality-select");
+LOCALITIES.forEach((loc, i) => {
+  const opt = document.createElement("option");
+  opt.value = i;
+  opt.textContent = loc.name;
+  select.appendChild(opt);
+});
 
-// Tech Details Toggle
+async function loadLocality(index) {
+  const loc = LOCALITIES[index];
+  document.getElementById("hero-summary").textContent = `Checking ${loc.name}...`;
+  try {
+    const raw = await fetchOpenMeteo(loc.lat, loc.lon);
+    const data = transformOpenMeteo(raw, loc.name);
+    render(data);
+    recenterMap(loc.lat, loc.lon);
+  } catch (err) {
+    console.error(err);
+    render({ ...fallbackData, locationName: loc.name });
+  }
+}
+
+select.addEventListener("change", (e) => loadLocality(Number(e.target.value)));
+
+/* ===========================================================
+   Tech panel toggle
+=========================================================== */
 document.getElementById("tech-toggle").addEventListener("click", () => {
   document.getElementById("tech-panel").classList.toggle("hidden");
   document.getElementById("tech-chevron").classList.toggle("rotate-180");
 });
 
-// Fetch and Animate Radar Loop
+/* ===========================================================
+   Radar — animated loop (RainViewer, free, no key)
+=========================================================== */
 fetch("https://api.rainviewer.com/public/weather-maps.json")
   .then((res) => res.json())
   .then((data) => {
     const pastFrames = data.radar.past;
-    let currentFrameIndex = 0;
+    let frameIdx = 0;
     let activeLayer = null;
 
-    function showFrame(index) {
-      if (activeLayer) {
-        map.removeLayer(activeLayer); // Remove old frame to prevent overlap buildup
-      }
-      
-      const frame = pastFrames[index];
+    function showFrame(i) {
+      if (activeLayer) map.removeLayer(activeLayer);
+      const frame = pastFrames[i];
       const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`;
-      
-      activeLayer = L.tileLayer(tileUrl, { 
-        opacity: 0.6, 
-        maxNativeZoom: 8, // Fixes the grey zoom tiles error
-        minZoom: 6 
-      }).addTo(map);
+      activeLayer = L.tileLayer(tileUrl, { opacity: 0.6, maxNativeZoom: 8, minZoom: 6 }).addTo(map);
     }
 
-    // Change frame every 1 second (1000ms)
     setInterval(() => {
-      showFrame(currentFrameIndex);
-      currentFrameIndex = (currentFrameIndex + 1) % pastFrames.length;
+      showFrame(frameIdx);
+      frameIdx = (frameIdx + 1) % pastFrames.length;
     }, 1000);
 
-    // Initial call to show the first frame right away
     showFrame(0);
   });
+
+/* ===========================================================
+   Initial load — start on Hyderabad (Central)
+=========================================================== */
+loadLocality(0);
 </script>
 
 </body>
