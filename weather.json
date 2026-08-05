@@ -1,0 +1,23 @@
+{
+  "city": "Hyderabad",
+  "temp": 28,
+  "humidity": 79,
+  "wind": 11,
+  "chanceOfRain": 80,
+  "condition": "cloudy",
+  "isDay": true,
+  "confidence": "low",
+  "rainAgreement": "split",
+  "tempSpread": 2,
+  "uv": 0.4,
+  "feelsLike": 31,
+  "airQuality": 11,
+  "sourcesUsed": [
+    "Open-Meteo ICON",
+    "Open-Meteo ECMWF",
+    "WeatherAPI",
+    "Tomorrow.io"
+  ],
+  "sourcesFailed": [],
+  "generatedAt": "2026-08-05T12:14:35.277Z"
+}

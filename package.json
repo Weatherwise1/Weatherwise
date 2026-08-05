@@ -5,8 +5,9 @@
   "description": "Accurate, plain-English weather forecast for Indian cities",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "fetch": "node --env-file=.env fetch-weather.js",
+  "test": "echo \"Error: no test specified\" && exit 1"
+},
   "keywords": [],
   "dependencies": {
     "@google/genai": "^2.15.0",

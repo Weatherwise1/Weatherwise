@@ -212,7 +212,7 @@ const LOCALITIES = [
 =========================================================== */
 const fallbackData = {
   temp: 24, condition: "rainy", isDay: true, humidity: 85, wind: 15, chanceOfRain: 62,
-  locationName: "Hyderabad (Central)",
+  locationName: "Hyderabad (Central)", updated: "--:--",
   periods: [
     { name: "Morning", icon: "cloud", temp: 22, condition: "Overcast" },
     { name: "Afternoon", icon: "cloud-rain", temp: 24, condition: "Heavy Rain" },
@@ -220,6 +220,27 @@ const fallbackData = {
     { name: "Night", icon: "cloud-moon", temp: 19, condition: "Drizzle" },
   ],
 };
+
+// Try to load pre-reconciled data from weather.json (written by fetch-weather.js)
+// Falls back to live Open-Meteo fetch if weather.json isn't available
+async function loadCentralWeather() {
+  try {
+    const res = await fetch("weather.json?t=" + Date.now()); // ?t= busts cache
+    if (!res.ok) throw new Error("weather.json not found");
+    const data = await res.json();
+    // Add periods via live fetch since weather.json only has current conditions
+    const raw = await fetchOpenMeteo(LOCALITIES[0].lat, LOCALITIES[0].lon);
+    data.periods = buildPeriods(raw.hourly);
+    data.updated = data.generatedAt ? data.generatedAt.slice(11, 16) : "--:--";
+    data.locationName = "Hyderabad (Central)";
+    render(data);
+    recenterMap(LOCALITIES[0].lat, LOCALITIES[0].lon);
+    hideErrorBanner();
+  } catch (err) {
+    // weather.json not available — fall back to live fetch
+    loadLocality(0);
+  }
+}
 
 /* ===========================================================
    Weather-code helpers (Open-Meteo uses WMO codes)
@@ -506,7 +527,7 @@ fetch("https://api.rainviewer.com/public/weather-maps.json")
 /* ===========================================================
    Initial load — start on Hyderabad (Central)
 =========================================================== */
-loadLocality(0);
+loadCentralWeather();
 </script>
 
 </body>
