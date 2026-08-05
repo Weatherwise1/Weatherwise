@@ -218,11 +218,15 @@ const LOCALITIES = [
 const fallbackData = {
   temp: 24, condition: "rainy", isDay: true, humidity: 85, wind: 15, chanceOfRain: 62,
   locationName: "Hyderabad (Central)", updated: "--:--",
-  periods: [
-    { name: "Morning", icon: "cloud", temp: 22, condition: "Overcast" },
-    { name: "Afternoon", icon: "cloud-rain", temp: 24, condition: "Heavy Rain" },
-    { name: "Evening", icon: "cloud-rain", temp: 21, condition: "Showers" },
-    { name: "Night", icon: "cloud-moon", temp: 19, condition: "Drizzle" },
+  // Replaced 'periods' with 'hourly' for precision
+  hourly: [
+    { time: "8:00 PM", icon: "cloud", temp: 27, condition: "Cloudy" },
+    { time: "9:00 PM", icon: "cloud", temp: 26, condition: "Cloudy" },
+    { time: "10:00 PM", icon: "cloud", temp: 26, condition: "Overcast" },
+    { time: "11:00 PM", icon: "cloud", temp: 26, condition: "Overcast" },
+    { time: "12:00 AM", icon: "cloud-rain", temp: 25, condition: "Drizzle" },
+    { time: "1:00 AM", icon: "cloud-rain", temp: 24, condition: "Drizzle" }
+    // ... you can add as many hours as you need for the fallback
   ],
 };
 
