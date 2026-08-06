@@ -14,27 +14,14 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <style>
-  :root{
-    --accent:#5EEAD4;
-    --cloud-color:rgba(148,163,184,0.4);
-    --hero-from:#1B2A4A;
-    --hero-to:#0B1220;
-  }
+  :root{--accent:#5EEAD4;--cloud-color:rgba(148,163,184,0.4);}
   *{box-sizing:border-box;}
   html,body{height:100%;margin:0;}
-  body{
-    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
-    overflow-x:hidden;
-    background:#0B1220;
-    color:#F1F5F9;
-  }
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;overflow-x:hidden;background:#0B1220;color:#F1F5F9;}
   .font-display{font-family:'Space Grotesk',sans-serif;}
   .font-mono{font-family:'IBM Plex Mono',monospace;}
 
-  /* ── Transitions ───────────────────────────────── */
-  .theme-transition{transition:background 0.8s ease,color 0.8s ease;}
-
-  /* ── Background decor ─────────────────────────── */
+  /* Background */
   #bg-decor{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
   .stars{position:absolute;inset:0;opacity:0;transition:opacity 1.2s ease;}
   .stars.visible{opacity:1;}
@@ -47,134 +34,66 @@
   .cloud.c3{width:260px;top:2%;animation-duration:140s;animation-delay:-65s;opacity:.25;}
   .cloud.c4{width:120px;top:28%;animation-duration:70s;animation-delay:-12s;opacity:.4;}
   @keyframes floatCloud{from{transform:translateX(-32%);}to{transform:translateX(132%);}}
-  @media(prefers-reduced-motion:reduce){
-    .cloud,.star{animation:none;}
-    *{transition:none!important;}
-  }
+  @media(prefers-reduced-motion:reduce){.cloud,.star{animation:none;}*{transition:none!important;}}
 
-  /* ── Hero bar ─────────────────────────────────── */
-  #hero-bar{
-    background:linear-gradient(135deg,var(--hero-from) 0%,var(--hero-to) 100%);
-    transition:background 0.8s ease;
-    position:relative;
-    overflow:hidden;
-  }
-  #hero-bar::after{
-    content:'';
-    position:absolute;
-    inset:0;
-    background:radial-gradient(ellipse at 20% 50%,rgba(255,255,255,0.06) 0%,transparent 60%);
-    pointer-events:none;
-  }
+  /* Hero */
+  #hero-bar{background:linear-gradient(135deg,#1B2A4A 0%,#0B1220 100%);transition:background 0.8s ease;position:relative;overflow:hidden;}
 
-  /* ── Glow blobs ───────────────────────────────── */
+  /* Glow */
   .glow-field{position:absolute;inset:0;pointer-events:none;filter:blur(70px);z-index:0;}
-  .glow-blob{position:absolute;border-radius:9999px;opacity:0.45;animation:drift 20s ease-in-out infinite alternate;}
+  .glow-blob{position:absolute;border-radius:9999px;opacity:0.4;animation:drift 20s ease-in-out infinite alternate;}
   .glow-blob.b2{animation-duration:28s;animation-delay:-8s;}
   .glow-blob.b3{animation-duration:36s;animation-delay:-16s;}
   @keyframes drift{0%{transform:translate(0,0) scale(1);}50%{transform:translate(5%,8%) scale(1.1);}100%{transform:translate(-6%,-4%) scale(0.94);}}
 
-  /* ── Cards ────────────────────────────────────── */
-  .glass-card{
-    background:rgba(255,255,255,0.06);
-    border:1px solid rgba(255,255,255,0.1);
-    backdrop-filter:blur(12px);
-    -webkit-backdrop-filter:blur(12px);
-    border-radius:1.25rem;
-    transition:transform 0.2s ease,border-color 0.2s ease;
-  }
-  .glass-card:hover{border-color:rgba(255,255,255,0.2);}
+  /* Cards */
+  .glass-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:1.25rem;transition:transform 0.2s ease,border-color 0.2s ease;}
+  .glass-card:hover{border-color:rgba(255,255,255,0.18);}
   .glass-card-lift:hover{transform:translateY(-3px);}
 
-  /* Light theme cards */
-  body.light .glass-card{
-    background:rgba(0,0,0,0.05);
-    border-color:rgba(0,0,0,0.08);
-  }
-  body.light .glass-card:hover{border-color:rgba(0,0,0,0.15);}
-
-  /* ── Locality select ──────────────────────────── */
+  /* Select */
   #locality-select{appearance:none;-webkit-appearance:none;background:transparent;cursor:pointer;}
 
-  /* ── Hourly strip ─────────────────────────────── */
+  /* Hourly */
   #hourly-strip{display:flex;gap:0.5rem;overflow-x:auto;padding-bottom:0.25rem;scrollbar-width:none;}
   #hourly-strip::-webkit-scrollbar{display:none;}
-  .hour-pill{
-    flex-shrink:0;
-    display:flex;flex-direction:column;align-items:center;gap:0.25rem;
-    padding:0.5rem 0.75rem;
-    border-radius:999px;
-    border:1px solid rgba(255,255,255,0.1);
-    background:rgba(255,255,255,0.05);
-    font-size:0.7rem;
-    min-width:52px;
-    transition:background 0.2s;
-  }
-  .hour-pill.now{
-    background:rgba(255,255,255,0.15);
-    border-color:rgba(255,255,255,0.3);
-  }
-  body.light .hour-pill{border-color:rgba(0,0,0,0.1);background:rgba(0,0,0,0.04);}
-  body.light .hour-pill.now{background:rgba(0,0,0,0.12);border-color:rgba(0,0,0,0.2);}
+  .hour-pill{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0.25rem;padding:0.5rem 0.75rem;border-radius:999px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);font-size:0.7rem;min-width:52px;}
+  .hour-pill.now{background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.3);}
 
-  /* ── Rain alert badges ────────────────────────── */
-  .rain-badge{
-    display:flex;align-items:center;gap:0.5rem;
-    padding:0.5rem 0.75rem;
-    border-radius:0.875rem;
-    border:1px solid rgba(255,255,255,0.08);
-    background:rgba(255,255,255,0.05);
-    font-size:0.78rem;
-    transition:background 0.2s;
-  }
-  .rain-badge:hover{background:rgba(255,255,255,0.1);}
-  body.light .rain-badge{border-color:rgba(0,0,0,0.08);background:rgba(0,0,0,0.04);}
+  /* Rain badge */
+  .rain-badge{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;border-radius:0.875rem;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.05);font-size:0.78rem;}
 
-  /* ── Confidence pill ──────────────────────────── */
+  /* Confidence */
   .conf-high{background:#14532d;color:#86efac;border:1px solid #16a34a44;}
   .conf-medium{background:#713f12;color:#fcd34d;border:1px solid #d9770644;}
   .conf-low{background:#7f1d1d;color:#fca5a5;border:1px solid #dc262644;}
 
-  /* ── Skeleton ─────────────────────────────────── */
-  .skeleton{
-    background:linear-gradient(90deg,rgba(255,255,255,0.07) 25%,rgba(255,255,255,0.14) 37%,rgba(255,255,255,0.07) 63%);
-    background-size:400% 100%;
-    animation:skPulse 1.4s ease infinite;
-    border-radius:0.5rem;
-    color:transparent!important;
-    pointer-events:none;
-  }
-  body.light .skeleton{
-    background:linear-gradient(90deg,rgba(0,0,0,0.07) 25%,rgba(0,0,0,0.14) 37%,rgba(0,0,0,0.07) 63%);
-    background-size:400% 100%;
-  }
+  /* Skeleton */
+  .skeleton{background:linear-gradient(90deg,rgba(255,255,255,0.07) 25%,rgba(255,255,255,0.14) 37%,rgba(255,255,255,0.07) 63%);background-size:400% 100%;animation:skPulse 1.4s ease infinite;border-radius:0.5rem;color:transparent!important;}
   @keyframes skPulse{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
 
-  /* ── Radar ────────────────────────────────────── */
-  #radar-map{height:280px;border-radius:1rem;}
+  /* Radar */
+  #radar-map{height:260px;border-radius:1rem;}
 
-  /* ── Error banner ─────────────────────────────── */
+  /* Error */
   #error-banner{display:none;}
   #error-banner.visible{display:flex;}
 
-  /* ── Fade in ──────────────────────────────────── */
-  .fade-up{animation:fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both;}
-  .fade-up.d1{animation-delay:0.05s;}
-  .fade-up.d2{animation-delay:0.12s;}
-  .fade-up.d3{animation-delay:0.2s;}
-  @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+  /* Fade */
+  .fade-up{animation:fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both;}
+  .fade-up.d1{animation-delay:0.05s;}.fade-up.d2{animation-delay:0.1s;}.fade-up.d3{animation-delay:0.16s;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 
-  /* ── Divider ──────────────────────────────────── */
   .divider{border:none;border-top:1px solid rgba(255,255,255,0.08);margin:0;}
-  body.light .divider{border-color:rgba(0,0,0,0.08);}
-
-  /* ── Scrollbar for panel ──────────────────────── */
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  /* Stale data indicator */
+  #stale-banner{display:none;align-items:center;justify-content:center;gap:6px;padding:6px 12px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);border-radius:8px;font-size:11px;color:#FCD34D;margin-bottom:8px;}
+  #stale-banner.visible{display:flex;}
 </style>
 </head>
 <body>
 
-<!-- Background decor (fixed, full viewport) -->
 <svg width="0" height="0" style="position:absolute">
   <defs>
     <symbol id="cloud-shape" viewBox="0 0 200 100">
@@ -192,69 +111,71 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════
-     HERO BAR
-════════════════════════════════════════════════════════ -->
+<!-- HERO BAR -->
 <div id="hero-bar" class="relative z-10 w-full">
   <div class="glow-field">
-    <div class="glow-blob b1" style="width:320px;height:320px;left:-5%;top:-40%;"></div>
-    <div class="glow-blob b2" style="width:240px;height:240px;right:10%;top:-20%;"></div>
-    <div class="glow-blob b3" style="width:180px;height:180px;left:45%;top:10%;"></div>
+    <div class="glow-blob b1" style="width:300px;height:300px;left:-5%;top:-40%;"></div>
+    <div class="glow-blob b2" style="width:220px;height:220px;right:10%;top:-20%;"></div>
+    <div class="glow-blob b3" style="width:160px;height:160px;left:45%;top:10%;"></div>
   </div>
+  <div class="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 py-6 flex flex-col sm:flex-row sm:items-start gap-6">
 
-  <div class="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 py-7 flex flex-col sm:flex-row sm:items-center gap-6">
-
-    <!-- LEFT: City-wide overview -->
+    <!-- Left: overview -->
     <div class="flex-1 min-w-0">
       <p class="text-[10px] uppercase tracking-[0.22em] opacity-50 mb-3 font-medium">Hyderabad Overview</p>
-      <div class="flex items-center gap-4 mb-3">
+      <div class="flex items-center gap-4 mb-2">
         <i id="hero-icon" data-lucide="cloud-rain" class="w-12 h-12 flex-shrink-0" stroke-width="1.3" style="color:var(--accent)"></i>
         <div>
           <span class="font-display text-6xl sm:text-7xl font-bold tracking-tight" id="hero-temp">--°C</span>
-          <div class="flex items-center gap-3 mt-1 text-xs opacity-60 font-medium">
+          <div class="flex items-center gap-3 mt-1 text-xs opacity-60 font-medium flex-wrap">
             <span id="hero-high-low">H: --° L: --°</span>
             <span>·</span>
             <span id="hero-feels">Feels --°</span>
           </div>
         </div>
       </div>
-      <p class="font-display text-lg sm:text-xl font-bold leading-snug opacity-90 max-w-sm" id="hero-city-summary">Loading city weather...</p>
-      <div class="flex items-center gap-2 mt-3 flex-wrap">
-        <span class="text-[10px] uppercase tracking-wider opacity-40">Confidence</span>
-        <span id="conf-badge" class="conf-high text-[10px] font-mono font-medium px-2 py-0.5 rounded-full">HIGH</span>
-        <span class="opacity-30 text-xs">·</span>
-        <span class="text-[10px] opacity-40 font-mono" id="hero-sources">-- sources</span>
-        <span class="opacity-30 text-xs">·</span>
-        <span class="text-[10px] opacity-40 font-mono" id="hero-updated">--:--</span>
-        <button id="refresh-btn" class="ml-1 opacity-40 hover:opacity-80 transition-opacity" title="Refresh">
+      <p class="font-display text-lg font-bold leading-snug opacity-90 max-w-sm mb-3" id="hero-city-summary">Loading city weather...</p>
+      <div class="flex items-center gap-2 flex-wrap text-[10px]">
+        <span class="opacity-40">Confidence</span>
+        <span id="conf-badge" class="conf-medium font-mono font-medium px-2 py-0.5 rounded-full">MEDIUM</span>
+        <span class="opacity-30">·</span>
+        <span class="opacity-40 font-mono" id="hero-updated">Updating...</span>
+        <button id="refresh-btn" class="opacity-40 hover:opacity-80 transition-opacity ml-1" title="Refresh data">
           <i data-lucide="refresh-cw" class="w-3 h-3"></i>
         </button>
       </div>
     </div>
 
-    <!-- RIGHT: Rain hotspots -->
-    <div class="sm:w-72 flex-shrink-0">
-      <p class="text-[10px] uppercase tracking-[0.22em] opacity-50 mb-3 font-medium">Rain Watch — Key Areas</p>
+    <!-- Right: rain hotspots -->
+    <div class="sm:w-68 flex-shrink-0 w-full">
+      <p class="text-[10px] uppercase tracking-[0.22em] opacity-50 mb-2.5 font-medium">Rain Watch</p>
       <div class="flex flex-col gap-1.5" id="rain-hotspots">
-        <div class="skeleton rain-badge h-9 w-full"></div>
-        <div class="skeleton rain-badge h-9 w-full"></div>
-        <div class="skeleton rain-badge h-9 w-full"></div>
-        <div class="skeleton rain-badge h-9 w-full"></div>
+        <div class="rain-badge opacity-30 text-xs">Loading hotspots...</div>
       </div>
     </div>
-
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════
-     MAIN CONTENT
-════════════════════════════════════════════════════════ -->
-<div class="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 py-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
+<!-- MAIN CONTENT -->
+<div class="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 py-5 grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-  <!-- ── LEFT PANEL (locality detail) ─────────────── -->
-  <div class="lg:col-span-3 flex flex-col gap-5">
+  <!-- LEFT PANEL -->
+  <div class="lg:col-span-3 flex flex-col gap-4">
 
-    <!-- Locality picker card -->
+    <!-- Stale data notice -->
+    <div id="stale-banner">
+      <i data-lucide="clock" class="w-3 h-3"></i>
+      <span>Showing cached data from last visit — live update in progress</span>
+    </div>
+
+    <!-- Error banner -->
+    <div id="error-banner" class="items-center gap-2 px-4 py-2.5 rounded-xl border border-red-400/20 bg-red-500/10 text-xs">
+      <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-400 flex-shrink-0"></i>
+      <span id="error-text" class="flex-1">Live data unavailable.</span>
+      <button id="error-retry" class="underline font-medium text-red-300 flex-shrink-0">Retry</button>
+    </div>
+
+    <!-- Locality picker -->
     <div class="glass-card px-5 py-4">
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-2">
@@ -267,144 +188,131 @@
         </div>
       </div>
 
-      <!-- Current conditions row -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4" id="loc-stats">
+      <!-- Stat cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
         <div class="glass-card px-3 py-2.5 text-center">
           <p class="text-[10px] opacity-50 uppercase tracking-wide mb-1">Temp</p>
-          <p class="font-display text-2xl font-bold skeleton" id="loc-temp" style="min-height:2rem">--°</p>
+          <p class="font-display text-2xl font-bold" id="loc-temp">--°</p>
         </div>
         <div class="glass-card px-3 py-2.5 text-center">
           <p class="text-[10px] opacity-50 uppercase tracking-wide mb-1">Humidity</p>
-          <p class="font-display text-2xl font-bold skeleton" id="loc-humidity" style="min-height:2rem">--%</p>
+          <p class="font-display text-2xl font-bold" id="loc-humidity">--%</p>
         </div>
         <div class="glass-card px-3 py-2.5 text-center">
           <p class="text-[10px] opacity-50 uppercase tracking-wide mb-1">Wind</p>
-          <p class="font-display text-2xl font-bold skeleton" id="loc-wind" style="min-height:2rem">--</p>
+          <p class="font-display text-2xl font-bold" id="loc-wind">--</p>
           <p class="text-[10px] opacity-40">km/h</p>
         </div>
         <div class="glass-card px-3 py-2.5 text-center">
           <p class="text-[10px] opacity-50 uppercase tracking-wide mb-1">Rain (6h)</p>
-          <p class="font-display text-2xl font-bold skeleton" id="loc-rain" style="min-height:2rem">--%</p>
+          <p class="font-display text-2xl font-bold" id="loc-rain">--%</p>
         </div>
       </div>
 
       <!-- Hourly strip -->
       <div>
         <p class="text-[10px] uppercase tracking-wider opacity-40 mb-2 font-medium">Next 12 Hours</p>
-        <div id="hourly-strip">
-          <!-- filled by JS -->
-        </div>
+        <div id="hourly-strip"><div class="skeleton h-16 w-full rounded-2xl"></div></div>
       </div>
     </div>
 
-    <!-- Today's timeline cards -->
+    <!-- Timeline -->
     <div>
       <p class="text-[10px] uppercase tracking-wider opacity-40 mb-2.5 font-medium px-1">Today's Outlook</p>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="timeline"></div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="timeline">
+        <div class="glass-card p-4 skeleton h-28"></div>
+        <div class="glass-card p-4 skeleton h-28"></div>
+        <div class="glass-card p-4 skeleton h-28"></div>
+        <div class="glass-card p-4 skeleton h-28"></div>
+      </div>
     </div>
 
-    <!-- Radar -->
+    <!-- Radar — loads last, non-blocking -->
     <div class="glass-card p-4">
       <div class="flex items-center justify-between mb-3">
-        <p class="text-[10px] uppercase tracking-wider opacity-50 font-medium">Live Radar — Hyderabad</p>
-        <p class="text-[10px] opacity-30 font-mono">Auto-animating</p>
+        <p class="text-[10px] uppercase tracking-wider opacity-50 font-medium">Live Radar</p>
+        <p class="text-[10px] opacity-30 font-mono">Animating last 30 min</p>
       </div>
       <div id="radar-map"></div>
-      <p class="text-[10px] opacity-35 mt-2">RainViewer radar — watch the rain cells move in real time.</p>
+      <p class="text-[10px] opacity-35 mt-2" id="radar-caption">RainViewer — watch rain cells move in real time across Hyderabad.</p>
     </div>
-
   </div>
 
-  <!-- ── RIGHT PANEL (plain-English interpretations) ── -->
-  <div class="lg:col-span-2 flex flex-col gap-5">
+  <!-- RIGHT PANEL -->
+  <div class="lg:col-span-2 flex flex-col gap-4">
 
-    <!-- Error banner -->
-    <div id="error-banner" class="items-center gap-2 px-4 py-2.5 rounded-xl border border-red-400/20 bg-red-500/10 text-xs">
-      <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-400 flex-shrink-0"></i>
-      <span id="error-text" class="flex-1">Live data unavailable — showing example conditions.</span>
-      <button id="error-retry" class="underline font-medium text-red-300 flex-shrink-0">Retry</button>
-    </div>
-
-    <!-- City-wide interpretation -->
+    <!-- City interpretation -->
     <div class="glass-card p-5">
       <div class="flex items-center gap-2 mb-3">
-        <div class="w-5 h-5 rounded-full flex items-center justify-center" style="background:var(--accent)22">
+        <div class="w-5 h-5 rounded-full flex items-center justify-center" style="background:rgba(94,234,212,0.15)">
           <i data-lucide="globe" class="w-3 h-3" style="color:var(--accent)"></i>
         </div>
         <p class="text-[10px] uppercase tracking-wider opacity-60 font-medium">Hyderabad — City View</p>
       </div>
-      <p class="font-display text-lg font-bold leading-snug mb-3 skeleton" id="city-interpretation" style="min-height:4rem">Loading...</p>
+      <p class="font-display text-lg font-bold leading-snug mb-3" id="city-interpretation">Loading...</p>
       <hr class="divider my-3"/>
-      <div class="flex items-center gap-2 text-[10px] opacity-40 font-mono">
-        <i data-lucide="database" class="w-3 h-3"></i>
-        <span id="city-sources-used">-- sources reconciled</span>
-      </div>
+      <p class="text-[10px] opacity-40 font-mono" id="city-sources-used">-- sources</p>
     </div>
 
-    <!-- Selected locality interpretation -->
+    <!-- Locality interpretation -->
     <div class="glass-card p-5">
       <div class="flex items-center gap-2 mb-3">
-        <div class="w-5 h-5 rounded-full flex items-center justify-center" style="background:var(--accent)22">
+        <div class="w-5 h-5 rounded-full flex items-center justify-center" style="background:rgba(94,234,212,0.15)">
           <i data-lucide="navigation" class="w-3 h-3" style="color:var(--accent)"></i>
         </div>
         <p class="text-[10px] uppercase tracking-wider opacity-60 font-medium" id="loc-interp-label">Your Location</p>
       </div>
       <p class="font-display text-lg font-bold leading-snug mb-3 skeleton" id="loc-interpretation" style="min-height:4rem">Select a locality...</p>
       <hr class="divider my-3"/>
-      <div class="flex items-center gap-1.5 text-[10px] opacity-40">
-        <i data-lucide="clock" class="w-3 h-3"></i>
-        <span class="font-mono" id="loc-updated">Last checked --:--</span>
-      </div>
+      <p class="text-[10px] opacity-40 font-mono" id="loc-updated">Last checked --:--</p>
     </div>
 
-    <!-- UV + Air Quality quick facts -->
+    <!-- Environmental snapshot -->
     <div class="glass-card p-5">
-      <p class="text-[10px] uppercase tracking-wider opacity-50 font-medium mb-3">Environmental Snapshot</p>
-      <div class="grid grid-cols-2 gap-3">
+      <p class="text-[10px] uppercase tracking-wider opacity-50 font-medium mb-3">Environmental</p>
+      <div class="grid grid-cols-2 gap-4">
         <div>
           <p class="text-[10px] opacity-40 mb-1">UV Index</p>
           <p class="font-display text-2xl font-bold" id="stat-uv">--</p>
           <p class="text-[10px] opacity-50 mt-0.5" id="stat-uv-label">--</p>
         </div>
         <div>
-          <p class="text-[10px] opacity-40 mb-1">Air Quality (PM2.5)</p>
-          <p class="font-display text-2xl font-bold" id="stat-aq">--</p>
-          <p class="text-[10px] opacity-50 mt-0.5" id="stat-aq-label">--</p>
-        </div>
-        <div>
           <p class="text-[10px] opacity-40 mb-1">Feels Like</p>
           <p class="font-display text-2xl font-bold" id="stat-feels">--°</p>
         </div>
         <div>
+          <p class="text-[10px] opacity-40 mb-1">High / Low</p>
+          <p class="font-display text-lg font-bold" id="stat-high-low">-- / --</p>
+        </div>
+        <div>
           <p class="text-[10px] opacity-40 mb-1">Condition</p>
-          <p class="font-display text-sm font-bold leading-tight mt-1" id="stat-condition">--</p>
+          <p class="font-display text-sm font-bold mt-1 leading-tight" id="stat-condition">--</p>
         </div>
       </div>
     </div>
 
-    <!-- Technical details toggle -->
+    <!-- Tech toggle -->
     <div>
       <button id="tech-toggle" class="glass-card w-full flex items-center justify-between px-4 py-3 text-xs font-medium opacity-60 hover:opacity-90 transition-opacity">
         <span>Raw Technical Data</span>
         <i data-lucide="chevron-down" id="tech-chevron" class="w-4 h-4 transition-transform duration-200"></i>
       </button>
       <div id="tech-panel" class="hidden mt-2 glass-card p-4 font-mono text-xs grid grid-cols-2 gap-3">
-        <div><p class="opacity-40 text-[10px]">Humidity</p><p class="font-medium" id="tech-humidity">--</p></div>
-        <div><p class="opacity-40 text-[10px]">Wind</p><p class="font-medium" id="tech-wind">--</p></div>
-        <div><p class="opacity-40 text-[10px]">Rain chance</p><p class="font-medium" id="tech-rain">--</p></div>
-        <div><p class="opacity-40 text-[10px]">Sources used</p><p class="font-medium" id="tech-sources">--</p></div>
-        <div class="col-span-2"><p class="opacity-40 text-[10px]">Sources failed</p><p class="font-medium" id="tech-failed">--</p></div>
-        <div class="col-span-2"><p class="opacity-40 text-[10px]">Generated at</p><p class="font-medium" id="tech-generated">--</p></div>
+        <div><p class="opacity-40 text-[10px]">Humidity</p><p id="tech-humidity">--</p></div>
+        <div><p class="opacity-40 text-[10px]">Wind</p><p id="tech-wind">--</p></div>
+        <div><p class="opacity-40 text-[10px]">Rain chance</p><p id="tech-rain">--</p></div>
+        <div><p class="opacity-40 text-[10px]">Weather code</p><p id="tech-code">--</p></div>
+        <div class="col-span-2"><p class="opacity-40 text-[10px]">Last API call</p><p id="tech-generated">--</p></div>
       </div>
     </div>
-
   </div>
 </div>
 
 <script>
-/* ============================================================
-   LOCALITIES
-============================================================ */
+/* ── CACHE KEY ─────────────────────────────────────── */
+const CACHE_KEY = "ww_cache_v1";
+
+/* ── LOCALITIES ────────────────────────────────────── */
 const LOCALITIES = [
   { name:"Hyderabad (Central)", lat:17.3850, lon:78.4867 },
   { name:"Malakpet",            lat:17.3702, lon:78.4990 },
@@ -419,447 +327,268 @@ const LOCALITIES = [
   { name:"Charminar",           lat:17.3616, lon:78.4747 },
   { name:"Uppal",               lat:17.4058, lon:78.5591 },
 ];
+const HOTSPOT_INDICES = [2, 4, 7, 10];
 
-// Rain watch hotspots shown in top-right of hero
-const HOTSPOT_INDICES = [2, 4, 7, 10]; // Gachibowli, Banjara Hills, Kukatpally, Charminar
-
-/* ============================================================
-   THEME TOKENS
-============================================================ */
+/* ── THEMES ────────────────────────────────────────── */
 const THEMES = {
   clear:{
-    day:{
-      from:"#4A3510", to:"#1A0F00",
-      bodyBg:"#2A1A08", textColor:"#FDF6E3",
-      accent:"#F59E0B", glows:["#F7B733","#F5D590","#E8942C"],
-      cloud:"rgba(255,255,255,0.55)", icon:"sun", light:false,
-    },
-    night:{
-      from:"#0B1024", to:"#030712",
-      bodyBg:"#060C1A", textColor:"#E5E7EB",
-      accent:"#A5B4FC", glows:["#6366F1","#818CF8","#3730A3"],
-      cloud:"rgba(148,163,184,0.2)", icon:"moon", light:false,
-    },
+    day:{from:"#3B2500",to:"#120C00",bg:"#1A1000",text:"#FDF6E3",accent:"#F59E0B",glows:["#F7B733","#F5D590","#E8942C"],cloud:"rgba(255,255,255,0.5)",icon:"sun"},
+    night:{from:"#0B1024",to:"#030712",bg:"#060C1A",text:"#E5E7EB",accent:"#A5B4FC",glows:["#6366F1","#818CF8","#3730A3"],cloud:"rgba(148,163,184,0.2)",icon:"moon"},
   },
   cloudy:{
-    day:{
-      from:"#2E3540", to:"#1A1F28",
-      bodyBg:"#1E232C", textColor:"#E4E7EB",
-      accent:"#94A3B8", glows:["#AEB6BF","#CBD2D9","#9AA5B1"],
-      cloud:"rgba(255,255,255,0.5)", icon:"cloud-sun", light:false,
-    },
-    night:{
-      from:"#1F2937", to:"#111827",
-      bodyBg:"#0F1724", textColor:"#E5E7EB",
-      accent:"#94A3B8", glows:["#475569","#64748B","#334155"],
-      cloud:"rgba(100,116,139,0.3)", icon:"cloud-moon", light:false,
-    },
+    day:{from:"#1E2630",to:"#111820",bg:"#151C25",text:"#E4E7EB",accent:"#94A3B8",glows:["#AEB6BF","#CBD2D9","#9AA5B1"],cloud:"rgba(255,255,255,0.45)",icon:"cloud-sun"},
+    night:{from:"#1F2937",to:"#111827",bg:"#0F1724",text:"#E5E7EB",accent:"#94A3B8",glows:["#475569","#64748B","#334155"],cloud:"rgba(100,116,139,0.3)",icon:"cloud-moon"},
   },
   rainy:{
-    day:{
-      from:"#1B2A4A", to:"#0B1220",
-      bodyBg:"#0B1220", textColor:"#F1F5F9",
-      accent:"#5EEAD4", glows:["#3B5A8A","#5EEAD4","#1E3A5F"],
-      cloud:"rgba(148,163,184,0.45)", icon:"cloud-rain", light:false,
-    },
-    night:{
-      from:"#0F172A", to:"#020617",
-      bodyBg:"#020617", textColor:"#F1F5F9",
-      accent:"#38BDF8", glows:["#1E3A8A","#38BDF8","#0F172A"],
-      cloud:"rgba(71,85,105,0.5)", icon:"cloud-moon-rain", light:false,
-    },
+    day:{from:"#1B2A4A",to:"#0B1220",bg:"#0B1220",text:"#F1F5F9",accent:"#5EEAD4",glows:["#3B5A8A","#5EEAD4","#1E3A5F"],cloud:"rgba(148,163,184,0.45)",icon:"cloud-rain"},
+    night:{from:"#0F172A",to:"#020617",bg:"#020617",text:"#F1F5F9",accent:"#38BDF8",glows:["#1E3A8A","#38BDF8","#0F172A"],cloud:"rgba(71,85,105,0.5)",icon:"cloud-moon-rain"},
   },
 };
 
-/* ============================================================
-   WEATHER CODE HELPERS
-============================================================ */
-function codeToCondition(code){
-  if(code===0) return "clear";
-  if([1,2,3,45,48].includes(code)) return "cloudy";
-  return "rainy";
+/* ── CODE HELPERS ──────────────────────────────────── */
+function codeToCondition(c){if(c===0)return"clear";if([1,2,3,45,48].includes(c))return"cloudy";return"rainy";}
+function codeToLabel(c){const m={0:"Clear",1:"Mostly Clear",2:"Partly Cloudy",3:"Overcast",45:"Fog",48:"Fog",51:"Drizzle",53:"Drizzle",55:"Drizzle",61:"Light Rain",63:"Rain",65:"Heavy Rain",80:"Showers",81:"Showers",82:"Heavy Showers",95:"Thunderstorm",96:"Thunderstorm",99:"Thunderstorm"};return m[c]||"Cloudy";}
+function condIcon(cond,night){if(cond==="clear")return night?"moon":"sun";if(cond==="cloudy")return night?"cloud-moon":"cloud-sun";return night?"cloud-moon-rain":"cloud-sun-rain";}
+function uvLabel(v){if(v==null)return"--";if(v<=2)return"Low";if(v<=5)return"Moderate";if(v<=7)return"High";if(v<=10)return"Very High";return"Extreme";}
+
+/* ── SUMMARIES ─────────────────────────────────────── */
+function cityText(d){
+  const t=d.isDay?"today":"tonight";
+  const cx=d.confidence==="low"?" Sources are a bit mixed — conditions could vary across the city.":"";
+  if(d.condition==="rainy"&&d.chanceOfRain>60)return`Rain is very likely across Hyderabad ${t}, with up to ${d.chanceOfRain}% chance in the coming hours. Most sources agree — carry an umbrella.${cx}`;
+  if(d.condition==="rainy")return`Scattered showers possible across parts of Hyderabad ${t}. Some areas may stay dry — check your specific locality below.${cx}`;
+  if(d.condition==="clear"&&d.temp>=33)return`Hot and sunny city-wide ${t} at ${d.temp}°C. Stay hydrated and avoid peak afternoon sun between 12–4 PM.${cx}`;
+  if(d.condition==="clear")return`Clear and comfortable across Hyderabad ${t} at ${d.temp}°C. ${d.isDay?"A good day to head out.":"A pleasant evening ahead."}${cx}`;
+  return`Overcast skies across the city ${t} at ${d.temp}°C. No significant rain expected right now.${cx}`;
 }
-function codeToLabel(code){
-  const m={0:"Clear",1:"Mostly Clear",2:"Partly Cloudy",3:"Overcast",
-    45:"Fog",48:"Fog",51:"Drizzle",53:"Drizzle",55:"Drizzle",
-    61:"Light Rain",63:"Rain",65:"Heavy Rain",
-    80:"Showers",81:"Showers",82:"Heavy Showers",
-    95:"Thunderstorm",96:"Thunderstorm",99:"Thunderstorm"};
-  return m[code]||"Cloudy";
-}
-function condIcon(cond,night){
-  if(cond==="clear") return night?"moon":"sun";
-  if(cond==="cloudy") return night?"cloud-moon":"cloud-sun";
-  return night?"cloud-moon-rain":"cloud-sun-rain";
+function locText(d,name){
+  const t=d.isDay?"right now":"tonight";
+  if(d.precipNow)return`It is actively raining in ${name} right now. Take an umbrella if you're heading out.`;
+  if(d.chanceOfRain>60)return`Rain is looking likely in ${name} — ${d.chanceOfRain}% chance in the next few hours. Don't leave without an umbrella.`;
+  if(d.chanceOfRain>30)return`Moderate chance of rain in ${name} (${d.chanceOfRain}%). It might pass by, but worth being prepared.`;
+  if(d.condition==="clear"&&d.temp>=33)return`${name} is hot and clear ${t} at ${d.temp}°C. The heat index makes it feel hotter — stay in shade if you can.`;
+  if(d.condition==="clear")return`${name} looks clear ${t} at ${d.temp}°C. ${d.isDay?"Good conditions to be outside.":"A calm night."}`;
+  return`${name} is overcast ${t} at ${d.temp}°C with no rain expected immediately.`;
 }
 
-/* ============================================================
-   PLAIN-ENGLISH SUMMARIES
-============================================================ */
-function cityInterpretation(data){
-  const t=data.isDay?"today":"tonight";
-  const conf=data.confidence==="low"?" Though forecasts are a bit mixed right now.":"";
-  if(data.condition==="rainy"&&data.chanceOfRain>60)
-    return `Rain is very likely across Hyderabad ${t}, with up to ${data.chanceOfRain}% chance in the coming hours. Most sources agree — keep an umbrella handy wherever you are.${conf}`;
-  if(data.condition==="rainy")
-    return `Scattered showers are possible across parts of Hyderabad ${t}. Some areas may stay dry — check your specific locality below.${conf}`;
-  if(data.condition==="clear"&&data.temp>=33)
-    return `Hot and sunny across the city ${t} at ${data.temp}°C. Stay hydrated and avoid peak afternoon sun between 12–4 PM.${conf}`;
-  if(data.condition==="clear")
-    return `Clear and comfortable across Hyderabad ${t} at ${data.temp}°C. ${data.isDay?"A good day to head out.":"A pleasant evening ahead."}${conf}`;
-  return `Overcast skies across the city ${t} at ${data.temp}°C. No significant rain expected right now, but conditions could change.${conf}`;
-}
-
-function localityInterpretation(data,name){
-  const t=data.isDay?"right now":"tonight";
-  if(data.precipNow)
-    return `It is actively raining in ${name} ${t}. If you're heading out, take an umbrella.`;
-  if(data.chanceOfRain>60)
-    return `Rain is looking likely in ${name} — ${data.chanceOfRain}% chance in the next few hours. Don't leave home without an umbrella.`;
-  if(data.chanceOfRain>30)
-    return `There's a moderate chance of rain in ${name} (${data.chanceOfRain}%). It might pass you by, but it's worth being prepared.`;
-  if(data.condition==="clear"&&data.temp>=33)
-    return `${name} is hot and clear ${t} at ${data.temp}°C. The heat index makes it feel like ${data.feelsLike||data.temp}°C — stay in the shade if you can.`;
-  if(data.condition==="clear")
-    return `${name} looks clear ${t} at ${data.temp}°C. ${data.isDay?"Good conditions to be outside.":"A calm night."}`;
-  return `${name} is overcast ${t} at ${data.temp}°C with no rain expected in the immediate term.`;
-}
-
-function uvLabel(uv){
-  if(!uv&&uv!==0) return "--";
-  if(uv<=2) return "Low";
-  if(uv<=5) return "Moderate";
-  if(uv<=7) return "High";
-  if(uv<=10) return "Very High";
-  return "Extreme";
-}
-function aqLabel(pm){
-  if(!pm&&pm!==0) return "--";
-  if(pm<=12) return "Good";
-  if(pm<=35) return "Moderate";
-  if(pm<=55) return "Unhealthy (Sensitive)";
-  return "Unhealthy";
-}
-
-/* ============================================================
-   FETCH WITH TIMEOUT
-============================================================ */
-async function fetchWithTimeout(url,opts={},ms=8000){
+/* ── FETCH WITH TIMEOUT (5s — faster fail) ─────────── */
+async function fetchT(url,opts={},ms=5000){
   const ctrl=new AbortController();
-  const t=setTimeout(()=>ctrl.abort(),ms);
+  const timer=setTimeout(()=>ctrl.abort(),ms);
   try{
-    const res=await fetch(url,{...opts,signal:ctrl.signal});
-    clearTimeout(t);
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  }catch(e){clearTimeout(t);throw e;}
+    const r=await fetch(url,{...opts,signal:ctrl.signal});
+    clearTimeout(timer);
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    return await r.json();
+  }catch(e){clearTimeout(timer);throw e;}
 }
 
-/* ============================================================
-   OPEN-METEO FETCH (ICON model — default)
-============================================================ */
-async function fetchOpenMeteo(lat,lon){
+/* ── OPEN-METEO FETCH ──────────────────────────────── */
+async function fetchOM(lat,lon){
   const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`+
     `&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day,precipitation`+
     `&hourly=temperature_2m,precipitation_probability,weather_code`+
     `&daily=temperature_2m_max,temperature_2m_min`+
     `&forecast_days=1&timezone=Asia%2FKolkata`;
-  return fetchWithTimeout(url);
+  return fetchT(url);
 }
 
-function transformOpenMeteo(raw,name){
+function transformOM(raw,name){
   const cur=raw.current;
   const cond=codeToCondition(cur.weather_code);
   const isDay=cur.is_day===1;
   const prefix=cur.time.slice(0,13);
-  let nowIdx=raw.hourly.time.findIndex(t=>t.startsWith(prefix));
-  if(nowIdx===-1) nowIdx=0;
-  const next6=raw.hourly.precipitation_probability.slice(nowIdx,nowIdx+6);
-  const chanceOfRain=next6.length?Math.max(...next6):0;
-
+  let ni=raw.hourly.time.findIndex(t=>t.startsWith(prefix));
+  if(ni===-1)ni=0;
+  const next6=raw.hourly.precipitation_probability.slice(ni,ni+6);
   return{
     temp:Math.round(cur.temperature_2m),
     humidity:cur.relative_humidity_2m,
     wind:Math.round(cur.wind_speed_10m),
     precipNow:cur.precipitation>0,
-    chanceOfRain,
-    condition:cond,
-    condLabel:codeToLabel(cur.weather_code),
-    isDay,
-    feelsLike:null,
-    uvIndex:null,
-    airQuality:null,
+    chanceOfRain:next6.length?Math.max(...next6):0,
+    condition:cond,condLabel:codeToLabel(cur.weather_code),
+    isDay,feelsLike:null,uvIndex:null,
     high:raw.daily?Math.round(raw.daily.temperature_2m_max[0]):null,
     low:raw.daily?Math.round(raw.daily.temperature_2m_min[0]):null,
-    hourly:raw.hourly,
-    nowIdx,
-    locationName:name,
-    updated:cur.time.slice(11,16),
-    sourcesUsed:["Open-Meteo"],
-    sourcesFailed:[],
-    confidence:"medium",
+    hourly:raw.hourly,nowIdx:ni,
+    locationName:name,updated:cur.time.slice(11,16),
+    weatherCode:cur.weather_code,
+    sourcesUsed:["Open-Meteo"],confidence:"medium",
+    generatedAt:new Date().toISOString(),
   };
 }
 
-/* ============================================================
-   BUILD PERIOD TIMELINE
-============================================================ */
 function pad(n){return n.toString().padStart(2,"0");}
-function buildPeriods(hourly){
-  const dateStr=hourly.time[0].split("T")[0];
-  const defs=[
-    {name:"Morning",hour:9,night:false},
-    {name:"Afternoon",hour:14,night:false},
-    {name:"Evening",hour:18,night:false},
-    {name:"Night",hour:23,night:true},
-  ];
-  return defs.map(d=>{
-    const target=`${dateStr}T${pad(d.hour)}:00`;
-    let idx=hourly.time.indexOf(target);
-    if(idx===-1) idx=0;
-    const code=hourly.weather_code[idx];
-    const cond=codeToCondition(code);
-    return{
-      name:d.name,
-      icon:condIcon(cond,d.night),
-      temp:Math.round(hourly.temperature_2m[idx]),
-      condition:codeToLabel(code),
-      rainChance:hourly.precipitation_probability[idx],
-    };
+function buildPeriods(h){
+  const date=h.time[0].split("T")[0];
+  return[{name:"Morning",hour:9,night:false},{name:"Afternoon",hour:14,night:false},{name:"Evening",hour:18,night:false},{name:"Night",hour:23,night:true}]
+  .map(d=>{
+    const target=`${date}T${pad(d.hour)}:00`;
+    let i=h.time.indexOf(target);if(i===-1)i=0;
+    const code=h.weather_code[i];
+    return{name:d.name,icon:condIcon(codeToCondition(code),d.night),temp:Math.round(h.temperature_2m[i]),condition:codeToLabel(code),rainChance:h.precipitation_probability[i]};
   });
 }
 
-/* ============================================================
-   APPLY THEME
-============================================================ */
-function applyTheme(condition,isDay){
-  const t=THEMES[condition]?.[isDay?"day":"night"]??THEMES.rainy.day;
+/* ── THEME ─────────────────────────────────────────── */
+function applyTheme(cond,isDay){
+  const t=THEMES[cond]?.[isDay?"day":"night"]??THEMES.rainy.day;
   document.documentElement.style.setProperty("--accent",t.accent);
   document.documentElement.style.setProperty("--cloud-color",t.cloud);
   document.getElementById("theme-color-meta").setAttribute("content",t.accent);
-  document.getElementById("bg-decor").style.background=t.bodyBg;
-  document.body.style.background=t.bodyBg;
-  document.body.style.color=t.textColor;
-  document.getElementById("hero-bar").style.background=
-    `linear-gradient(135deg,${t.from} 0%,${t.to} 100%)`;
-  const blobs=document.querySelectorAll(".glow-blob");
-  blobs.forEach((b,i)=>{
-    b.style.background=`radial-gradient(circle,${t.glows[i]} 0%,transparent 70%)`;
-  });
-  const clouds=document.querySelectorAll(".cloud");
-  clouds.forEach(c=>c.style.fill=t.cloud);
+  document.body.style.background=t.bg;
+  document.body.style.color=t.text;
+  document.getElementById("hero-bar").style.background=`linear-gradient(135deg,${t.from} 0%,${t.to} 100%)`;
+  document.querySelectorAll(".glow-blob").forEach((b,i)=>b.style.background=`radial-gradient(circle,${t.glows[i]} 0%,transparent 70%)`);
+  document.querySelectorAll(".cloud").forEach(c=>c.style.fill=t.cloud);
   document.getElementById("stars").classList.toggle("visible",!isDay);
   document.getElementById("hero-icon").setAttribute("data-lucide",t.icon);
   document.getElementById("hero-icon").style.color=t.accent;
 }
 
-/* ============================================================
-   RENDER CITY-WIDE (hero bar)
-============================================================ */
-function renderHero(data){
+/* ── RENDER ────────────────────────────────────────── */
+function set(id,v){const e=document.getElementById(id);if(e){e.classList.remove("skeleton");e.textContent=v;}}
+
+function renderAll(data,name){
   applyTheme(data.condition,data.isDay);
+  const accent=data.condition==="clear"&&!data.isDay?"#A5B4FC":data.condition==="clear"?"#F59E0B":data.condition==="cloudy"?"#94A3B8":data.isDay?"#5EEAD4":"#38BDF8";
 
-  setText("hero-temp",`${data.temp}°C`);
-  setText("hero-high-low",data.high!=null?`H: ${data.high}° L: ${data.low}°`:"H: --° L: --°");
-  setText("hero-feels",data.feelsLike!=null?`Feels ${data.feelsLike}°`:"Feels --°");
-  setText("hero-city-summary",cityInterpretation(data));
-  setText("city-interpretation",cityInterpretation(data));
-  setText("city-sources-used",`${data.sourcesUsed.length} source${data.sourcesUsed.length!==1?"s":""} reconciled: ${data.sourcesUsed.join(", ")}`);
+  // Hero
+  set("hero-temp",`${data.temp}°C`);
+  set("hero-high-low",data.high!=null?`H: ${data.high}° L: ${data.low}°`:"H: --° L: --°");
+  set("hero-feels",data.feelsLike!=null?`Feels ${data.feelsLike}°`:"Feels --°");
+  set("hero-city-summary",cityText(data));
+  set("hero-updated",`Updated ${data.updated}`);
 
-  // Confidence badge
   const badge=document.getElementById("conf-badge");
-  badge.className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full ";
-  badge.className+=data.confidence==="high"?"conf-high":data.confidence==="medium"?"conf-medium":"conf-low";
+  badge.className="font-mono font-medium px-2 py-0.5 rounded-full text-[10px] "+(data.confidence==="high"?"conf-high":data.confidence==="medium"?"conf-medium":"conf-low");
   badge.textContent=data.confidence.toUpperCase();
 
-  setText("hero-sources",`${data.sourcesUsed.length} source${data.sourcesUsed.length!==1?"s":""}`);
-  setText("hero-updated",`Updated ${data.updated}`);
+  // City interpretation
+  set("city-interpretation",cityText(data));
+  set("city-sources-used",`${data.sourcesUsed.length} source reconciled: ${data.sourcesUsed.join(", ")}`);
 
-  // UV & AQ
-  setText("stat-uv",data.uvIndex!=null?data.uvIndex:"--");
-  setText("stat-uv-label",uvLabel(data.uvIndex));
-  setText("stat-aq",data.airQuality!=null?Math.round(data.airQuality):"--");
-  setText("stat-aq-label",aqLabel(data.airQuality));
-  setText("stat-feels",data.feelsLike!=null?`${data.feelsLike}°`:"--°");
-  setText("stat-condition",data.condLabel||"--");
+  // Locality stats
+  set("loc-temp",`${data.temp}°`);
+  set("loc-humidity",`${data.humidity}%`);
+  set("loc-wind",`${data.wind}`);
+  set("loc-rain",`${data.chanceOfRain}%`);
+  set("loc-interp-label",name);
+
+  const li=document.getElementById("loc-interpretation");
+  li.classList.remove("skeleton");
+  li.textContent=locText(data,name);
+  set("loc-updated",`Last checked ${data.updated}`);
+
+  // Environmental
+  set("stat-uv",data.uvIndex!=null?data.uvIndex:"--");
+  set("stat-uv-label",uvLabel(data.uvIndex));
+  set("stat-feels",data.feelsLike!=null?`${data.feelsLike}°`:"--°");
+  set("stat-high-low",data.high!=null?`${data.high}° / ${data.low}°`:"-- / --");
+  set("stat-condition",data.condLabel||"--");
 
   // Tech panel
-  setText("tech-humidity",`${data.humidity}%`);
-  setText("tech-wind",`${data.wind} km/h`);
-  setText("tech-rain",`${data.chanceOfRain}%`);
-  setText("tech-sources",data.sourcesUsed.join(", ")||"--");
-  setText("tech-failed",data.sourcesFailed.length?data.sourcesFailed.join(", "):"None");
-  setText("tech-generated",data.generatedAt||new Date().toISOString());
+  set("tech-humidity",`${data.humidity}%`);
+  set("tech-wind",`${data.wind} km/h`);
+  set("tech-rain",`${data.chanceOfRain}%`);
+  set("tech-code",`${data.weatherCode} — ${data.condLabel}`);
+  set("tech-generated",data.generatedAt||"--");
 
-  lucide.createIcons();
-}
-
-/* ============================================================
-   RENDER LOCALITY DETAIL (left panel)
-============================================================ */
-function renderLocality(data,name){
-  setSkel("loc-temp",`${data.temp}°`);
-  setSkel("loc-humidity",`${data.humidity}%`);
-  setSkel("loc-wind",`${data.wind}`);
-  setSkel("loc-rain",`${data.chanceOfRain}%`);
-
-  setText("loc-interp-label",name);
-  setSkel("loc-interpretation",localityInterpretation(data,name));
-  setText("loc-updated",`Last checked ${data.updated}`);
-
-  // Periods (timeline)
+  // Timeline
   const periods=buildPeriods(data.hourly);
   const tl=document.getElementById("timeline");
   tl.innerHTML="";
-  const accent=getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
   periods.forEach((p,i)=>{
     const card=document.createElement("div");
-    card.className="glass-card glass-card-lift p-4 flex flex-col items-center gap-2 text-center fade-up d"+Math.min(i+1,3);
-    card.innerHTML=`
-      <span class="text-[10px] uppercase tracking-wide opacity-50 font-medium">${p.name}</span>
-      <i data-lucide="${p.icon}" class="w-7 h-7" style="color:${accent}"></i>
-      <span class="font-display text-2xl font-bold">${p.temp}°</span>
-      <span class="text-[10px] opacity-70">${p.condition}</span>
-      ${p.rainChance>0?`<span class="text-[10px] opacity-50 font-mono">${p.rainChance}% rain</span>`:""}
-    `;
+    card.className=`glass-card glass-card-lift p-4 flex flex-col items-center gap-2 text-center fade-up d${Math.min(i+1,3)}`;
+    card.innerHTML=`<span class="text-[10px] uppercase tracking-wide opacity-50 font-medium">${p.name}</span><i data-lucide="${p.icon}" class="w-7 h-7" style="color:${accent}"></i><span class="font-display text-2xl font-bold">${p.temp}°</span><span class="text-[10px] opacity-70">${p.condition}</span>${p.rainChance>0?`<span class="text-[10px] opacity-50 font-mono">${p.rainChance}%</span>`:""}`;
     tl.appendChild(card);
   });
 
-  // Hourly strip (next 12 hours)
+  // Hourly strip
   const strip=document.getElementById("hourly-strip");
   strip.innerHTML="";
-  const now=new Date();
-  const nowH=now.getHours();
-  const accent2=accent;
   for(let i=0;i<12;i++){
     const idx=data.nowIdx+i;
-    if(idx>=data.hourly.time.length) break;
-    const timeStr=data.hourly.time[idx].slice(11,16);
+    if(idx>=data.hourly.time.length)break;
     const h=parseInt(data.hourly.time[idx].slice(11,13));
     const code=data.hourly.weather_code[idx];
     const cond=codeToCondition(code);
-    const isNightH=h<6||h>=19;
     const pill=document.createElement("div");
     pill.className="hour-pill"+(i===0?" now":"");
-    pill.innerHTML=`
-      <span class="opacity-60 font-mono">${i===0?"Now":timeStr}</span>
-      <i data-lucide="${condIcon(cond,isNightH)}" class="w-3.5 h-3.5" style="color:${accent2}"></i>
-      <span class="font-display font-bold text-sm">${Math.round(data.hourly.temperature_2m[idx])}°</span>
-      <span class="opacity-50 font-mono text-[9px]">${data.hourly.precipitation_probability[idx]}%</span>
-    `;
+    pill.innerHTML=`<span class="opacity-60 font-mono">${i===0?"Now":data.hourly.time[idx].slice(11,16)}</span><i data-lucide="${condIcon(cond,h<6||h>=19)}" class="w-3.5 h-3.5" style="color:${accent}"></i><span class="font-display font-bold text-sm">${Math.round(data.hourly.temperature_2m[idx])}°</span><span class="opacity-50 font-mono text-[9px]">${data.hourly.precipitation_probability[idx]}%</span>`;
     strip.appendChild(pill);
   }
 
   lucide.createIcons();
+
+  // Save to cache
+  try{localStorage.setItem(CACHE_KEY+":"+name,JSON.stringify({data,name,ts:Date.now()}));}catch(e){}
 }
 
-/* ============================================================
-   RAIN HOTSPOTS (hero right side)
-   Fetches a subset of localities in parallel and shows their rain %
-============================================================ */
+/* ── HOTSPOTS ───────────────────────────────────────── */
+async function loadHotspot(idx){
+  const loc=LOCALITIES[idx];
+  try{
+    const raw=await fetchOM(loc.lat,loc.lon);
+    return{ok:true,name:loc.name,data:transformOM(raw,loc.name)};
+  }catch(e){return{ok:false,name:loc.name};}
+}
+
+function renderHotspot(r){
+  const badge=document.createElement("div");
+  badge.className="rain-badge";
+  if(r.ok){
+    const rain=r.data.chanceOfRain;
+    const isRaining=r.data.precipNow;
+    const dot=isRaining?"#38BDF8":rain>40?"#FBBF24":"#4ADE80";
+    const label=isRaining?"Raining now":rain>0?`${rain}% chance`:"Dry";
+    const icon=isRaining?"cloud-rain":rain>40?"cloud-drizzle":"cloud";
+    badge.innerHTML=`<div class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:${dot}"></div><i data-lucide="${icon}" class="w-3.5 h-3.5 flex-shrink-0 opacity-60"></i><span class="flex-1 opacity-80 truncate text-xs">${r.name.replace(" Hills","").replace(" (Central)","")}</span><span class="font-mono font-medium flex-shrink-0 text-[11px]" style="color:${dot}">${label}</span>`;
+  }else{
+    badge.innerHTML=`<span class="opacity-30 text-xs">${r.name.replace(" (Central)","")} — unavailable</span>`;
+  }
+  return badge;
+}
+
 async function loadHotspots(){
   const container=document.getElementById("rain-hotspots");
-
-  const results=await Promise.allSettled(
-    HOTSPOT_INDICES.map(i=>
-      fetchOpenMeteo(LOCALITIES[i].lat,LOCALITIES[i].lon)
-        .then(raw=>({name:LOCALITIES[i].name,data:transformOpenMeteo(raw,LOCALITIES[i].name)}))
-    )
-  );
-
-  container.innerHTML="";
-  const accent=getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
-
-  results.forEach(r=>{
-    const badge=document.createElement("div");
-    badge.className="rain-badge";
-
-    if(r.status==="fulfilled"){
-      const{name,data}=r.value;
-      const rain=data.chanceOfRain;
-      const isRaining=data.precipNow;
-      const icon=isRaining?"cloud-rain":rain>40?"cloud-drizzle":"cloud";
-      const label=isRaining?"Raining now":rain>0?`${rain}% chance`:"Dry";
-      const dotColor=isRaining?"#38BDF8":rain>40?"#FBBF24":"#4ADE80";
-      badge.innerHTML=`
-        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:${dotColor}"></div>
-        <i data-lucide="${icon}" class="w-3.5 h-3.5 flex-shrink-0 opacity-60"></i>
-        <span class="flex-1 opacity-80 truncate">${name.replace(" Hills","").replace(" (Central)","")}</span>
-        <span class="font-mono font-medium flex-shrink-0 text-[11px]" style="color:${dotColor}">${label}</span>
-      `;
-    } else {
-      badge.innerHTML=`<span class="opacity-30 text-[10px]">Unavailable</span>`;
-    }
-    container.appendChild(badge);
-  });
-
-  lucide.createIcons();
-}
-
-/* ============================================================
-   HELPERS
-============================================================ */
-function setText(id,val){
-  const el=document.getElementById(id);
-  if(el){el.classList.remove("skeleton");el.textContent=val;}
-}
-function setSkel(id,val){
-  const el=document.getElementById(id);
-  if(el){el.classList.remove("skeleton");el.textContent=val;}
-}
-function showError(msg){
-  setText("error-text",msg);
-  document.getElementById("error-banner").classList.add("visible");
-  lucide.createIcons();
-}
-function hideError(){document.getElementById("error-banner").classList.remove("visible");}
-
-/* ============================================================
-   MAP
-============================================================ */
-const map=L.map("radar-map",{zoomControl:false,attributionControl:false,minZoom:6,maxZoom:11})
-  .setView([17.385,78.4867],10);
-
-let baseLayer=null;
-let locMarker=null;
-
-function setBaseLayer(dark){
-  if(baseLayer) map.removeLayer(baseLayer);
-  baseLayer=L.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark?"dark_all":"light_all"}/{z}/{x}/{y}{r}.png`,
-    {subdomains:"abcd"}).addTo(map);
-}
-function recenterMap(lat,lon){
-  map.setView([lat,lon],11);
-  if(locMarker) map.removeLayer(locMarker);
-  const accent=getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
-  locMarker=L.circleMarker([lat,lon],{radius:6,color:"#fff",weight:2,fillColor:accent,fillOpacity:1}).addTo(map);
-}
-
-/* ============================================================
-   STARS
-============================================================ */
-(function buildStars(){
-  const c=document.getElementById("stars");
-  for(let i=0;i<35;i++){
-    const s=document.createElement("div");
-    s.className="star";
-    s.style.top=Math.random()*65+"%";
-    s.style.left=Math.random()*100+"%";
-    s.style.animationDelay=(Math.random()*3.5).toFixed(2)+"s";
-    c.appendChild(s);
+  container.innerHTML="<div class='rain-badge opacity-30 text-xs'>Loading...</div>";
+  // Load one at a time with small delay to avoid hammering the API
+  const results=[];
+  for(const idx of HOTSPOT_INDICES){
+    const r=await loadHotspot(idx);
+    results.push(r);
   }
-})();
+  container.innerHTML="";
+  results.forEach(r=>{
+    const el=renderHotspot(r);
+    container.appendChild(el);
+  });
+  lucide.createIcons();
+}
 
-/* ============================================================
-   LOCALITY DROPDOWN
-============================================================ */
+/* ── MAP ────────────────────────────────────────────── */
+const map=L.map("radar-map",{zoomControl:false,attributionControl:false,minZoom:6,maxZoom:11}).setView([17.385,78.4867],10);
+let baseLayer=null,locMarker=null;
+function setBaseLayer(dark){
+  if(baseLayer)map.removeLayer(baseLayer);
+  baseLayer=L.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark?"dark_all":"light_all"}/{z}/{x}/{y}{r}.png`,{subdomains:"abcd"}).addTo(map);
+}
+function recenterMap(lat,lon,accent){
+  map.setView([lat,lon],11);
+  if(locMarker)map.removeLayer(locMarker);
+  locMarker=L.circleMarker([lat,lon],{radius:6,color:"#fff",weight:2,fillColor:accent||"#5EEAD4",fillOpacity:1}).addTo(map);
+}
+setBaseLayer(true);
+
+/* ── STARS ──────────────────────────────────────────── */
+(function(){const c=document.getElementById("stars");for(let i=0;i<35;i++){const s=document.createElement("div");s.className="star";s.style.top=Math.random()*65+"%";s.style.left=Math.random()*100+"%";s.style.animationDelay=(Math.random()*3.5).toFixed(2)+"s";c.appendChild(s);}})();
+
+/* ── DROPDOWN ───────────────────────────────────────── */
 const select=document.getElementById("locality-select");
-LOCALITIES.forEach((loc,i)=>{
-  const opt=document.createElement("option");
-  opt.value=i;
-  opt.textContent=loc.name;
-  select.appendChild(opt);
-});
+LOCALITIES.forEach((loc,i)=>{const o=document.createElement("option");o.value=i;o.textContent=loc.name;select.appendChild(o);});
 
 let currentIdx=0;
 
@@ -867,30 +596,30 @@ async function loadLocality(idx){
   currentIdx=idx;
   const loc=LOCALITIES[idx];
   select.disabled=true;
-  hideError();
+  document.getElementById("error-banner").classList.remove("visible");
 
-  // skeleton the locality interpretation while loading
-  const li=document.getElementById("loc-interpretation");
-  li.classList.add("skeleton");
-  li.textContent="Checking...";
+  // Show cached data instantly if available
+  try{
+    const cached=JSON.parse(localStorage.getItem(CACHE_KEY+":"+loc.name));
+    if(cached&&(Date.now()-cached.ts)<30*60*1000){
+      renderAll(cached.data,cached.name);
+      document.getElementById("stale-banner").classList.add("visible");
+    }
+  }catch(e){}
 
   try{
-    const raw=await fetchOpenMeteo(loc.lat,loc.lon);
-    const data=transformOpenMeteo(raw,loc.name);
-    renderHero(data);
-    renderLocality(data,loc.name);
+    const raw=await fetchOM(loc.lat,loc.lon);
+    const data=transformOM(raw,loc.name);
+    document.getElementById("stale-banner").classList.remove("visible");
+    renderAll(data,loc.name);
     recenterMap(loc.lat,loc.lon);
     setBaseLayer(!data.isDay||data.condition==="rainy");
   }catch(err){
-    console.error(err);
-    const msg=err.name==="AbortError"
-      ?"Live data timed out — check your connection."
-      :"Couldn't reach weather service — try again shortly.";
-    showError(msg);
-    // render fallback so page isn't blank
-    renderHero({temp:28,condition:"cloudy",isDay:true,humidity:70,wind:12,chanceOfRain:20,
-      condLabel:"Overcast",high:32,low:23,sourcesUsed:[],sourcesFailed:["Open-Meteo"],
-      confidence:"low",updated:"--:--",uvIndex:null,airQuality:null,feelsLike:null});
+    document.getElementById("stale-banner").classList.remove("visible");
+    const msg=err.name==="AbortError"?"Request timed out — check your connection and retry.":"Couldn't reach weather service. Try again shortly.";
+    document.getElementById("error-text").textContent=msg;
+    document.getElementById("error-banner").classList.add("visible");
+    lucide.createIcons();
   }finally{
     select.disabled=false;
   }
@@ -898,48 +627,37 @@ async function loadLocality(idx){
 
 select.addEventListener("change",e=>loadLocality(Number(e.target.value)));
 document.getElementById("error-retry").addEventListener("click",()=>loadLocality(currentIdx));
-document.getElementById("refresh-btn").addEventListener("click",()=>loadLocality(currentIdx));
-
-/* ============================================================
-   TECH TOGGLE
-============================================================ */
+document.getElementById("refresh-btn").addEventListener("click",()=>{
+  try{localStorage.removeItem(CACHE_KEY+":"+LOCALITIES[currentIdx].name);}catch(e){}
+  loadLocality(currentIdx);
+});
 document.getElementById("tech-toggle").addEventListener("click",()=>{
   document.getElementById("tech-panel").classList.toggle("hidden");
   document.getElementById("tech-chevron").classList.toggle("rotate-180");
 });
 
-/* ============================================================
-   RADAR
-============================================================ */
-setBaseLayer(true);
-fetchWithTimeout("https://api.rainviewer.com/public/weather-maps.json",{},8000)
+/* ── RADAR (last — non-blocking) ────────────────────── */
+function initRadar(){
+  fetchT("https://api.rainviewer.com/public/weather-maps.json",{},6000)
   .then(data=>{
     const frames=data.radar.past;
-    let fi=0;let al=null;
-    function showFrame(i){
-      if(al) map.removeLayer(al);
-      const url=`https://tilecache.rainviewer.com/v2/radar/${frames[i].time}/256/{z}/{x}/{y}/2/1_1.png`;
-      al=L.tileLayer(url,{opacity:0.65,maxNativeZoom:8,minZoom:6}).addTo(map);
-    }
-    setInterval(()=>{showFrame(fi);fi=(fi+1)%frames.length;},1000);
-    showFrame(0);
+    let fi=0,al=null;
+    function sf(i){if(al)map.removeLayer(al);al=L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${frames[i].time}/256/{z}/{x}/{y}/2/1_1.png`,{opacity:0.65,maxNativeZoom:8,minZoom:6}).addTo(map);}
+    setInterval(()=>{sf(fi);fi=(fi+1)%frames.length;},1200);
+    sf(0);
   })
-  .catch(err=>{
-    console.error("Radar unavailable:",err);
-    document.querySelector("#radar-map + p, .radar-caption")?.textContent="Radar temporarily unavailable.";
-  });
+  .catch(()=>{document.getElementById("radar-caption").textContent="Radar temporarily unavailable.";});
+}
 
-/* ============================================================
-   INITIAL LOAD
-============================================================ */
+/* ── BOOT SEQUENCE ──────────────────────────────────── */
+// 1. Load main locality immediately
 loadLocality(0);
-loadHotspots();
-
-// Auto-refresh every 15 minutes
-setInterval(()=>{
-  loadLocality(currentIdx);
-  loadHotspots();
-},15*60*1000);
+// 2. Load radar after 1s (non-blocking, doesn't delay main content)
+setTimeout(initRadar, 1000);
+// 3. Load hotspots after 3s (after main content is shown and stable)
+setTimeout(loadHotspots, 3000);
+// 4. Auto-refresh every 20 minutes
+setInterval(()=>{loadLocality(currentIdx);},20*60*1000);
 </script>
 </body>
 </html>
