@@ -574,7 +574,7 @@ async function initRadar() {
     radarLayers = frames.map(frame => {
       const layer = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`, {
         opacity: 0,
-        maxNativeZoom: 8,
+        maxNativeZoom: 7,
         minZoom: 6,
         zIndex: 10 // Ensures rain sits above the street map
       }).addTo(map);
