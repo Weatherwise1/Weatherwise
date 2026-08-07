@@ -21,12 +21,14 @@
   .font-display{font-family:'Space Grotesk',sans-serif;}
   .font-mono{font-family:'IBM Plex Mono',monospace;}
 
+  /* Background */
   #bg-decor{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
   .stars{position:absolute;inset:0;opacity:0;transition:opacity 1.2s ease;}
   .stars.visible{opacity:1;}
   .star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:twinkle 3.5s ease-in-out infinite;}
   @keyframes twinkle{0%,100%{opacity:.1;}50%{opacity:.9;}}
 
+  /* Animated Clouds */
   .cloud-layer{position:absolute;inset:0;}
   .cloud{position:absolute;fill:var(--cloud-color);animation:floatCloud linear infinite;transition:fill 1s ease;}
   .cloud.c1{width:220px;top:5%;animation-duration:80s;opacity:.5;}
@@ -35,22 +37,28 @@
   .cloud.c4{width:120px;top:28%;animation-duration:70s;animation-delay:-12s;opacity:.4;}
   @keyframes floatCloud{from{transform:translateX(-32%);}to{transform:translateX(132%);}}
 
+  /* Hero */
   #hero-bar{transition:background 0.8s ease;position:relative;overflow:hidden;}
 
+  /* Glow */
   .glow-field{position:absolute;inset:0;pointer-events:none;filter:blur(70px);z-index:0;}
   .glow-blob{position:absolute;border-radius:9999px;opacity:0.4;animation:drift 20s ease-in-out infinite alternate;}
 
+  /* Cards */
   .glass-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:1.25rem;transition:transform 0.2s ease,border-color 0.2s ease;}
   .glass-card:hover{border-color:rgba(255,255,255,0.22);}
 
+  /* Select Fix */
   #locality-select{appearance:none;-webkit-appearance:none;background:transparent;cursor:pointer;}
   #locality-select option { background-color: #0F172A; color: #F1F5F9; padding: 8px; }
 
+  /* Hourly Strip */
   #hourly-strip{display:flex;gap:0.5rem;overflow-x:auto;padding-bottom:0.25rem;scrollbar-width:none;}
   #hourly-strip::-webkit-scrollbar{display:none;}
   .hour-pill{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0.25rem;padding:0.6rem 0.8rem;border-radius:1rem;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);font-size:0.75rem;min-width:60px;}
   .hour-pill.now{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.35);}
 
+  /* Radar */
   #radar-map{height:280px;border-radius:1rem;}
 </style>
 </head>
@@ -74,7 +82,7 @@
   </div>
 </div>
 
-<!-- HERO BAR (Hybrid: Driven by backend weather.json) -->
+<!-- HERO BAR -->
 <div id="hero-bar" class="relative z-10 w-full border-b border-white/10">
   <div class="glow-field">
     <div class="glow-blob b1" style="width:300px;height:300px;left:-5%;top:-40%;"></div>
@@ -163,6 +171,7 @@
       </div>
     </div>
 
+    <!-- Live Radar -->
     <div class="glass-card p-5">
       <div class="flex items-center justify-between mb-3">
         <p class="text-[11px] uppercase tracking-wider opacity-60 font-semibold">Live Doppler Radar</p>
@@ -178,21 +187,22 @@
 
   <div class="lg:col-span-2 flex flex-col gap-6">
 
+    <!-- Sun & Air Quality (Fixed with proper IDs) -->
     <div class="glass-card p-6">
       <p class="text-[11px] uppercase tracking-wider opacity-60 font-semibold mb-4">Sun & Air Quality</p>
       <div class="grid grid-cols-2 gap-5">
         <div>
           <p class="text-[11px] opacity-50 mb-1">Sunrise</p>
-          <p class="font-display text-xl font-bold">05:58 AM</p>
+          <p class="font-display text-xl font-bold" id="stat-sunrise">--:--</p>
         </div>
         <div>
           <p class="text-[11px] opacity-50 mb-1">Sunset</p>
-          <p class="font-display text-xl font-bold">06:42 PM</p>
+          <p class="font-display text-xl font-bold" id="stat-sunset">--:--</p>
         </div>
         <div>
           <p class="text-[11px] opacity-50 mb-1">Visibility</p>
-          <p class="font-display text-lg font-bold">10 km</p>
-          <p class="text-[10px] opacity-60">Clear view</p>
+          <p class="font-display text-lg font-bold" id="stat-visibility">-- km</p>
+          <p class="text-[10px] opacity-60" id="stat-vis-label">Loading</p>
         </div>
         <div>
           <p class="text-[11px] opacity-50 mb-1">UV Index</p>
@@ -325,11 +335,13 @@ async function loadCityHero() {
   }
 }
 
+// UPGRADED OM FETCH: Now explicitly requests sunrise, sunset, visibility, and uv_index
 async function fetchOM(lat, lon, model) {
   const modelParam = model ? `&models=${model}` : "";
   const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`+
-    `&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day,precipitation`+
+    `&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day,precipitation,visibility`+
     `&hourly=temperature_2m,precipitation_probability,weather_code`+
+    `&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max`+
     `${modelParam}&forecast_days=1&timezone=Asia%2FKolkata`;
   const res = await fetch(url);
   if (!res.ok) throw new Error("Fetch failed");
@@ -337,30 +349,40 @@ async function fetchOM(lat, lon, model) {
 }
 
 function transformOM(raw, name) {
-  const cur=raw.current;
-  const cond=codeToCondition(cur.weather_code);
-  const prefix=cur.time.slice(0,13);
-  let ni=raw.hourly.time.findIndex(t=>t.startsWith(prefix));
-  if(ni===-1)ni=0;
+  const cur = raw.current;
+  const cond = codeToCondition(cur.weather_code);
+  const prefix = cur.time.slice(0,13);
+  let ni = raw.hourly.time.findIndex(t=>t.startsWith(prefix));
+  if(ni === -1) ni = 0;
 
   const next6Prob = raw.hourly.precipitation_probability.slice(ni,ni+6);
   const next6Codes = raw.hourly.weather_code.slice(ni,ni+6);
   const chanceOfRain = next6Prob.length ? Math.max(...next6Prob) : 0;
-  const upcomingRainType = getUpcomingRainType(next6Codes);
+  
+  // Format Time for Sunrise/Sunset
+  const formatTime = (isoString) => {
+    if(!isoString) return "--:--";
+    const d = new Date(isoString);
+    return d.toLocaleTimeString('en-IN', {hour: '2-digit', minute:'2-digit'});
+  };
 
   return {
-    temp:Math.round(cur.temperature_2m),
-    humidity:cur.relative_humidity_2m,
-    wind:Math.round(cur.wind_speed_10m),
-    precipNow:cur.precipitation>0,
-    chanceOfRain:chanceOfRain,
-    upcomingRainType:upcomingRainType,
-    condition:cond,
-    condLabel:codeToLabel(cur.weather_code),
-    isDay:cur.is_day===1,
-    hourly:raw.hourly,nowIdx:ni,
-    locationName:name,updated:cur.time.slice(11,16),
-    weatherCode:cur.weather_code,
+    temp: Math.round(cur.temperature_2m),
+    humidity: cur.relative_humidity_2m,
+    wind: Math.round(cur.wind_speed_10m),
+    precipNow: cur.precipitation > 0,
+    visibility: cur.visibility ? Math.round(cur.visibility / 1000) : "--",
+    sunrise: raw.daily ? formatTime(raw.daily.sunrise[0]) : "--:--",
+    sunset: raw.daily ? formatTime(raw.daily.sunset[0]) : "--:--",
+    uvIndex: raw.daily ? raw.daily.uv_index_max[0] : "--",
+    chanceOfRain: chanceOfRain,
+    upcomingRainType: getUpcomingRainType(next6Codes),
+    condition: cond,
+    condLabel: codeToLabel(cur.weather_code),
+    isDay: cur.is_day === 1,
+    hourly: raw.hourly, nowIdx: ni,
+    locationName: name, updated: cur.time.slice(11,16),
+    weatherCode: cur.weather_code,
   };
 }
 
@@ -401,6 +423,7 @@ async function fetchLocalityEnsemble(lat, lon, name) {
   return {
     temp: avgTemp, humidity: avgHumidity, wind: avgWind, chanceOfRain: maxRain, precipNow: anyPrecipNow,
     upcomingRainType: primary.upcomingRainType,
+    visibility: primary.visibility, sunrise: primary.sunrise, sunset: primary.sunset, uvIndex: primary.uvIndex,
     condition, condLabel: primary.condLabel, isDay: primary.isDay,
     hourly: primary.hourly, nowIdx: primary.nowIdx,
     locationName: name, updated: primary.updated, weatherCode: primary.weatherCode,
@@ -435,9 +458,12 @@ function renderLocality(data, name) {
   if(data.confidence === "low") interpretationText += ` Models disagree, refer to live radar.`;
   document.getElementById("loc-interpretation").textContent = interpretationText;
 
-  if(document.getElementById("stat-uv")) {
-    document.getElementById("stat-uv").textContent = data.isDay ? (Math.random() * 3 + 4).toFixed(1) : "0";
-  }
+  // Insert Live Sun & Air Data
+  document.getElementById("stat-sunrise").textContent = data.sunrise;
+  document.getElementById("stat-sunset").textContent = data.sunset;
+  document.getElementById("stat-visibility").textContent = `${data.visibility} km`;
+  document.getElementById("stat-uv").textContent = data.uvIndex;
+  document.getElementById("stat-vis-label").textContent = data.visibility > 8 ? "Clear view" : data.visibility > 3 ? "Haze or mist" : "Poor visibility";
 
   document.getElementById("tech-humidity").textContent=`${data.humidity}%`;
   document.getElementById("tech-wind").textContent=`${data.wind} km/h`;
@@ -521,31 +547,31 @@ document.getElementById("tech-toggle").addEventListener("click",()=>{
   document.getElementById("tech-chevron").classList.toggle("rotate-180");
 });
 
-/* ── MAP — zoom range now capped to match what RainViewer + base tiles can actually serve ── */
 const map=L.map("radar-map",{zoomControl:false,attributionControl:false,minZoom:6,maxZoom:11}).setView([17.385,78.4867],9);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:11}).addTo(map);
 
-/* ── Live Radar (RainViewer) ──
-   FIX: RainViewer's own documentation states maximum zoom level is 7 (not 8, as
-   previously assumed). Requesting z=8 tiles returns a placeholder image that
-   literally reads "Zoom Level Not Supported" — that image was what was showing.
-   maxNativeZoom is now capped at 7, so Leaflet stretches the z=7 tile instead
-   of requesting a level RainViewer doesn't serve. */
+/* ── UPDATED: RainViewer Dynamic Fetch Fix ── */
 let radarLayers = [];
 let radarInterval = null;
 let currentRadarIdx = 0;
+
 async function initRadar() {
   try {
     const res = await fetch("https://api.rainviewer.com/public/weather-maps.json");
     const data = await res.json();
-
+    
+    // RainViewer dynamically assigns the host now (e.g. tilecache.rainviewer.com)
+    const host = data.host || "https://tilecache.rainviewer.com";
     const frames = data.radar.past;
+    
     if (!frames || frames.length === 0) return;
 
     radarLayers = frames.map(frame => {
-      const layer = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`, {
+      // Combines the API-provided host with the frame-specific path string
+      const url = `${host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
+      const layer = L.tileLayer(url, {
         opacity: 0,
-        maxNativeZoom: 7,   // RainViewer's documented hard limit — was 8, that was the bug
+        maxNativeZoom: 7, 
         minZoom: 6,
         maxZoom: 11,
         zIndex: 10
@@ -557,6 +583,7 @@ async function initRadar() {
     if (radarInterval) clearInterval(radarInterval);
 
     radarInterval = setInterval(() => {
+      if(!radarLayers.length) return;
       radarLayers[currentRadarIdx].setOpacity(0);
       currentRadarIdx = (currentRadarIdx + 1) % radarLayers.length;
       radarLayers[currentRadarIdx].setOpacity(0.65);
