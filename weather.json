@@ -1,16 +1,16 @@
 {
   "city": "Hyderabad",
-  "temp": 26,
-  "humidity": 77,
-  "wind": 10,
-  "chanceOfRain": 57,
+  "temp": 24,
+  "humidity": 84,
+  "wind": 12,
+  "chanceOfRain": 29,
   "condition": "rainy",
   "isDay": false,
-  "confidence": "high",
-  "rainAgreement": "all_wet",
-  "tempSpread": 1,
+  "confidence": "low",
+  "rainAgreement": "mostly_wet",
+  "tempSpread": 3,
   "uv": null,
-  "feelsLike": 27,
+  "feelsLike": 26,
   "airQuality": 18,
   "sourcesUsed": [
     "Open-Meteo ICON",
@@ -20,5 +20,5 @@
   "sourcesFailed": [
     "Tomorrow.io"
   ],
-  "generatedAt": "2026-08-07T15:10:42.151Z"
+  "generatedAt": "2026-08-07T18:32:42.062Z"
 }
