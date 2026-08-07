@@ -557,10 +557,53 @@ document.getElementById("tech-toggle").addEventListener("click",()=>{
 const map=L.map("radar-map",{zoomControl:false,attributionControl:false}).setView([17.385,78.4867],10);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
 
+/* Live Radar (RainViewer) Setup */
+let radarLayers = [];
+let radarInterval = null;
+let currentRadarIdx = 0;
+
+async function initRadar() {
+  try {
+    const res = await fetch("https://api.rainviewer.com/public/weather-maps.json");
+    const data = await res.json();
+    
+    // Grab the last 2 hours of radar frames
+    const frames = data.radar.past;
+    if (!frames || frames.length === 0) return;
+
+    // Pre-create tile layers with 0 opacity to prevent flickering while animating
+    radarLayers = frames.map(frame => {
+      const layer = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`, {
+        opacity: 0,
+        maxNativeZoom: 8,
+        minZoom: 6,
+        zIndex: 10 // Ensures rain sits above the street map
+      }).addTo(map);
+      return layer;
+    });
+
+    // Start the animation loop
+    radarLayers[0].setOpacity(0.65);
+    if (radarInterval) clearInterval(radarInterval);
+    
+    radarInterval = setInterval(() => {
+      radarLayers[currentRadarIdx].setOpacity(0);
+      currentRadarIdx = (currentRadarIdx + 1) % radarLayers.length;
+      radarLayers[currentRadarIdx].setOpacity(0.65);
+    }, 1200);
+
+  } catch (e) {
+    console.error("Radar failed to load:", e);
+    const hint = document.getElementById("radar-hint");
+    if(hint) hint.innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-400"></i> Radar feed temporarily offline.`;
+    lucide.createIcons();
+  }
+}
+/* Boot Sequence */
 /* Boot Sequence */
 loadCityHero();
 loadLocality(0);
 setTimeout(loadHotspots, 1000); 
-</script>
+setTimeout(initRadar, 1500); // Loads the radar last so it doesn't slow down the main text
 </body>
 </html>
