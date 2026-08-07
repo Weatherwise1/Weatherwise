@@ -561,7 +561,6 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
 let radarLayers = [];
 let radarInterval = null;
 let currentRadarIdx = 0;
-
 async function initRadar() {
   try {
     const res = await fetch("https://api.rainviewer.com/public/weather-maps.json");
@@ -599,7 +598,6 @@ async function initRadar() {
     lucide.createIcons();
   }
 }
-/* Boot Sequence */
 /* Boot Sequence */
 loadCityHero();
 loadLocality(0);
