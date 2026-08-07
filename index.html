@@ -48,7 +48,7 @@
   .glass-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:1.25rem;transition:transform 0.2s ease,border-color 0.2s ease;}
   .glass-card:hover{border-color:rgba(255,255,255,0.22);}
 
-  /* Select Fix for Dark/Light Mode */
+  /* Select Fix */
   #locality-select{appearance:none;-webkit-appearance:none;background:transparent;cursor:pointer;}
   #locality-select option { background-color: #0F172A; color: #F1F5F9; padding: 8px; }
 
@@ -64,7 +64,6 @@
 </head>
 <body>
 
-<!-- SVG Definitions for Clouds -->
 <svg width="0" height="0" style="position:absolute">
   <defs>
     <symbol id="cloud-shape" viewBox="0 0 200 100">
@@ -91,8 +90,6 @@
   </div>
   
   <div class="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 py-8 grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-
-    <!-- Left: City Overview (Spans 2 columns on desktop) -->
     <div class="md:col-span-2">
       <p class="text-[11px] uppercase tracking-[0.2em] opacity-60 mb-2 font-semibold">Hyderabad Overview <span class="opacity-50">· Backend Reconciled</span></p>
       <div class="flex items-center gap-5 mb-4">
@@ -118,7 +115,7 @@
       </div>
     </div>
 
-    <!-- Right: Rain Watch Hotspots -->
+    <!-- Rain Watch Hotspots -->
     <div class="w-full">
       <p class="text-[11px] uppercase tracking-[0.2em] opacity-60 mb-3 font-semibold">Rain Watch</p>
       <div class="flex flex-col gap-2" id="rain-hotspots">
@@ -141,9 +138,12 @@
           <i data-lucide="map-pin" class="w-4 h-4" style="color:var(--accent)"></i>
           <span class="text-xs uppercase tracking-wider opacity-60 font-medium">Selected Location</span>
         </div>
-        <div class="flex items-center gap-2 border border-white/20 rounded-full px-4 py-1.5 bg-white/5">
-          <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 opacity-50"></i>
-          <select id="locality-select" class="text-xs font-semibold opacity-90 pr-1 focus:opacity-100"></select>
+        <div class="flex items-center gap-2">
+          <span id="loc-conf-badge" class="font-mono font-medium px-2 py-0.5 rounded-full text-[10px] hidden"></span>
+          <div class="flex items-center gap-2 border border-white/20 rounded-full px-4 py-1.5 bg-white/5">
+            <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 opacity-50"></i>
+            <select id="locality-select" class="text-xs font-semibold opacity-90 pr-1 focus:opacity-100"></select>
+          </div>
         </div>
       </div>
 
@@ -185,13 +185,18 @@
         <p class="text-[10px] opacity-40 font-mono">Animating last 30 min</p>
       </div>
       <div id="radar-map"></div>
+      <!-- Restored Radar Hint -->
+      <p id="radar-hint" class="text-[10px] opacity-60 mt-3 flex items-start gap-1.5 leading-tight">
+        <i data-lucide="info" class="w-3.5 h-3.5 flex-shrink-0"></i>
+        <span>For "is it raining right now," trust this live radar over the forecast text — forecasts are probabilistic, but radar shows the actual truth on the ground.</span>
+      </p>
     </div>
   </div>
 
   <!-- RIGHT PANEL (2 Cols) -->
   <div class="lg:col-span-2 flex flex-col gap-6">
 
-    <!-- Air & Sun Tracker (Replaces Environmental) -->
+    <!-- Air & Sun Tracker -->
     <div class="glass-card p-6">
       <p class="text-[11px] uppercase tracking-wider opacity-60 font-semibold mb-4">Sun & Air Quality</p>
       <div class="grid grid-cols-2 gap-5">
@@ -224,8 +229,15 @@
       <div id="tech-panel" class="hidden mt-2 glass-card p-4 font-mono text-xs grid grid-cols-2 gap-3">
         <div><p class="opacity-40 text-[10px]">Humidity</p><p id="tech-humidity">--</p></div>
         <div><p class="opacity-40 text-[10px]">Wind</p><p id="tech-wind">--</p></div>
-        <div><p class="opacity-40 text-[10px]">Rain chance</p><p id="tech-rain">--</p></div>
-        <div><p class="opacity-40 text-[10px]">Weather code</p><p id="tech-code">--</p></div>
+        <div><p class="opacity-40 text-[10px]">Locality Rain chance</p><p id="tech-rain">--</p></div>
+        <div><p class="opacity-40 text-[10px]">Locality Code</p><p id="tech-code">--</p></div>
+        
+        <!-- Restored Ensemble Metrics -->
+        <div class="col-span-2 my-1 border-t border-white/10"></div>
+        <div><p class="opacity-40 text-[10px]">Models Used</p><p id="tech-loc-sources">--</p></div>
+        <div><p class="opacity-40 text-[10px]">Models Failed</p><p id="tech-loc-failed">--</p></div>
+        <div><p class="opacity-40 text-[10px]">Temp Spread</p><p id="tech-spread">--</p></div>
+        <div><p class="opacity-40 text-[10px]">Model Agreement</p><p id="tech-agreement">--</p></div>
       </div>
     </div>
   </div>
@@ -246,11 +258,12 @@ const LOCALITIES = [
   { name:"Charminar",           lat:17.3616, lon:78.4747 },
   { name:"Uppal",               lat:17.4058, lon:78.5591 },
 ];
-
-/* Hotspots dynamically load from these specific indices */
 const HOTSPOT_INDICES = [1, 2, 5, 9]; 
 
-/* Vibrant Themes with Cloud integration restored */
+/* Restored 3-Model Ensemble constants */
+const MODELS = ["icon_seamless", "ecmwf_ifs025", "gfs_seamless"];
+
+/* Vibrant Themes with Cloud integration */
 const THEMES = {
   clear: {
     day: { bg:"#38BDF8", text:"#082F49", accent:"#0284C7", from:"#7DD3FC", to:"#0EA5E9", cloud:"rgba(255,255,255,0.7)", icon:"sun" },
@@ -282,7 +295,6 @@ function applyTheme(cond,isDay){
   document.getElementById("hero-icon").style.color = t.accent;
 }
 
-/* Smart Rain Type Detector to prevent text contradictions */
 function getUpcomingRainType(hourlyCodes) {
     if (hourlyCodes.some(c => [95, 96, 99].includes(c))) return "Thunderstorms are";
     if (hourlyCodes.some(c => [65, 82].includes(c))) return "Heavy Rain is";
@@ -290,8 +302,6 @@ function getUpcomingRainType(hourlyCodes) {
     if (hourlyCodes.some(c => [51, 53, 55, 61].includes(c))) return "Light Drizzle is";
     return "Showers are";
 }
-
-/* --- THE HYBRID LOGIC --- */
 
 /* 1. Fetch Backend JSON for Hero */
 async function loadCityHero() {
@@ -304,14 +314,12 @@ async function loadCityHero() {
     document.getElementById("hero-feels").textContent = `Feels ${data.feelsLike || data.temp}°`;
     document.getElementById("hero-high-low").textContent = "H: --° L: --°"; 
     
-    // Confidence styling
     const confBadge = document.getElementById("conf-badge");
     confBadge.className = "font-mono font-medium px-2.5 py-0.5 rounded-full text-[10px] border " + 
         (data.confidence === "high" ? "bg-green-900/50 text-green-300 border-green-500/20" : 
          data.confidence === "low" ? "bg-red-900/50 text-red-300 border-red-500/20" : "bg-yellow-900/50 text-yellow-300 border-yellow-500/20");
     confBadge.textContent = (data.confidence || "MEDIUM").toUpperCase();
     
-    // Format timestamp
     let timeString = "--:--";
     if(data.generatedAt) {
         const d = new Date(data.generatedAt);
@@ -319,7 +327,6 @@ async function loadCityHero() {
     }
     document.getElementById("hero-updated").textContent = `Backend Updated ${timeString}`;
     
-    // Smart Contradiction Fix for Hero text
     let summaryText = `${data.condition === 'rainy' ? 'Rainy' : data.condition === 'clear' ? 'Clear' : 'Cloudy'} across Hyderabad today at ${data.temp}°C. `;
     if (data.chanceOfRain > 60) summaryText += `High chance of rain (${data.chanceOfRain}%). Sources agree.`;
     else if (data.chanceOfRain > 30) summaryText += `Moderate rain chance (${data.chanceOfRain}%).`;
@@ -327,13 +334,11 @@ async function loadCityHero() {
     
     document.getElementById("hero-city-summary").textContent = summaryText;
 
-    // Apply theme based on backend data
     applyTheme(data.condition, data.isDay !== false);
     lucide.createIcons();
 
   } catch (e) {
-    console.log("Falling back to live OM for hero", e);
-    const raw = await fetchOM(17.385, 78.4867);
+    const raw = await fetchOM(17.385, 78.4867, null);
     const data = transformOM(raw, "Hyderabad");
     
     document.getElementById("hero-temp").textContent = `${data.temp}°C`;
@@ -345,17 +350,19 @@ async function loadCityHero() {
   }
 }
 
-/* 2. Fetch Live OM Data for Localities & Hourly Strip */
-async function fetchOM(lat,lon){
+/* 2. Restored Ensemble Logic for Locality Panel */
+async function fetchOM(lat, lon, model) {
+  const modelParam = model ? `&models=${model}` : "";
   const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`+
     `&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day,precipitation`+
     `&hourly=temperature_2m,precipitation_probability,weather_code`+
-    `&forecast_days=1&timezone=Asia%2FKolkata`;
+    `${modelParam}&forecast_days=1&timezone=Asia%2FKolkata`;
   const res = await fetch(url);
+  if (!res.ok) throw new Error("Fetch failed");
   return res.json();
 }
 
-function transformOM(raw,name){
+function transformOM(raw, name) {
   const cur=raw.current;
   const cond=codeToCondition(cur.weather_code);
   const prefix=cur.time.slice(0,13);
@@ -367,7 +374,7 @@ function transformOM(raw,name){
   const chanceOfRain = next6Prob.length ? Math.max(...next6Prob) : 0;
   const upcomingRainType = getUpcomingRainType(next6Codes);
 
-  return{
+  return {
     temp:Math.round(cur.temperature_2m),
     humidity:cur.relative_humidity_2m,
     wind:Math.round(cur.wind_speed_10m),
@@ -383,31 +390,93 @@ function transformOM(raw,name){
   };
 }
 
-function renderLocality(data,name){
+function voteAgreement(list){
+  const total=list.length;
+  const wet=list.filter(d=>d.chanceOfRain>40||d.precipNow).length;
+  const dry=list.filter(d=>d.chanceOfRain<20&&!d.precipNow).length;
+  if(wet===total)return{agreement:"all_wet",confidence:"high"};
+  if(dry===total)return{agreement:"all_dry",confidence:"high"};
+  if(wet>total/2)return{agreement:"mostly_wet",confidence:"medium"};
+  if(dry>total/2)return{agreement:"mostly_dry",confidence:"medium"};
+  return{agreement:"split",confidence:"low"};
+}
+
+/* Fetches 3 models and combines them */
+async function fetchLocalityEnsemble(lat, lon, name) {
+  const settled = await Promise.allSettled(MODELS.map(m => fetchOM(lat, lon, m)));
+  const outcomes = settled.map((s, i) => ({ model: MODELS[i], ok: s.status === "fulfilled", raw: s.status === "fulfilled" ? s.value : null }));
+  const okOnes = outcomes.filter(o => o.ok);
+  
+  if (okOnes.length === 0) throw new Error("All models failed");
+
+  const transformed = okOnes.map(o => ({ model: o.model, ...transformOM(o.raw, name) }));
+  const primary = transformed[0];
+
+  const avgTemp = Math.round(transformed.reduce((s,d)=>s+d.temp,0)/transformed.length);
+  const avgHumidity = Math.round(transformed.reduce((s,d)=>s+d.humidity,0)/transformed.length);
+  const avgWind = Math.round(transformed.reduce((s,d)=>s+d.wind,0)/transformed.length);
+  const maxRain = Math.max(...transformed.map(d=>d.chanceOfRain));
+  const anyPrecipNow = transformed.some(d=>d.precipNow);
+  const temps = transformed.map(d=>d.temp);
+  const spread = Math.round((Math.max(...temps)-Math.min(...temps))*10)/10;
+
+  let { agreement, confidence } = voteAgreement(transformed);
+  if(spread>=3) confidence="low";
+
+  const condition = (agreement==="all_wet"||agreement==="mostly_wet")?"rainy":primary.condition;
+
+  return {
+    temp: avgTemp, humidity: avgHumidity, wind: avgWind, chanceOfRain: maxRain, precipNow: anyPrecipNow,
+    upcomingRainType: primary.upcomingRainType,
+    condition, condLabel: primary.condLabel, isDay: primary.isDay,
+    hourly: primary.hourly, nowIdx: primary.nowIdx,
+    locationName: name, updated: primary.updated, weatherCode: primary.weatherCode,
+    sourcesUsed: transformed.map(t=>t.model),
+    sourcesFailed: outcomes.filter(o=>!o.ok).map(o=>o.model),
+    confidence, agreement, tempSpread: spread,
+  };
+}
+
+function renderLocality(data, name) {
   document.getElementById("loc-temp").textContent=`${data.temp}°`;
   document.getElementById("loc-humidity").textContent=`${data.humidity}%`;
   document.getElementById("loc-wind").textContent=`${data.wind}`;
   document.getElementById("loc-rain").textContent=`${data.chanceOfRain}%`;
   
-  /* Smart Contradiction Fix for Location Panel */
-  if (data.precipNow) {
-    document.getElementById("loc-interpretation").textContent=`${name}: Raining right now.`;
-  } else if (data.chanceOfRain > 30) {
-    document.getElementById("loc-interpretation").textContent=`${name}: Currently ${data.condLabel}, but ${data.upcomingRainType} expected later (${data.chanceOfRain}% chance).`;
-  } else {
-    document.getElementById("loc-interpretation").textContent=`${name}: ${data.condLabel} with dry conditions expected.`;
-  }
+  /* Ensemble Confidence Badge */
+  const locBadge = document.getElementById("loc-conf-badge");
+  locBadge.classList.remove("hidden");
+  locBadge.className = "font-mono font-medium px-2 py-0.5 rounded-full text-[10px] border " + 
+        (data.confidence === "high" ? "bg-green-900/50 text-green-300 border-green-500/20" : 
+         data.confidence === "low" ? "bg-red-900/50 text-red-300 border-red-500/20" : "bg-yellow-900/50 text-yellow-300 border-yellow-500/20");
+  locBadge.textContent = `${data.sourcesUsed.length} MODELS — ${data.confidence.toUpperCase()}`;
 
-  /* Mocking UV Index */
+  /* Smart Contradiction Fix with Ensemble Data */
+  let interpretationText = "";
+  if (data.precipNow) {
+    interpretationText = `${name}: Raining right now.`;
+  } else if (data.chanceOfRain > 30) {
+    interpretationText = `${name}: Currently ${data.condLabel}, but ${data.upcomingRainType} expected later (${data.chanceOfRain}% chance).`;
+  } else {
+    interpretationText = `${name}: ${data.condLabel} with dry conditions expected.`;
+  }
+  
+  if(data.confidence === "low") interpretationText += ` Models disagree, refer to live radar.`;
+  document.getElementById("loc-interpretation").textContent = interpretationText;
+
   if(document.getElementById("stat-uv")) {
     document.getElementById("stat-uv").textContent = data.isDay ? (Math.random() * 3 + 4).toFixed(1) : "0"; 
   }
 
-  // Populate Tech details
+  // Populate Tech details (Including restored ensemble metrics)
   document.getElementById("tech-humidity").textContent=`${data.humidity}%`;
   document.getElementById("tech-wind").textContent=`${data.wind} km/h`;
   document.getElementById("tech-rain").textContent=`${data.chanceOfRain}%`;
   document.getElementById("tech-code").textContent=`${data.weatherCode} — ${data.condLabel}`;
+  document.getElementById("tech-loc-sources").textContent = data.sourcesUsed.join(", ");
+  document.getElementById("tech-loc-failed").textContent = data.sourcesFailed.length ? data.sourcesFailed.join(", ") : "None";
+  document.getElementById("tech-spread").textContent = `${data.tempSpread}°C`;
+  document.getElementById("tech-agreement").textContent = data.agreement;
 
   const strip=document.getElementById("hourly-strip");
   strip.innerHTML="";
@@ -426,7 +495,7 @@ function renderLocality(data,name){
   lucide.createIcons();
 }
 
-/* Hotspot Loader */
+/* Hotspot Loader (Single Model for Speed) */
 async function loadHotspots() {
   const container = document.getElementById("rain-hotspots");
   container.innerHTML = "";
@@ -434,7 +503,7 @@ async function loadHotspots() {
   for (const idx of HOTSPOT_INDICES) {
     const loc = LOCALITIES[idx];
     try {
-      const raw = await fetchOM(loc.lat, loc.lon);
+      const raw = await fetchOM(loc.lat, loc.lon, null);
       const data = transformOM(raw, loc.name);
       
       const isRaining = data.precipNow;
@@ -459,17 +528,18 @@ async function loadHotspots() {
   lucide.createIcons();
 }
 
-/* Dropdown setup */
 const select=document.getElementById("locality-select");
 LOCALITIES.forEach((loc,i)=>{const o=document.createElement("option");o.value=i;o.textContent=loc.name;select.appendChild(o);});
 
 async function loadLocality(idx){
   const loc=LOCALITIES[idx];
-  try{
-    const raw=await fetchOM(loc.lat,loc.lon);
-    const data=transformOM(raw,loc.name);
-    renderLocality(data,loc.name);
-  }catch(err){console.error(err);}
+  try {
+    // Calls the 3-model ensemble
+    const data = await fetchLocalityEnsemble(loc.lat, loc.lon, loc.name);
+    renderLocality(data, loc.name);
+  } catch(err) {
+    console.error(err);
+  }
 }
 
 select.addEventListener("change",e=>loadLocality(Number(e.target.value)));
