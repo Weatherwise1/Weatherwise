@@ -392,6 +392,14 @@ function transformOM(raw, name) {
 
 function voteAgreement(list){
   const total=list.length;
+
+  // FIX: a single surviving model can't meaningfully "agree with itself."
+  // Without this guard, if 2 of 3 models failed and only 1 came back,
+  // it would trivially satisfy wet===total or dry===total and get
+  // labeled HIGH confidence — exactly the false-confidence problem
+  // this whole ensemble system exists to prevent.
+  if(total<2) return{agreement:"single_source",confidence:"low"};
+
   const wet=list.filter(d=>d.chanceOfRain>40||d.precipNow).length;
   const dry=list.filter(d=>d.chanceOfRain<20&&!d.precipNow).length;
   if(wet===total)return{agreement:"all_wet",confidence:"high"};
@@ -456,7 +464,8 @@ function renderLocality(data, name) {
   locBadge.className = "font-mono font-medium px-2 py-0.5 rounded-full text-[10px] border " +
         (data.confidence === "high" ? "bg-green-900/50 text-green-300 border-green-500/20" :
          data.confidence === "low" ? "bg-red-900/50 text-red-300 border-red-500/20" : "bg-yellow-900/50 text-yellow-300 border-yellow-500/20");
-  locBadge.textContent = `${data.sourcesUsed.length} MODELS — ${data.confidence.toUpperCase()}`;
+  const modelWord = data.sourcesUsed.length === 1 ? "MODEL" : "MODELS";
+  locBadge.textContent = `${data.sourcesUsed.length} ${modelWord} — ${data.confidence.toUpperCase()}`;
 
   let interpretationText = "";
   if (data.precipNow) {
@@ -467,7 +476,11 @@ function renderLocality(data, name) {
     interpretationText = `${name}: ${data.condLabel} with dry conditions expected.`;
   }
 
-  if(data.confidence === "low") interpretationText += ` Models disagree, refer to live radar.`;
+  if(data.agreement === "single_source") {
+    interpretationText += ` Only one model responded — treat this as a rough estimate, not a confident forecast.`;
+  } else if(data.confidence === "low") {
+    interpretationText += ` Models disagree, refer to live radar.`;
+  }
   document.getElementById("loc-interpretation").textContent = interpretationText;
 
   document.getElementById("stat-sunrise").textContent = data.sunrise;
