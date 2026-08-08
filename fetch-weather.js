@@ -24,12 +24,13 @@ async function getOpenMeteoICON(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
     `&current=temperature_2m,precipitation,weather_code,wind_speed_10m,relative_humidity_2m,is_day` +
     `&hourly=precipitation_probability,temperature_2m,weather_code` +
+    `&daily=temperature_2m_max,temperature_2m_min` +
     `&models=icon_seamless&forecast_days=1&timezone=Asia%2FKolkata`;
   const data = await fetchWithTimeout(url);
   const cur = data.current;
   const nowIdx = data.hourly.time.findIndex(t => t.startsWith(cur.time.slice(0, 13)));
   const next6 = data.hourly.precipitation_probability.slice(nowIdx, nowIdx + 6);
-  return {
+ return {
     source: "Open-Meteo ICON",
     temp: Math.round(cur.temperature_2m),
     humidity: cur.relative_humidity_2m,
@@ -38,6 +39,8 @@ async function getOpenMeteoICON(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
     chanceOfRain: next6.length ? Math.max(...next6) : 0,
     weatherCode: cur.weather_code,
     isDay: cur.is_day === 1,
+    high: data.daily ? Math.round(data.daily.temperature_2m_max[0]) : null,
+    low: data.daily ? Math.round(data.daily.temperature_2m_min[0]) : null,
   };
 }
 
@@ -144,6 +147,8 @@ function reconcile(results) {
   if (tempSpread >= 3) confidence = "low";
 
   const isDay = good.find(d => d.isDay !== undefined)?.isDay ?? true;
+  const high = good.find(d => d.high != null)?.high ?? null;
+  const low = good.find(d => d.low != null)?.low ?? null;
   const uv = good.find(d => d.uvIndex)?.uvIndex ?? good.find(d => d.uv)?.uv ?? null;
   const feelsLike = good.find(d => d.feelsLike)?.feelsLike ?? null;
   const airQuality = good.find(d => d.airQuality)?.airQuality ?? null;
@@ -167,6 +172,8 @@ function reconcile(results) {
     chanceOfRain: maxRain,
     condition,
     isDay,
+    high,
+    low,
     confidence,
     rainAgreement,
     tempSpread,

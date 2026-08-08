@@ -297,7 +297,8 @@ async function loadCityHero() {
 
     document.getElementById("hero-temp").textContent = `${data.temp}°C`;
     document.getElementById("hero-feels").textContent = `Feels ${data.feelsLike || data.temp}°`;
-    document.getElementById("hero-high-low").textContent = "H: --° L: --°";
+    // High/low intentionally NOT touched here — weather.json doesn't track it.
+    // It's filled in separately by renderLocality() when Hyderabad Central loads.
 
     const confBadge = document.getElementById("conf-badge");
     confBadge.className = "font-mono font-medium px-2.5 py-0.5 rounded-full text-[10px] border " +
@@ -373,6 +374,11 @@ function transformOM(raw, name) {
     sunrise: raw.daily ? formatTime(raw.daily.sunrise[0]) : "--:--",
     sunset: raw.daily ? formatTime(raw.daily.sunset[0]) : "--:--",
     uvIndex: raw.daily ? raw.daily.uv_index_max[0] : "--",
+    // FIX #3: high/low were being fetched (see &daily= in fetchOM) but
+    // never extracted here, so the hero display had nothing real to show
+    // and fell back to a hardcoded "--°" placeholder.
+    high: raw.daily ? Math.round(raw.daily.temperature_2m_max[0]) : null,
+    low: raw.daily ? Math.round(raw.daily.temperature_2m_min[0]) : null,
     chanceOfRain: chanceOfRain,
     upcomingRainType: getUpcomingRainType(next6Codes),
     condition: cond,
@@ -422,6 +428,7 @@ async function fetchLocalityEnsemble(lat, lon, name) {
     temp: avgTemp, humidity: avgHumidity, wind: avgWind, chanceOfRain: maxRain, precipNow: anyPrecipNow,
     upcomingRainType: primary.upcomingRainType,
     visibility: primary.visibility, sunrise: primary.sunrise, sunset: primary.sunset, uvIndex: primary.uvIndex,
+    high: primary.high, low: primary.low,
     condition, condLabel: primary.condLabel, isDay: primary.isDay,
     hourly: primary.hourly, nowIdx: primary.nowIdx,
     locationName: name, updated: primary.updated, weatherCode: primary.weatherCode,
@@ -436,6 +443,13 @@ function renderLocality(data, name) {
   document.getElementById("loc-humidity").textContent=`${data.humidity}%`;
   document.getElementById("loc-wind").textContent=`${data.wind}`;
   document.getElementById("loc-rain").textContent=`${data.chanceOfRain}%`;
+
+  // FIX #3: the backend weather.json (used for the hero) doesn't track
+  // high/low, so we borrow it from the Hyderabad Central locality fetch
+  // when that's what just loaded — no extra network request needed.
+  if (name === "Hyderabad (Central)" && data.high != null && data.low != null) {
+    document.getElementById("hero-high-low").textContent = `H: ${data.high}° L: ${data.low}°`;
+  }
 
   const locBadge = document.getElementById("loc-conf-badge");
   locBadge.classList.remove("hidden");
