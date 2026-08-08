@@ -107,6 +107,14 @@ async function getTomorrow(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   };
 }
 
+function median(nums) {
+  const sorted = [...nums].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 !== 0
+    ? sorted[mid]
+    : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+}
+
 // ─── Reconciliation Engine ──────────────────────────────────────────────────
 function reconcile(results) {
   const good = results.filter(r => r.status === "ok").map(r => r.data);
@@ -117,7 +125,11 @@ function reconcile(results) {
   const avgTemp = Math.round(good.reduce((s, d) => s + d.temp, 0) / good.length);
   const avgHumidity = Math.round(good.reduce((s, d) => s + d.humidity, 0) / good.length);
   const avgWind = Math.round(good.reduce((s, d) => s + d.wind, 0) / good.length);
-  const maxRain = Math.max(...good.map(d => d.chanceOfRain));
+  // FIX: was Math.max(...) — one outlier source (e.g. Tomorrow.io spiking to
+  // 90% while Open-Meteo ICON/ECMWF and WeatherAPI all say 20-30%) could
+  // single-handedly push the headline number to "rain likely." Median is
+  // resistant to that: the outlier gets outvoted by the middle value.
+  const rainChance = median(good.map(d => d.chanceOfRain));
 
   const temps = good.map(d => d.temp);
   const tempSpread = Math.max(...temps) - Math.min(...temps);
@@ -169,7 +181,7 @@ function reconcile(results) {
     temp: avgTemp,
     humidity: avgHumidity,
     wind: avgWind,
-    chanceOfRain: maxRain,
+    chanceOfRain: rainChance,
     condition,
     isDay,
     high,
