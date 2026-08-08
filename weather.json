@@ -1,15 +1,15 @@
 {
   "city": "Hyderabad",
-  "temp": 30,
+  "temp": 29,
   "humidity": 60,
-  "wind": 19,
-  "chanceOfRain": 75,
+  "wind": 17,
+  "chanceOfRain": 69,
   "condition": "rainy",
   "isDay": true,
-  "confidence": "low",
+  "confidence": "medium",
   "rainAgreement": "mostly_wet",
-  "tempSpread": 3,
-  "uv": 2.3,
+  "tempSpread": 1,
+  "uv": 1.3,
   "feelsLike": 30,
   "airQuality": 14,
   "sourcesUsed": [
@@ -20,5 +20,5 @@
   "sourcesFailed": [
     "Tomorrow.io"
   ],
-  "generatedAt": "2026-08-08T09:58:50.248Z"
+  "generatedAt": "2026-08-08T11:13:55.433Z"
 }
