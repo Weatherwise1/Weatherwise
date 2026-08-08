@@ -51,9 +51,8 @@
   .hour-pill{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0.25rem;padding:0.6rem 0.8rem;border-radius:1rem;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);font-size:0.75rem;min-width:60px;}
   .hour-pill.now{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.35);}
 
-  #radar-map{height:280px;border-radius:1rem;}
+  #radar-map{height:280px;border-radius:1rem; z-index: 1;}
 
-  /* NEW: error banner for failed locality loads */
   #loc-error-banner{display:none;}
   #loc-error-banner.visible{display:flex;}
 </style>
@@ -121,8 +120,8 @@
 
 <div class="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 py-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
 
+  <!-- LEFT PANEL -->
   <div class="lg:col-span-3 flex flex-col gap-6">
-
     <div class="glass-card p-6">
       <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
         <div class="flex items-center gap-2">
@@ -130,7 +129,7 @@
           <span class="text-xs uppercase tracking-wider opacity-60 font-medium">Selected Location</span>
         </div>
         <div class="flex items-center gap-2">
-          <span id="loc-conf-badge" class="font-mono font-medium px-2 py-0.5 rounded-full text-[10px] hidden"></span>
+          <span id="loc-conf-badge" class="font-mono font-medium px-2.5 py-0.5 rounded-full text-[10px] hidden"></span>
           <div class="flex items-center gap-2 border border-white/20 rounded-full px-4 py-1.5 bg-white/5">
             <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 opacity-50"></i>
             <select id="locality-select" class="text-xs font-semibold opacity-90 pr-1 focus:opacity-100" aria-label="Select locality"></select>
@@ -138,7 +137,6 @@
         </div>
       </div>
 
-      <!-- NEW: error banner, shown only when a locality fetch fails -->
       <div id="loc-error-banner" class="mb-4 items-center gap-2 px-4 py-2.5 rounded-xl border border-red-400/20 bg-red-500/10 text-xs">
         <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-400 flex-shrink-0"></i>
         <span id="loc-error-text" class="flex-1">Couldn't load this location. Check your connection.</span>
@@ -173,56 +171,52 @@
       </div>
     </div>
 
+    <!-- Live Radar -->
     <div class="glass-card p-5">
       <div class="flex items-center justify-between mb-3">
         <p class="text-[11px] uppercase tracking-wider opacity-60 font-semibold">Live Doppler Radar</p>
-        <p class="text-[10px] opacity-40 font-mono">Animating last 30 min</p>
+        <p class="text-[10px] opacity-80 font-mono bg-black/20 px-2 py-1 rounded">Frame: <span id="radar-time" class="text-white font-bold">--:--</span></p>
       </div>
       <div id="radar-map"></div>
       <p id="radar-hint" class="text-[10px] opacity-60 mt-3 flex items-start gap-1.5 leading-tight">
         <i data-lucide="info" class="w-3.5 h-3.5 flex-shrink-0"></i>
-        <span>For "is it raining right now," trust this live radar over the forecast text — forecasts are probabilistic, but radar shows the actual truth on the ground.</span>
+        <span>Doppler radar shows actual falling rain, not clouds. If the map is clear, there is no active precipitation in the area. Try zooming out to find active rain cells across India.</span>
       </p>
     </div>
   </div>
 
+  <!-- RIGHT PANEL -->
   <div class="lg:col-span-2 flex flex-col gap-6">
 
-    <div class="glass-card p-6">
-      <p class="text-[11px] uppercase tracking-wider opacity-60 font-semibold mb-4">Sun & Air Quality</p>
-      <div class="grid grid-cols-2 gap-5">
-        <div>
-          <p class="text-[11px] opacity-50 mb-1">Sunrise</p>
-          <p class="font-display text-xl font-bold" id="stat-sunrise">--:--</p>
-        </div>
-        <div>
-          <p class="text-[11px] opacity-50 mb-1">Sunset</p>
-          <p class="font-display text-xl font-bold" id="stat-sunset">--:--</p>
-        </div>
-        <div>
-          <p class="text-[11px] opacity-50 mb-1">Visibility</p>
-          <p class="font-display text-lg font-bold" id="stat-visibility">-- km</p>
-          <p class="text-[10px] opacity-60" id="stat-vis-label">Loading</p>
-        </div>
-        <div>
-          <p class="text-[11px] opacity-50 mb-1">UV Index</p>
-          <p class="font-display text-lg font-bold" id="stat-uv">--</p>
-        </div>
+    <!-- NEW: WeatherWise Says Card -->
+    <div class="glass-card p-6 border-l-4 border-l-[var(--accent)]">
+      <div class="flex items-center gap-2 mb-3">
+        <i data-lucide="sparkles" class="w-4 h-4" style="color:var(--accent)"></i>
+        <p class="text-[11px] uppercase tracking-wider opacity-80 font-semibold">WeatherWise Says</p>
       </div>
+      <p class="font-display text-lg font-medium leading-snug" id="ww-says-text">Analyzing neighborhood data...</p>
     </div>
 
+    <!-- MOVED & COMBINED: Tech Details & Sun/Air -->
     <div>
-      <button id="tech-toggle" class="glass-card w-full flex items-center justify-between p-4 text-xs font-semibold opacity-70 hover:opacity-100 transition-opacity">
-        <span>Raw Technical Data</span>
+      <button id="tech-toggle" class="glass-card w-full flex items-center justify-between p-4 text-xs font-semibold opacity-70 hover:opacity-100 transition-opacity mt-2">
+        <span>Advanced Forecast & Sun Details</span>
         <i data-lucide="chevron-down" id="tech-chevron" class="w-4 h-4 transition-transform"></i>
       </button>
-      <div id="tech-panel" class="hidden mt-2 glass-card p-4 font-mono text-xs grid grid-cols-2 gap-3">
+      <div id="tech-panel" class="hidden mt-2 glass-card p-5 font-mono text-xs grid grid-cols-2 gap-4">
+        <!-- Sun Data -->
+        <div><p class="opacity-40 text-[10px]">Sunrise</p><p id="stat-sunrise">--:--</p></div>
+        <div><p class="opacity-40 text-[10px]">Sunset</p><p id="stat-sunset">--:--</p></div>
+        <div><p class="opacity-40 text-[10px]">Visibility</p><p><span id="stat-visibility">-- km</span> (<span id="stat-vis-label">--</span>)</p></div>
+        <div><p class="opacity-40 text-[10px]">UV Index Max</p><p id="stat-uv">--</p></div>
+        
+        <div class="col-span-2 my-1 border-t border-white/10"></div>
+        
+        <!-- Tech Data -->
         <div><p class="opacity-40 text-[10px]">Humidity</p><p id="tech-humidity">--</p></div>
         <div><p class="opacity-40 text-[10px]">Wind</p><p id="tech-wind">--</p></div>
         <div><p class="opacity-40 text-[10px]">Locality Rain chance</p><p id="tech-rain">--</p></div>
         <div><p class="opacity-40 text-[10px]">Locality Code</p><p id="tech-code">--</p></div>
-
-        <div class="col-span-2 my-1 border-t border-white/10"></div>
         <div><p class="opacity-40 text-[10px]">Models Used</p><p id="tech-loc-sources">--</p></div>
         <div><p class="opacity-40 text-[10px]">Models Failed</p><p id="tech-loc-failed">--</p></div>
         <div><p class="opacity-40 text-[10px]">Temp Spread</p><p id="tech-spread">--</p></div>
@@ -247,7 +241,6 @@ const LOCALITIES = [
   { name:"Uppal",               lat:17.4058, lon:78.5591 },
 ];
 const HOTSPOT_INDICES = [1, 2, 5, 9];
-
 const MODELS = ["icon_seamless", "ecmwf_ifs025", "gfs_seamless"];
 
 const THEMES = {
@@ -297,8 +290,6 @@ async function loadCityHero() {
 
     document.getElementById("hero-temp").textContent = `${data.temp}°C`;
     document.getElementById("hero-feels").textContent = `Feels ${data.feelsLike || data.temp}°`;
-    // High/low intentionally NOT touched here — weather.json doesn't track it.
-    // It's filled in separately by renderLocality() when Hyderabad Central loads.
 
     const confBadge = document.getElementById("conf-badge");
     confBadge.className = "font-mono font-medium px-2.5 py-0.5 rounded-full text-[10px] border " +
@@ -319,6 +310,10 @@ async function loadCityHero() {
     else summaryText += `No significant rain expected.`;
 
     document.getElementById("hero-city-summary").textContent = summaryText;
+    
+    if(document.getElementById("stat-uv")) {
+        document.getElementById("stat-uv").textContent = data.uv || data.uvIndex || "--";
+    }
 
     applyTheme(data.condition, data.isDay !== false);
     lucide.createIcons();
@@ -331,6 +326,11 @@ async function loadCityHero() {
     document.getElementById("hero-feels").textContent = `Feels ${data.temp}°`;
     document.getElementById("hero-updated").textContent = `Updated ${data.updated}`;
     document.getElementById("hero-city-summary").textContent = `${data.condLabel} today at ${data.temp}°C. Live fallback data.`;
+    
+    if(document.getElementById("stat-uv")) {
+        document.getElementById("stat-uv").textContent = data.uvIndex !== undefined ? data.uvIndex : "--";
+    }
+
     applyTheme(data.condition, data.isDay);
     lucide.createIcons();
   }
@@ -373,10 +373,7 @@ function transformOM(raw, name) {
     visibility: cur.visibility ? Math.round(cur.visibility / 1000) : "--",
     sunrise: raw.daily ? formatTime(raw.daily.sunrise[0]) : "--:--",
     sunset: raw.daily ? formatTime(raw.daily.sunset[0]) : "--:--",
-    uvIndex: raw.daily ? raw.daily.uv_index_max[0] : "--",
-    // FIX #3: high/low were being fetched (see &daily= in fetchOM) but
-    // never extracted here, so the hero display had nothing real to show
-    // and fell back to a hardcoded "--°" placeholder.
+    uvIndex: raw.daily && raw.daily.uv_index_max ? raw.daily.uv_index_max[0] : "--",
     high: raw.daily ? Math.round(raw.daily.temperature_2m_max[0]) : null,
     low: raw.daily ? Math.round(raw.daily.temperature_2m_min[0]) : null,
     chanceOfRain: chanceOfRain,
@@ -390,31 +387,25 @@ function transformOM(raw, name) {
   };
 }
 
-function voteAgreement(list){
-  const total=list.length;
-
-  // FIX: a single surviving model can't meaningfully "agree with itself."
-  // Without this guard, if 2 of 3 models failed and only 1 came back,
-  // it would trivially satisfy wet===total or dry===total and get
-  // labeled HIGH confidence — exactly the false-confidence problem
-  // this whole ensemble system exists to prevent.
-  if(total<2) return{agreement:"single_source",confidence:"low"};
-
-  const wet=list.filter(d=>d.chanceOfRain>40||d.precipNow).length;
-  const dry=list.filter(d=>d.chanceOfRain<20&&!d.precipNow).length;
-  if(wet===total)return{agreement:"all_wet",confidence:"high"};
-  if(dry===total)return{agreement:"all_dry",confidence:"high"};
-  if(wet>total/2)return{agreement:"mostly_wet",confidence:"medium"};
-  if(dry>total/2)return{agreement:"mostly_dry",confidence:"medium"};
-  return{agreement:"split",confidence:"low"};
-}
-
 function median(nums){
   const sorted = [...nums].sort((a,b)=>a-b);
   const mid = Math.floor(sorted.length/2);
   return sorted.length % 2 !== 0
     ? sorted[mid]
     : Math.round((sorted[mid-1] + sorted[mid]) / 2);
+}
+
+function voteAgreement(list){
+  const total=list.length;
+  if(total<2) return{agreement:"single_source",confidenceText:"Not enough data", confLevel: "low"};
+
+  const wet=list.filter(d=>d.chanceOfRain>40||d.precipNow).length;
+  const dry=list.filter(d=>d.chanceOfRain<20&&!d.precipNow).length;
+  
+  if(wet===total || dry===total) return {agreement: wet === total ? "all_wet" : "all_dry", confidenceText: "Models agree", confLevel: "high"};
+  if(wet>total/2 || dry>total/2) return {agreement: wet>total/2 ? "mostly_wet" : "mostly_dry", confidenceText: "Models mostly agree", confLevel: "medium"};
+  
+  return{agreement:"split",confidenceText:"Models disagree", confLevel: "low"};
 }
 
 async function fetchLocalityEnsemble(lat, lon, name) {
@@ -430,16 +421,17 @@ async function fetchLocalityEnsemble(lat, lon, name) {
   const avgTemp = Math.round(transformed.reduce((s,d)=>s+d.temp,0)/transformed.length);
   const avgHumidity = Math.round(transformed.reduce((s,d)=>s+d.humidity,0)/transformed.length);
   const avgWind = Math.round(transformed.reduce((s,d)=>s+d.wind,0)/transformed.length);
-  // FIX: was Math.max(...) — a single outlier model (e.g. one glitching to
-  // 90% while the other two say 20-25%) could hijack the headline number.
-  // Median resists that: the outlier gets outvoted by the middle value.
   const rainChance = median(transformed.map(d=>d.chanceOfRain));
+  
   const anyPrecipNow = transformed.some(d=>d.precipNow);
   const temps = transformed.map(d=>d.temp);
   const spread = Math.round((Math.max(...temps)-Math.min(...temps))*10)/10;
 
-  let { agreement, confidence } = voteAgreement(transformed);
-  if(spread>=3) confidence="low";
+  let { agreement, confidenceText, confLevel } = voteAgreement(transformed);
+  if(spread>=3) {
+      confidenceText = "High temperature uncertainty";
+      confLevel = "low";
+  }
 
   const condition = (agreement==="all_wet"||agreement==="mostly_wet")?"rainy":primary.condition;
 
@@ -453,51 +445,49 @@ async function fetchLocalityEnsemble(lat, lon, name) {
     locationName: name, updated: primary.updated, weatherCode: primary.weatherCode,
     sourcesUsed: transformed.map(t=>t.model),
     sourcesFailed: outcomes.filter(o=>!o.ok).map(o=>o.model),
-    confidence, agreement, tempSpread: spread,
+    confidenceText, confLevel, agreement, tempSpread: spread,
   };
 }
 
 function renderLocality(data, name) {
   document.getElementById("loc-temp").textContent=`${data.temp}°`;
   document.getElementById("loc-humidity").textContent=`${data.humidity}%`;
-  document.getElementById("loc-wind").textContent=`${data.wind}`;
+  document.getElementById("loc-wind").textContent=`${data.wind} km/h`;
   document.getElementById("loc-rain").textContent=`${data.chanceOfRain}%`;
 
-  // FIX #3: the backend weather.json (used for the hero) doesn't track
-  // high/low, so we borrow it from the Hyderabad Central locality fetch
-  // when that's what just loaded — no extra network request needed.
   if (name === "Hyderabad (Central)" && data.high != null && data.low != null) {
     document.getElementById("hero-high-low").textContent = `H: ${data.high}° L: ${data.low}°`;
   }
 
   const locBadge = document.getElementById("loc-conf-badge");
   locBadge.classList.remove("hidden");
-  locBadge.className = "font-mono font-medium px-2 py-0.5 rounded-full text-[10px] border " +
-        (data.confidence === "high" ? "bg-green-900/50 text-green-300 border-green-500/20" :
-         data.confidence === "low" ? "bg-red-900/50 text-red-300 border-red-500/20" : "bg-yellow-900/50 text-yellow-300 border-yellow-500/20");
-  const modelWord = data.sourcesUsed.length === 1 ? "MODEL" : "MODELS";
-  locBadge.textContent = `${data.sourcesUsed.length} ${modelWord} — ${data.confidence.toUpperCase()}`;
+  locBadge.className = "font-mono font-medium px-2.5 py-0.5 rounded-full text-[10px] border " +
+        (data.confLevel === "high" ? "bg-green-900/50 text-green-300 border-green-500/20" :
+         data.confLevel === "low" ? "bg-red-900/50 text-red-300 border-red-500/20" : "bg-yellow-900/50 text-yellow-300 border-yellow-500/20");
+  locBadge.textContent = data.confidenceText.toUpperCase();
 
-  let interpretationText = "";
+  let advice = "";
   if (data.precipNow) {
-    interpretationText = `${name}: Raining right now.`;
+    advice = `Carry an umbrella. It is actively raining in ${name}, and conditions remain wet.`;
+  } else if (data.chanceOfRain > 60) {
+    advice = `Rain is highly likely in ${name} soon (${data.chanceOfRain}% chance). Bring an umbrella if you are heading out.`;
   } else if (data.chanceOfRain > 30) {
-    interpretationText = `${name}: Currently ${data.condLabel}, but ${data.upcomingRainType} expected later (${data.chanceOfRain}% chance).`;
+    advice = `There is a moderate chance of rain (${data.chanceOfRain}%) in ${name}. It might pass, but stay aware.`;
+  } else if (data.temp >= 33 && data.isDay) {
+    advice = `It is hot in ${name} (${data.temp}°C). Stay hydrated and avoid prolonged sun exposure.`;
+  } else if (data.condition === "clear") {
+    advice = `Good conditions in ${name}. Expect clear skies and no significant weather disruptions.`;
   } else {
-    interpretationText = `${name}: ${data.condLabel} with dry conditions expected.`;
+    advice = `Quiet weather in ${name} right now. No major rain expected.`;
   }
-
-  if(data.agreement === "single_source") {
-    interpretationText += ` Only one model responded — treat this as a rough estimate, not a confident forecast.`;
-  } else if(data.confidence === "low") {
-    interpretationText += ` Models disagree, refer to live radar.`;
-  }
-  document.getElementById("loc-interpretation").textContent = interpretationText;
+  document.getElementById("ww-says-text").textContent = advice;
+  
+  document.getElementById("loc-interpretation").textContent = data.precipNow ? "Raining right now." : `Currently ${data.condLabel}.`;
 
   document.getElementById("stat-sunrise").textContent = data.sunrise;
   document.getElementById("stat-sunset").textContent = data.sunset;
   document.getElementById("stat-visibility").textContent = `${data.visibility} km`;
-  document.getElementById("stat-uv").textContent = data.uvIndex;
+  if(document.getElementById("stat-uv")) document.getElementById("stat-uv").textContent = data.uvIndex !== undefined ? data.uvIndex : "--";
   document.getElementById("stat-vis-label").textContent = data.visibility > 8 ? "Clear view" : data.visibility > 3 ? "Haze or mist" : "Poor visibility";
 
   document.getElementById("tech-humidity").textContent=`${data.humidity}%`;
@@ -530,10 +520,6 @@ async function loadHotspots() {
   const container = document.getElementById("rain-hotspots");
   container.innerHTML = "";
 
-  // FIX #4: fetch all hotspots in parallel instead of one-at-a-time.
-  // Previously this loop awaited each fetch before starting the next,
-  // making 4 sequential requests (~4x slower than necessary). Promise.all
-  // fires them simultaneously and waits only for the slowest one.
   const results = await Promise.all(
     HOTSPOT_INDICES.map(async (idx) => {
       const loc = LOCALITIES[idx];
@@ -576,9 +562,6 @@ async function loadHotspots() {
 const select=document.getElementById("locality-select");
 LOCALITIES.forEach((loc,i)=>{const o=document.createElement("option");o.value=i;o.textContent=loc.name;select.appendChild(o);});
 
-/* ── FIX #1: loadLocality now shows a visible error + retry button
-   instead of silently console.error-ing and leaving the UI stuck
-   on "Loading location detail..." forever. ── */
 let currentLocalityIdx = 0;
 
 function hideLocError(){
@@ -596,16 +579,13 @@ async function loadLocality(idx){
   hideLocError();
   try {
     const data = await fetchLocalityEnsemble(loc.lat, loc.lon, loc.name);
-    // FIX #2: if the user has since switched to a different locality while
-    // this request was in flight, discard this now-stale response instead
-    // of overwriting the screen with data for the wrong place.
     if (idx !== currentLocalityIdx) {
       console.log(`Discarding stale response for ${loc.name} — user moved to a different locality.`);
       return;
     }
     renderLocality(data, loc.name);
   } catch(err) {
-    if (idx !== currentLocalityIdx) return; // stale error too — ignore it
+    if (idx !== currentLocalityIdx) return; 
     console.error(err);
     const msg = err.name === "AbortError"
       ? `Request for ${loc.name} timed out. Check your connection and retry.`
@@ -627,27 +607,30 @@ document.getElementById("tech-toggle").addEventListener("click",()=>{
   document.getElementById("tech-chevron").classList.toggle("rotate-180");
 });
 
-const map=L.map("radar-map",{zoomControl:false,attributionControl:false,minZoom:6,maxZoom:11}).setView([17.385,78.4867],9);
+const map=L.map("radar-map",{zoomControl:true,attributionControl:false,minZoom:4,maxZoom:11}).setView([17.385,78.4867],8);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:11}).addTo(map);
 
 let radarLayers = [];
 let radarInterval = null;
 let currentRadarIdx = 0;
+
 async function initRadar() {
   try {
     const res = await fetch("https://api.rainviewer.com/public/weather-maps.json");
     const data = await res.json();
-
+    
     const host = data.host || "https://tilecache.rainviewer.com";
     const frames = data.radar.past;
+    const timeLabel = document.getElementById("radar-time");
+    
     if (!frames || frames.length === 0) return;
 
     radarLayers = frames.map(frame => {
       const url = `${host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
       const layer = L.tileLayer(url, {
         opacity: 0,
-        maxNativeZoom: 7,
-        minZoom: 6,
+        maxNativeZoom: 7, 
+        minZoom: 4,
         maxZoom: 11,
         zIndex: 10
       }).addTo(map);
@@ -655,13 +638,24 @@ async function initRadar() {
     });
 
     radarLayers[0].setOpacity(0.65);
+    if(timeLabel) {
+        const d = new Date(frames[0].time * 1000);
+        timeLabel.textContent = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
     if (radarInterval) clearInterval(radarInterval);
 
     radarInterval = setInterval(() => {
       if(!radarLayers.length) return;
+      
       radarLayers[currentRadarIdx].setOpacity(0);
       currentRadarIdx = (currentRadarIdx + 1) % radarLayers.length;
       radarLayers[currentRadarIdx].setOpacity(0.65);
+      
+      if(timeLabel) {
+          const d = new Date(frames[currentRadarIdx].time * 1000);
+          timeLabel.textContent = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      }
     }, 1200);
 
   } catch (e) {
