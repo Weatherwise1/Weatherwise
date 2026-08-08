@@ -4,6 +4,15 @@ import { writeFileSync } from "fs";
 const DEFAULT_LAT = 17.385;
 const DEFAULT_LON = 78.4867;
 
+// ─── Phase 26: Weather Data Validation ───────────────────────────────────────
+function validatePhysicalBounds(data, sourceName) {
+  if (data.temp < -5 || data.temp > 55) throw new Error(`Unrealistic temperature detected (${data.temp}°C)`);
+  if (data.humidity < 0 || data.humidity > 100) throw new Error(`Unrealistic humidity detected (${data.humidity}%)`);
+  if (data.wind < 0 || data.wind > 200) throw new Error(`Unrealistic wind speed detected (${data.wind} km/h)`);
+  if (data.chanceOfRain < 0 || data.chanceOfRain > 100) throw new Error(`Unrealistic rain probability detected (${data.chanceOfRain}%)`);
+  return data;
+}
+
 // ─── Fetch Helper with Timeout ───────────────────────────────────────────────
 async function fetchWithTimeout(url, options = {}, ms = 8000) {
   const controller = new AbortController();
@@ -30,7 +39,8 @@ async function getOpenMeteoICON(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   const cur = data.current;
   const nowIdx = data.hourly.time.findIndex(t => t.startsWith(cur.time.slice(0, 13)));
   const next6 = data.hourly.precipitation_probability.slice(nowIdx, nowIdx + 6);
- return {
+  
+  return validatePhysicalBounds({
     source: "Open-Meteo ICON",
     temp: Math.round(cur.temperature_2m),
     humidity: cur.relative_humidity_2m,
@@ -41,7 +51,7 @@ async function getOpenMeteoICON(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
     isDay: cur.is_day === 1,
     high: data.daily ? Math.round(data.daily.temperature_2m_max[0]) : null,
     low: data.daily ? Math.round(data.daily.temperature_2m_min[0]) : null,
-  };
+  }, "Open-Meteo ICON");
 }
 
 async function getOpenMeteoECMWF(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
@@ -53,7 +63,8 @@ async function getOpenMeteoECMWF(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   const cur = data.current;
   const nowIdx = data.hourly.time.findIndex(t => t.startsWith(cur.time.slice(0, 13)));
   const next6 = data.hourly.precipitation_probability.slice(nowIdx, nowIdx + 6);
-  return {
+  
+  return validatePhysicalBounds({
     source: "Open-Meteo ECMWF",
     temp: Math.round(cur.temperature_2m),
     humidity: cur.relative_humidity_2m,
@@ -61,7 +72,7 @@ async function getOpenMeteoECMWF(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
     precipNow: cur.precipitation > 0,
     chanceOfRain: next6.length ? Math.max(...next6) : 0,
     weatherCode: cur.weather_code,
-  };
+  }, "Open-Meteo ECMWF");
 }
 
 async function getWeatherAPI(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
@@ -70,7 +81,8 @@ async function getWeatherAPI(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   const url = `https://api.weatherapi.com/v1/forecast.json?key=${key}&q=${lat},${lon}&days=1&aqi=yes`;
   const data = await fetchWithTimeout(url);
   const cur = data.current;
-  return {
+  
+  return validatePhysicalBounds({
     source: "WeatherAPI",
     temp: Math.round(cur.temp_c),
     humidity: cur.humidity,
@@ -83,7 +95,7 @@ async function getWeatherAPI(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
     uv: cur.uv,
     feelsLike: Math.round(cur.feelslike_c),
     airQuality: cur.air_quality ? Math.round(cur.air_quality.pm2_5) : null,
-  };
+  }, "WeatherAPI");
 }
 
 async function getTomorrow(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
@@ -94,7 +106,8 @@ async function getTomorrow(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
     headers: { "apikey": key, "Accept": "application/json" }
   });
   const v = data.data.values;
-  return {
+  
+  return validatePhysicalBounds({
     source: "Tomorrow.io",
     temp: Math.round(v.temperature),
     humidity: Math.round(v.humidity),
@@ -104,7 +117,7 @@ async function getTomorrow(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
     visibility: v.visibility,
     uvIndex: v.uvIndex,
     feelsLike: Math.round(v.temperatureApparent),
-  };
+  }, "Tomorrow.io");
 }
 
 function median(nums) {
