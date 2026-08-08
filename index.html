@@ -409,6 +409,14 @@ function voteAgreement(list){
   return{agreement:"split",confidence:"low"};
 }
 
+function median(nums){
+  const sorted = [...nums].sort((a,b)=>a-b);
+  const mid = Math.floor(sorted.length/2);
+  return sorted.length % 2 !== 0
+    ? sorted[mid]
+    : Math.round((sorted[mid-1] + sorted[mid]) / 2);
+}
+
 async function fetchLocalityEnsemble(lat, lon, name) {
   const settled = await Promise.allSettled(MODELS.map(m => fetchOM(lat, lon, m)));
   const outcomes = settled.map((s, i) => ({ model: MODELS[i], ok: s.status === "fulfilled", raw: s.status === "fulfilled" ? s.value : null }));
@@ -422,7 +430,10 @@ async function fetchLocalityEnsemble(lat, lon, name) {
   const avgTemp = Math.round(transformed.reduce((s,d)=>s+d.temp,0)/transformed.length);
   const avgHumidity = Math.round(transformed.reduce((s,d)=>s+d.humidity,0)/transformed.length);
   const avgWind = Math.round(transformed.reduce((s,d)=>s+d.wind,0)/transformed.length);
-  const maxRain = Math.max(...transformed.map(d=>d.chanceOfRain));
+  // FIX: was Math.max(...) — a single outlier model (e.g. one glitching to
+  // 90% while the other two say 20-25%) could hijack the headline number.
+  // Median resists that: the outlier gets outvoted by the middle value.
+  const rainChance = median(transformed.map(d=>d.chanceOfRain));
   const anyPrecipNow = transformed.some(d=>d.precipNow);
   const temps = transformed.map(d=>d.temp);
   const spread = Math.round((Math.max(...temps)-Math.min(...temps))*10)/10;
@@ -433,7 +444,7 @@ async function fetchLocalityEnsemble(lat, lon, name) {
   const condition = (agreement==="all_wet"||agreement==="mostly_wet")?"rainy":primary.condition;
 
   return {
-    temp: avgTemp, humidity: avgHumidity, wind: avgWind, chanceOfRain: maxRain, precipNow: anyPrecipNow,
+    temp: avgTemp, humidity: avgHumidity, wind: avgWind, chanceOfRain: rainChance, precipNow: anyPrecipNow,
     upcomingRainType: primary.upcomingRainType,
     visibility: primary.visibility, sunrise: primary.sunrise, sunset: primary.sunset, uvIndex: primary.uvIndex,
     high: primary.high, low: primary.low,
