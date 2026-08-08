@@ -12,7 +12,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/dist/umd/lucide.js"></script>
 <style>
   :root{--accent:#5EEAD4;--cloud-color:rgba(255,255,255,0.7);}
   *{box-sizing:border-box;}
@@ -55,6 +55,22 @@
 
   #loc-error-banner{display:none;}
   #loc-error-banner.visible{display:flex;}
+
+  /* Phase 9: Graceful States (Skeleton Loaders) */
+  .skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.07) 25%, rgba(255,255,255,0.14) 37%, rgba(255,255,255,0.07) 63%);
+    background-size: 400% 100%;
+    animation: skPulse 1.4s ease infinite;
+    color: transparent !important;
+    border-radius: 0.375rem;
+    pointer-events: none;
+    user-select: none;
+  }
+  @keyframes skPulse { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+  
+  /* Status Colors */
+  .text-stale { color: #FBBF24; } /* Amber-400 */
+  .text-very-stale { color: #F87171; } /* Red-400 */
 </style>
 </head>
 <body>
@@ -89,20 +105,21 @@
       <div class="flex items-center gap-5 mb-4">
         <i id="hero-icon" data-lucide="cloud-rain" class="w-16 h-16 flex-shrink-0" stroke-width="1.3" style="color:var(--accent)"></i>
         <div>
-          <span class="font-display text-6xl sm:text-7xl font-bold tracking-tight" id="hero-temp">--°C</span>
+          <!-- Phase 9: Skeletons replacing broken text -->
+          <span class="font-display text-6xl sm:text-7xl font-bold tracking-tight skeleton inline-block min-w-[120px]" id="hero-temp">00°C</span>
           <div class="flex items-center gap-3 mt-1 text-sm opacity-70 font-medium">
-            <span id="hero-high-low">H: --° L: --°</span>
-            <span>·</span>
-            <span id="hero-feels">Feels --°</span>
+            <span id="hero-high-low" class="skeleton">H: 00° L: 00°</span>
+            <span class="skeleton-hide">·</span>
+            <span id="hero-feels" class="skeleton">Feels 00°</span>
           </div>
         </div>
       </div>
-      <p class="font-display text-xl sm:text-2xl font-bold leading-snug opacity-90 mb-4 max-w-xl" id="hero-city-summary">Loading city weather...</p>
+      <p class="font-display text-xl sm:text-2xl font-bold leading-snug opacity-90 mb-4 max-w-xl skeleton" id="hero-city-summary">Loading weather data for Hyderabad...</p>
       <div class="flex items-center gap-3 text-xs">
         <span class="opacity-50">Confidence</span>
-        <span id="conf-badge" class="bg-yellow-900/50 text-yellow-300 font-mono font-medium px-2.5 py-0.5 rounded-full border border-yellow-500/20">MEDIUM</span>
+        <span id="conf-badge" class="bg-white/10 text-white font-mono font-medium px-2.5 py-0.5 rounded-full border border-white/20 skeleton">LOADING</span>
         <span class="opacity-30">·</span>
-        <span class="opacity-50 font-mono" id="hero-updated">Updating...</span>
+        <span class="opacity-50 font-mono" id="hero-updated">Checking freshness...</span>
         <button id="refresh-btn" class="opacity-50 hover:opacity-100 transition-opacity ml-1" title="Refresh data" aria-label="Refresh weather data">
           <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
         </button>
@@ -112,7 +129,9 @@
     <div class="w-full">
       <p class="text-[11px] uppercase tracking-[0.2em] opacity-60 mb-3 font-semibold">Rain Watch</p>
       <div class="flex flex-col gap-2" id="rain-hotspots">
-        <div class="p-3 rounded-[0.875rem] border border-white/10 bg-white/5 opacity-40 text-xs">Loading hotspots...</div>
+        <div class="p-3 rounded-[0.875rem] border border-white/10 bg-white/5 opacity-40 text-xs skeleton">Loading hotspots...</div>
+        <div class="p-3 rounded-[0.875rem] border border-white/10 bg-white/5 opacity-40 text-xs skeleton">Loading hotspots...</div>
+        <div class="p-3 rounded-[0.875rem] border border-white/10 bg-white/5 opacity-40 text-xs skeleton">Loading hotspots...</div>
       </div>
     </div>
   </div>
@@ -120,8 +139,8 @@
 
 <div class="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 py-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
 
-  <!-- LEFT PANEL -->
   <div class="lg:col-span-3 flex flex-col gap-6">
+
     <div class="glass-card p-6">
       <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
         <div class="flex items-center gap-2">
@@ -143,41 +162,41 @@
         <button id="loc-error-retry" class="underline font-medium text-red-300 flex-shrink-0">Retry</button>
       </div>
 
-      <p class="font-display text-lg font-bold mb-5 leading-snug" id="loc-interpretation">Loading location detail...</p>
+      <p class="font-display text-lg font-bold mb-5 leading-snug skeleton" id="loc-interpretation">Analyzing neighborhood forecast...</p>
 
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <div class="glass-card p-3 text-center">
           <p class="text-[10px] opacity-50 uppercase tracking-wide mb-1">Temp</p>
-          <p class="font-display text-2xl font-bold" id="loc-temp">--°</p>
+          <p class="font-display text-2xl font-bold inline-block min-w-[40px] skeleton" id="loc-temp">00°</p>
         </div>
         <div class="glass-card p-3 text-center">
           <p class="text-[10px] opacity-50 uppercase tracking-wide mb-1">Humidity</p>
-          <p class="font-display text-2xl font-bold" id="loc-humidity">--%</p>
+          <p class="font-display text-2xl font-bold inline-block min-w-[50px] skeleton" id="loc-humidity">00%</p>
         </div>
         <div class="glass-card p-3 text-center">
           <p class="text-[10px] opacity-50 uppercase tracking-wide mb-1">Wind</p>
-          <p class="font-display text-2xl font-bold" id="loc-wind">--</p>
-          <p class="text-[10px] opacity-40">km/h</p>
+          <p class="font-display text-2xl font-bold inline-block min-w-[80px] skeleton" id="loc-wind">00 km/h</p>
         </div>
         <div class="glass-card p-3 text-center">
           <p class="text-[10px] opacity-50 uppercase tracking-wide mb-1">Rain (6h)</p>
-          <p class="font-display text-2xl font-bold" id="loc-rain">--%</p>
+          <p class="font-display text-2xl font-bold inline-block min-w-[50px] skeleton" id="loc-rain">00%</p>
         </div>
       </div>
 
       <div>
         <p class="text-[11px] uppercase tracking-wider opacity-50 mb-3 font-semibold">Next 12 Hours</p>
-        <div id="hourly-strip"></div>
+        <div id="hourly-strip">
+            <div class="skeleton h-20 w-full rounded-xl"></div>
+        </div>
       </div>
     </div>
 
-    <!-- Live Radar -->
     <div class="glass-card p-5">
       <div class="flex items-center justify-between mb-3">
         <p class="text-[11px] uppercase tracking-wider opacity-60 font-semibold">Live Doppler Radar</p>
         <p class="text-[10px] opacity-80 font-mono bg-black/20 px-2 py-1 rounded">Frame: <span id="radar-time" class="text-white font-bold">--:--</span></p>
       </div>
-      <div id="radar-map"></div>
+      <div id="radar-map" class="skeleton"></div>
       <p id="radar-hint" class="text-[10px] opacity-60 mt-3 flex items-start gap-1.5 leading-tight">
         <i data-lucide="info" class="w-3.5 h-3.5 flex-shrink-0"></i>
         <span>Doppler radar shows actual falling rain, not clouds. If the map is clear, there is no active precipitation in the area. Try zooming out to find active rain cells across India.</span>
@@ -185,42 +204,37 @@
     </div>
   </div>
 
-  <!-- RIGHT PANEL -->
   <div class="lg:col-span-2 flex flex-col gap-6">
 
-    <!-- NEW: WeatherWise Says Card -->
     <div class="glass-card p-6 border-l-4 border-l-[var(--accent)]">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="sparkles" class="w-4 h-4" style="color:var(--accent)"></i>
         <p class="text-[11px] uppercase tracking-wider opacity-80 font-semibold">WeatherWise Says</p>
       </div>
-      <p class="font-display text-lg font-medium leading-snug" id="ww-says-text">Analyzing neighborhood data...</p>
+      <p class="font-display text-lg font-medium leading-snug skeleton" id="ww-says-text">Generating neighborhood advice based on ensemble models...</p>
     </div>
 
-    <!-- MOVED & COMBINED: Tech Details & Sun/Air -->
     <div>
       <button id="tech-toggle" class="glass-card w-full flex items-center justify-between p-4 text-xs font-semibold opacity-70 hover:opacity-100 transition-opacity mt-2">
         <span>Advanced Forecast & Sun Details</span>
         <i data-lucide="chevron-down" id="tech-chevron" class="w-4 h-4 transition-transform"></i>
       </button>
       <div id="tech-panel" class="hidden mt-2 glass-card p-5 font-mono text-xs grid grid-cols-2 gap-4">
-        <!-- Sun Data -->
-        <div><p class="opacity-40 text-[10px]">Sunrise</p><p id="stat-sunrise">--:--</p></div>
-        <div><p class="opacity-40 text-[10px]">Sunset</p><p id="stat-sunset">--:--</p></div>
-        <div><p class="opacity-40 text-[10px]">Visibility</p><p><span id="stat-visibility">-- km</span> (<span id="stat-vis-label">--</span>)</p></div>
-        <div><p class="opacity-40 text-[10px]">UV Index Max</p><p id="stat-uv">--</p></div>
+        <div><p class="opacity-40 text-[10px]">Sunrise</p><p id="stat-sunrise" class="skeleton w-12">00:00</p></div>
+        <div><p class="opacity-40 text-[10px]">Sunset</p><p id="stat-sunset" class="skeleton w-12">00:00</p></div>
+        <div><p class="opacity-40 text-[10px]">Visibility</p><p><span id="stat-visibility" class="skeleton w-10">00 km</span> (<span id="stat-vis-label" class="skeleton w-16">Loading</span>)</p></div>
+        <div><p class="opacity-40 text-[10px]">UV Index Max</p><p id="stat-uv" class="skeleton w-6">00</p></div>
         
         <div class="col-span-2 my-1 border-t border-white/10"></div>
         
-        <!-- Tech Data -->
-        <div><p class="opacity-40 text-[10px]">Humidity</p><p id="tech-humidity">--</p></div>
-        <div><p class="opacity-40 text-[10px]">Wind</p><p id="tech-wind">--</p></div>
-        <div><p class="opacity-40 text-[10px]">Locality Rain chance</p><p id="tech-rain">--</p></div>
-        <div><p class="opacity-40 text-[10px]">Locality Code</p><p id="tech-code">--</p></div>
-        <div><p class="opacity-40 text-[10px]">Models Used</p><p id="tech-loc-sources">--</p></div>
-        <div><p class="opacity-40 text-[10px]">Models Failed</p><p id="tech-loc-failed">--</p></div>
-        <div><p class="opacity-40 text-[10px]">Temp Spread</p><p id="tech-spread">--</p></div>
-        <div><p class="opacity-40 text-[10px]">Model Agreement</p><p id="tech-agreement">--</p></div>
+        <div><p class="opacity-40 text-[10px]">Humidity</p><p id="tech-humidity" class="skeleton w-8">00%</p></div>
+        <div><p class="opacity-40 text-[10px]">Wind</p><p id="tech-wind" class="skeleton w-12">00 km/h</p></div>
+        <div><p class="opacity-40 text-[10px]">Locality Rain chance</p><p id="tech-rain" class="skeleton w-8">00%</p></div>
+        <div><p class="opacity-40 text-[10px]">Locality Code</p><p id="tech-code" class="skeleton w-16">000 - Cloud</p></div>
+        <div><p class="opacity-40 text-[10px]">Models Used</p><p id="tech-loc-sources" class="skeleton w-24">Model1, Model2</p></div>
+        <div><p class="opacity-40 text-[10px]">Models Failed</p><p id="tech-loc-failed" class="skeleton w-10">None</p></div>
+        <div><p class="opacity-40 text-[10px]">Temp Spread</p><p id="tech-spread" class="skeleton w-8">0.0°C</p></div>
+        <div><p class="opacity-40 text-[10px]">Model Agreement</p><p id="tech-agreement" class="skeleton w-16">checking</p></div>
       </div>
     </div>
   </div>
@@ -274,6 +288,34 @@ function applyTheme(cond,isDay){
   document.getElementById("hero-icon").style.color = t.accent;
 }
 
+function removeSkeleton(id, text) {
+    const el = document.getElementById(id);
+    if(el) {
+        el.classList.remove("skeleton");
+        if (text !== undefined) el.textContent = text;
+    }
+}
+
+/* Phase 5: Data Freshness Logic */
+function getFreshness(isoString) {
+  if(!isoString) return { text: "Live data unavailable", status: "UNAVAILABLE" };
+  const diff = Math.floor((Date.now() - new Date(isoString).getTime()) / 60000); 
+  if (diff < 1) return { text: "Updated just now", status: "FRESH" };
+  if (diff < 15) return { text: `Updated ${diff} min ago`, status: "FRESH" };
+  if (diff < 120) return { text: `Updated ${diff} min ago`, status: "STALE" };
+  const hours = Math.floor(diff/60);
+  return { text: `Data may be outdated (${hours} hours old)`, status: "VERY_STALE" };
+}
+
+function applyFreshnessStyling(elementId, statusObj, prefix = "") {
+  const el = document.getElementById(elementId);
+  if(!el) return;
+  el.textContent = `${prefix}${statusObj.text}`;
+  el.classList.remove("text-stale", "text-very-stale");
+  if(statusObj.status === "STALE") el.classList.add("text-stale");
+  if(statusObj.status === "VERY_STALE" || statusObj.status === "UNAVAILABLE") el.classList.add("text-very-stale");
+}
+
 function getUpcomingRainType(hourlyCodes) {
     if (hourlyCodes.some(c => [95, 96, 99].includes(c))) return "Thunderstorms are";
     if (hourlyCodes.some(c => [65, 82].includes(c))) return "Heavy Rain is";
@@ -288,33 +330,28 @@ async function loadCityHero() {
     if (!res.ok) throw new Error("weather.json not found");
     const data = await res.json();
 
-    document.getElementById("hero-temp").textContent = `${data.temp}°C`;
-    document.getElementById("hero-feels").textContent = `Feels ${data.feelsLike || data.temp}°`;
+    removeSkeleton("hero-temp", `${data.temp}°C`);
+    removeSkeleton("hero-feels", `Feels ${data.feelsLike || data.temp}°`);
+    removeSkeleton("hero-high-low", "H: --° L: --°");
 
     const confBadge = document.getElementById("conf-badge");
+    confBadge.classList.remove("skeleton", "bg-white/10", "border-white/20");
     confBadge.className = "font-mono font-medium px-2.5 py-0.5 rounded-full text-[10px] border " +
         (data.confidence === "high" ? "bg-green-900/50 text-green-300 border-green-500/20" :
          data.confidence === "low" ? "bg-red-900/50 text-red-300 border-red-500/20" : "bg-yellow-900/50 text-yellow-300 border-yellow-500/20");
     confBadge.textContent = (data.confidence || "MEDIUM").toUpperCase();
 
-    let timeString = "--:--";
-    if(data.generatedAt) {
-        const d = new Date(data.generatedAt);
-        timeString = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    }
-    document.getElementById("hero-updated").textContent = `Backend Updated ${timeString}`;
+    // Phase 5 Integration
+    const freshness = getFreshness(data.generatedAt);
+    applyFreshnessStyling("hero-updated", freshness, "Backend ");
 
     let summaryText = `${data.condition === 'rainy' ? 'Rainy' : data.condition === 'clear' ? 'Clear' : 'Cloudy'} across Hyderabad today at ${data.temp}°C. `;
     if (data.chanceOfRain > 60) summaryText += `High chance of rain (${data.chanceOfRain}%). Sources agree.`;
     else if (data.chanceOfRain > 30) summaryText += `Moderate rain chance (${data.chanceOfRain}%).`;
     else summaryText += `No significant rain expected.`;
 
-    document.getElementById("hero-city-summary").textContent = summaryText;
+    removeSkeleton("hero-city-summary", summaryText);
     
-    if(document.getElementById("stat-uv")) {
-        document.getElementById("stat-uv").textContent = data.uv || data.uvIndex || "--";
-    }
-
     applyTheme(data.condition, data.isDay !== false);
     lucide.createIcons();
 
@@ -322,15 +359,14 @@ async function loadCityHero() {
     const raw = await fetchOM(17.385, 78.4867, null);
     const data = transformOM(raw, "Hyderabad");
 
-    document.getElementById("hero-temp").textContent = `${data.temp}°C`;
-    document.getElementById("hero-feels").textContent = `Feels ${data.temp}°`;
-    document.getElementById("hero-updated").textContent = `Updated ${data.updated}`;
-    document.getElementById("hero-city-summary").textContent = `${data.condLabel} today at ${data.temp}°C. Live fallback data.`;
+    removeSkeleton("hero-temp", `${data.temp}°C`);
+    removeSkeleton("hero-feels", `Feels ${data.temp}°`);
+    removeSkeleton("hero-high-low", "H: --° L: --°");
     
-    if(document.getElementById("stat-uv")) {
-        document.getElementById("stat-uv").textContent = data.uvIndex !== undefined ? data.uvIndex : "--";
-    }
-
+    const freshness = getFreshness(data.fullTimestamp);
+    applyFreshnessStyling("hero-updated", freshness, "Live Fallback: ");
+    
+    removeSkeleton("hero-city-summary", `${data.condLabel} today at ${data.temp}°C. Live fallback data.`);
     applyTheme(data.condition, data.isDay);
     lucide.createIcons();
   }
@@ -382,7 +418,9 @@ function transformOM(raw, name) {
     condLabel: codeToLabel(cur.weather_code),
     isDay: cur.is_day === 1,
     hourly: raw.hourly, nowIdx: ni,
-    locationName: name, updated: cur.time.slice(11,16),
+    locationName: name, 
+    // Appending +05:30 to correct OM time strings for accurate Phase 5 relative math
+    fullTimestamp: cur.time + "+05:30",
     weatherCode: cur.weather_code,
   };
 }
@@ -390,9 +428,7 @@ function transformOM(raw, name) {
 function median(nums){
   const sorted = [...nums].sort((a,b)=>a-b);
   const mid = Math.floor(sorted.length/2);
-  return sorted.length % 2 !== 0
-    ? sorted[mid]
-    : Math.round((sorted[mid-1] + sorted[mid]) / 2);
+  return sorted.length % 2 !== 0 ? sorted[mid] : Math.round((sorted[mid-1] + sorted[mid]) / 2);
 }
 
 function voteAgreement(list){
@@ -428,10 +464,7 @@ async function fetchLocalityEnsemble(lat, lon, name) {
   const spread = Math.round((Math.max(...temps)-Math.min(...temps))*10)/10;
 
   let { agreement, confidenceText, confLevel } = voteAgreement(transformed);
-  if(spread>=3) {
-      confidenceText = "High temperature uncertainty";
-      confLevel = "low";
-  }
+  if(spread>=3) { confidenceText = "High temperature uncertainty"; confLevel = "low"; }
 
   const condition = (agreement==="all_wet"||agreement==="mostly_wet")?"rainy":primary.condition;
 
@@ -442,7 +475,7 @@ async function fetchLocalityEnsemble(lat, lon, name) {
     high: primary.high, low: primary.low,
     condition, condLabel: primary.condLabel, isDay: primary.isDay,
     hourly: primary.hourly, nowIdx: primary.nowIdx,
-    locationName: name, updated: primary.updated, weatherCode: primary.weatherCode,
+    locationName: name, fullTimestamp: primary.fullTimestamp, weatherCode: primary.weatherCode,
     sourcesUsed: transformed.map(t=>t.model),
     sourcesFailed: outcomes.filter(o=>!o.ok).map(o=>o.model),
     confidenceText, confLevel, agreement, tempSpread: spread,
@@ -450,10 +483,10 @@ async function fetchLocalityEnsemble(lat, lon, name) {
 }
 
 function renderLocality(data, name) {
-  document.getElementById("loc-temp").textContent=`${data.temp}°`;
-  document.getElementById("loc-humidity").textContent=`${data.humidity}%`;
-  document.getElementById("loc-wind").textContent=`${data.wind} km/h`;
-  document.getElementById("loc-rain").textContent=`${data.chanceOfRain}%`;
+  removeSkeleton("loc-temp", `${data.temp}°`);
+  removeSkeleton("loc-humidity", `${data.humidity}%`);
+  removeSkeleton("loc-wind", `${data.wind} km/h`);
+  removeSkeleton("loc-rain", `${data.chanceOfRain}%`);
 
   if (name === "Hyderabad (Central)" && data.high != null && data.low != null) {
     document.getElementById("hero-high-low").textContent = `H: ${data.high}° L: ${data.low}°`;
@@ -480,24 +513,24 @@ function renderLocality(data, name) {
   } else {
     advice = `Quiet weather in ${name} right now. No major rain expected.`;
   }
-  document.getElementById("ww-says-text").textContent = advice;
+  removeSkeleton("ww-says-text", advice);
   
-  document.getElementById("loc-interpretation").textContent = data.precipNow ? "Raining right now." : `Currently ${data.condLabel}.`;
+  removeSkeleton("loc-interpretation", data.precipNow ? "Raining right now." : `Currently ${data.condLabel}.`);
 
-  document.getElementById("stat-sunrise").textContent = data.sunrise;
-  document.getElementById("stat-sunset").textContent = data.sunset;
-  document.getElementById("stat-visibility").textContent = `${data.visibility} km`;
-  if(document.getElementById("stat-uv")) document.getElementById("stat-uv").textContent = data.uvIndex !== undefined ? data.uvIndex : "--";
-  document.getElementById("stat-vis-label").textContent = data.visibility > 8 ? "Clear view" : data.visibility > 3 ? "Haze or mist" : "Poor visibility";
+  removeSkeleton("stat-sunrise", data.sunrise);
+  removeSkeleton("stat-sunset", data.sunset);
+  removeSkeleton("stat-visibility", `${data.visibility} km`);
+  if(document.getElementById("stat-uv")) removeSkeleton("stat-uv", data.uvIndex !== undefined ? data.uvIndex : "--");
+  removeSkeleton("stat-vis-label", data.visibility > 8 ? "Clear view" : data.visibility > 3 ? "Haze or mist" : "Poor visibility");
 
-  document.getElementById("tech-humidity").textContent=`${data.humidity}%`;
-  document.getElementById("tech-wind").textContent=`${data.wind} km/h`;
-  document.getElementById("tech-rain").textContent=`${data.chanceOfRain}%`;
-  document.getElementById("tech-code").textContent=`${data.weatherCode} — ${data.condLabel}`;
-  document.getElementById("tech-loc-sources").textContent = data.sourcesUsed.join(", ");
-  document.getElementById("tech-loc-failed").textContent = data.sourcesFailed.length ? data.sourcesFailed.join(", ") : "None";
-  document.getElementById("tech-spread").textContent = `${data.tempSpread}°C`;
-  document.getElementById("tech-agreement").textContent = data.agreement;
+  removeSkeleton("tech-humidity", `${data.humidity}%`);
+  removeSkeleton("tech-wind", `${data.wind} km/h`);
+  removeSkeleton("tech-rain", `${data.chanceOfRain}%`);
+  removeSkeleton("tech-code", `${data.weatherCode} — ${data.condLabel}`);
+  removeSkeleton("tech-loc-sources", data.sourcesUsed.join(", "));
+  removeSkeleton("tech-loc-failed", data.sourcesFailed.length ? data.sourcesFailed.join(", ") : "None");
+  removeSkeleton("tech-spread", `${data.tempSpread}°C`);
+  removeSkeleton("tech-agreement", data.agreement);
 
   const strip=document.getElementById("hourly-strip");
   strip.innerHTML="";
@@ -579,10 +612,7 @@ async function loadLocality(idx){
   hideLocError();
   try {
     const data = await fetchLocalityEnsemble(loc.lat, loc.lon, loc.name);
-    if (idx !== currentLocalityIdx) {
-      console.log(`Discarding stale response for ${loc.name} — user moved to a different locality.`);
-      return;
-    }
+    if (idx !== currentLocalityIdx) return;
     renderLocality(data, loc.name);
   } catch(err) {
     if (idx !== currentLocalityIdx) return; 
@@ -624,6 +654,8 @@ async function initRadar() {
     const timeLabel = document.getElementById("radar-time");
     
     if (!frames || frames.length === 0) return;
+    
+    document.getElementById("radar-map").classList.remove("skeleton");
 
     radarLayers = frames.map(frame => {
       const url = `${host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
@@ -660,6 +692,7 @@ async function initRadar() {
 
   } catch (e) {
     console.error("Radar failed to load:", e);
+    document.getElementById("radar-map").classList.remove("skeleton");
     const hint = document.getElementById("radar-hint");
     if(hint) hint.innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-400"></i> Radar feed temporarily offline.`;
     lucide.createIcons();
