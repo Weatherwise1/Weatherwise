@@ -492,12 +492,26 @@ async function loadHotspots() {
   const container = document.getElementById("rain-hotspots");
   container.innerHTML = "";
 
-  for (const idx of HOTSPOT_INDICES) {
-    const loc = LOCALITIES[idx];
-    try {
-      const raw = await fetchOM(loc.lat, loc.lon, null);
-      const data = transformOM(raw, loc.name);
+  // FIX #4: fetch all hotspots in parallel instead of one-at-a-time.
+  // Previously this loop awaited each fetch before starting the next,
+  // making 4 sequential requests (~4x slower than necessary). Promise.all
+  // fires them simultaneously and waits only for the slowest one.
+  const results = await Promise.all(
+    HOTSPOT_INDICES.map(async (idx) => {
+      const loc = LOCALITIES[idx];
+      try {
+        const raw = await fetchOM(loc.lat, loc.lon, null);
+        const data = transformOM(raw, loc.name);
+        return { ok: true, loc, data };
+      } catch (e) {
+        return { ok: false, loc };
+      }
+    })
+  );
 
+  results.forEach(r => {
+    if (r.ok) {
+      const { loc, data } = r;
       const isRaining = data.precipNow;
       const rain = data.chanceOfRain;
       const dot = isRaining ? "#38BDF8" : rain > 40 ? "#FBBF24" : "#4ADE80";
@@ -513,10 +527,11 @@ async function loadHotspots() {
           </div>
           <span class="font-mono font-bold text-[11px]" style="color:${dot}">${label}</span>
         </div>`;
-    } catch (e) {
-        container.innerHTML += `<div class="p-2.5 rounded-[0.875rem] border border-white/10 bg-white/5 opacity-50 flex justify-between text-xs"><span>${loc.name}</span><span>Failed</span></div>`;
+    } else {
+      container.innerHTML += `<div class="p-2.5 rounded-[0.875rem] border border-white/10 bg-white/5 opacity-50 flex justify-between text-xs"><span>${r.loc.name}</span><span>Failed</span></div>`;
     }
-  }
+  });
+
   lucide.createIcons();
 }
 
