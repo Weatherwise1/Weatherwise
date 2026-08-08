@@ -21,14 +21,12 @@
   .font-display{font-family:'Space Grotesk',sans-serif;}
   .font-mono{font-family:'IBM Plex Mono',monospace;}
 
-  /* Background */
   #bg-decor{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
   .stars{position:absolute;inset:0;opacity:0;transition:opacity 1.2s ease;}
   .stars.visible{opacity:1;}
   .star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:twinkle 3.5s ease-in-out infinite;}
   @keyframes twinkle{0%,100%{opacity:.1;}50%{opacity:.9;}}
 
-  /* Animated Clouds */
   .cloud-layer{position:absolute;inset:0;}
   .cloud{position:absolute;fill:var(--cloud-color);animation:floatCloud linear infinite;transition:fill 1s ease;}
   .cloud.c1{width:220px;top:5%;animation-duration:80s;opacity:.5;}
@@ -37,29 +35,27 @@
   .cloud.c4{width:120px;top:28%;animation-duration:70s;animation-delay:-12s;opacity:.4;}
   @keyframes floatCloud{from{transform:translateX(-32%);}to{transform:translateX(132%);}}
 
-  /* Hero */
   #hero-bar{transition:background 0.8s ease;position:relative;overflow:hidden;}
 
-  /* Glow */
   .glow-field{position:absolute;inset:0;pointer-events:none;filter:blur(70px);z-index:0;}
   .glow-blob{position:absolute;border-radius:9999px;opacity:0.4;animation:drift 20s ease-in-out infinite alternate;}
 
-  /* Cards */
   .glass-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:1.25rem;transition:transform 0.2s ease,border-color 0.2s ease;}
   .glass-card:hover{border-color:rgba(255,255,255,0.22);}
 
-  /* Select Fix */
   #locality-select{appearance:none;-webkit-appearance:none;background:transparent;cursor:pointer;}
   #locality-select option { background-color: #0F172A; color: #F1F5F9; padding: 8px; }
 
-  /* Hourly Strip */
   #hourly-strip{display:flex;gap:0.5rem;overflow-x:auto;padding-bottom:0.25rem;scrollbar-width:none;}
   #hourly-strip::-webkit-scrollbar{display:none;}
   .hour-pill{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0.25rem;padding:0.6rem 0.8rem;border-radius:1rem;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);font-size:0.75rem;min-width:60px;}
   .hour-pill.now{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.35);}
 
-  /* Radar */
   #radar-map{height:280px;border-radius:1rem;}
+
+  /* NEW: error banner for failed locality loads */
+  #loc-error-banner{display:none;}
+  #loc-error-banner.visible{display:flex;}
 </style>
 </head>
 <body>
@@ -82,7 +78,6 @@
   </div>
 </div>
 
-<!-- HERO BAR -->
 <div id="hero-bar" class="relative z-10 w-full border-b border-white/10">
   <div class="glow-field">
     <div class="glow-blob b1" style="width:300px;height:300px;left:-5%;top:-40%;"></div>
@@ -109,7 +104,7 @@
         <span id="conf-badge" class="bg-yellow-900/50 text-yellow-300 font-mono font-medium px-2.5 py-0.5 rounded-full border border-yellow-500/20">MEDIUM</span>
         <span class="opacity-30">·</span>
         <span class="opacity-50 font-mono" id="hero-updated">Updating...</span>
-        <button id="refresh-btn" class="opacity-50 hover:opacity-100 transition-opacity ml-1" title="Refresh data">
+        <button id="refresh-btn" class="opacity-50 hover:opacity-100 transition-opacity ml-1" title="Refresh data" aria-label="Refresh weather data">
           <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
         </button>
       </div>
@@ -138,9 +133,16 @@
           <span id="loc-conf-badge" class="font-mono font-medium px-2 py-0.5 rounded-full text-[10px] hidden"></span>
           <div class="flex items-center gap-2 border border-white/20 rounded-full px-4 py-1.5 bg-white/5">
             <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 opacity-50"></i>
-            <select id="locality-select" class="text-xs font-semibold opacity-90 pr-1 focus:opacity-100"></select>
+            <select id="locality-select" class="text-xs font-semibold opacity-90 pr-1 focus:opacity-100" aria-label="Select locality"></select>
           </div>
         </div>
+      </div>
+
+      <!-- NEW: error banner, shown only when a locality fetch fails -->
+      <div id="loc-error-banner" class="mb-4 items-center gap-2 px-4 py-2.5 rounded-xl border border-red-400/20 bg-red-500/10 text-xs">
+        <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-400 flex-shrink-0"></i>
+        <span id="loc-error-text" class="flex-1">Couldn't load this location. Check your connection.</span>
+        <button id="loc-error-retry" class="underline font-medium text-red-300 flex-shrink-0">Retry</button>
       </div>
 
       <p class="font-display text-lg font-bold mb-5 leading-snug" id="loc-interpretation">Loading location detail...</p>
@@ -171,7 +173,6 @@
       </div>
     </div>
 
-    <!-- Live Radar -->
     <div class="glass-card p-5">
       <div class="flex items-center justify-between mb-3">
         <p class="text-[11px] uppercase tracking-wider opacity-60 font-semibold">Live Doppler Radar</p>
@@ -187,7 +188,6 @@
 
   <div class="lg:col-span-2 flex flex-col gap-6">
 
-    <!-- Sun & Air Quality (Fixed with proper IDs) -->
     <div class="glass-card p-6">
       <p class="text-[11px] uppercase tracking-wider opacity-60 font-semibold mb-4">Sun & Air Quality</p>
       <div class="grid grid-cols-2 gap-5">
@@ -335,7 +335,6 @@ async function loadCityHero() {
   }
 }
 
-// UPGRADED OM FETCH: Now explicitly requests sunrise, sunset, visibility, and uv_index
 async function fetchOM(lat, lon, model) {
   const modelParam = model ? `&models=${model}` : "";
   const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`+
@@ -358,8 +357,7 @@ function transformOM(raw, name) {
   const next6Prob = raw.hourly.precipitation_probability.slice(ni,ni+6);
   const next6Codes = raw.hourly.weather_code.slice(ni,ni+6);
   const chanceOfRain = next6Prob.length ? Math.max(...next6Prob) : 0;
-  
-  // Format Time for Sunrise/Sunset
+
   const formatTime = (isoString) => {
     if(!isoString) return "--:--";
     const d = new Date(isoString);
@@ -458,7 +456,6 @@ function renderLocality(data, name) {
   if(data.confidence === "low") interpretationText += ` Models disagree, refer to live radar.`;
   document.getElementById("loc-interpretation").textContent = interpretationText;
 
-  // Insert Live Sun & Air Data
   document.getElementById("stat-sunrise").textContent = data.sunrise;
   document.getElementById("stat-sunset").textContent = data.sunset;
   document.getElementById("stat-visibility").textContent = `${data.visibility} km`;
@@ -526,20 +523,42 @@ async function loadHotspots() {
 const select=document.getElementById("locality-select");
 LOCALITIES.forEach((loc,i)=>{const o=document.createElement("option");o.value=i;o.textContent=loc.name;select.appendChild(o);});
 
+/* ── FIX #1: loadLocality now shows a visible error + retry button
+   instead of silently console.error-ing and leaving the UI stuck
+   on "Loading location detail..." forever. ── */
+let currentLocalityIdx = 0;
+
+function hideLocError(){
+  document.getElementById("loc-error-banner").classList.remove("visible");
+}
+function showLocError(msg){
+  document.getElementById("loc-error-text").textContent = msg;
+  document.getElementById("loc-error-banner").classList.add("visible");
+  lucide.createIcons();
+}
+
 async function loadLocality(idx){
+  currentLocalityIdx = idx;
   const loc=LOCALITIES[idx];
+  hideLocError();
   try {
     const data = await fetchLocalityEnsemble(loc.lat, loc.lon, loc.name);
     renderLocality(data, loc.name);
   } catch(err) {
     console.error(err);
+    const msg = err.name === "AbortError"
+      ? `Request for ${loc.name} timed out. Check your connection and retry.`
+      : `Couldn't load ${loc.name} — the weather service may be temporarily unavailable.`;
+    showLocError(msg);
   }
 }
 
 select.addEventListener("change",e=>loadLocality(Number(e.target.value)));
+document.getElementById("loc-error-retry").addEventListener("click", () => loadLocality(currentLocalityIdx));
+
 document.getElementById("refresh-btn").addEventListener("click", () => {
     loadCityHero();
-    loadLocality(select.value);
+    loadLocality(currentLocalityIdx);
 });
 
 document.getElementById("tech-toggle").addEventListener("click",()=>{
@@ -550,28 +569,23 @@ document.getElementById("tech-toggle").addEventListener("click",()=>{
 const map=L.map("radar-map",{zoomControl:false,attributionControl:false,minZoom:6,maxZoom:11}).setView([17.385,78.4867],9);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:11}).addTo(map);
 
-/* ── UPDATED: RainViewer Dynamic Fetch Fix ── */
 let radarLayers = [];
 let radarInterval = null;
 let currentRadarIdx = 0;
-
 async function initRadar() {
   try {
     const res = await fetch("https://api.rainviewer.com/public/weather-maps.json");
     const data = await res.json();
-    
-    // RainViewer dynamically assigns the host now (e.g. tilecache.rainviewer.com)
+
     const host = data.host || "https://tilecache.rainviewer.com";
     const frames = data.radar.past;
-    
     if (!frames || frames.length === 0) return;
 
     radarLayers = frames.map(frame => {
-      // Combines the API-provided host with the frame-specific path string
       const url = `${host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
       const layer = L.tileLayer(url, {
         opacity: 0,
-        maxNativeZoom: 7, 
+        maxNativeZoom: 7,
         minZoom: 6,
         maxZoom: 11,
         zIndex: 10
