@@ -68,8 +68,9 @@
   }
   @keyframes skPulse { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
   
-  .text-stale { color: #FBBF24; }
-  .text-very-stale { color: #F87171; }
+  /* Softer, neutral colors for age indicators */
+  .text-stale { opacity: 0.8; }
+  .text-very-stale { color: #FCD34D; opacity: 0.9; } /* Soft amber instead of error red */
 </style>
 </head>
 <body>
@@ -100,7 +101,8 @@
 
   <div class="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 py-8 grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
     <div class="md:col-span-2">
-      <p class="text-[11px] uppercase tracking-[0.2em] opacity-60 mb-2 font-semibold">Hyderabad Overview <span class="opacity-50">· Backend Reconciled</span></p>
+      <!-- Cleaned up jargon from title -->
+      <p class="text-[11px] uppercase tracking-[0.2em] opacity-60 mb-2 font-semibold">Hyderabad <span class="opacity-50">· Forecast</span></p>
       <div class="flex items-center gap-5 mb-4">
         <i id="hero-icon" data-lucide="cloud-rain" class="w-16 h-16 flex-shrink-0" stroke-width="1.3" style="color:var(--accent)"></i>
         <div>
@@ -270,8 +272,8 @@ const THEMES = {
   },
 };
 
-/* ─── CACHING LOGIC (Phase 24) ─── */
-const CACHE_TTL = 15 * 60 * 1000; // 15 minutes TTL
+/* ─── CACHING LOGIC ─── */
+const CACHE_TTL = 15 * 60 * 1000;
 
 function getCache(key) {
   try {
@@ -321,14 +323,14 @@ function removeSkeleton(id, text) {
     }
 }
 
+/* Updated Freshness Logic to be Objective & Neutral */
 function getFreshness(isoString) {
   if(!isoString) return { text: "Live data unavailable", status: "UNAVAILABLE" };
   const diff = Math.floor((Date.now() - new Date(isoString).getTime()) / 60000); 
   if (diff < 1) return { text: "Updated just now", status: "FRESH" };
-  if (diff < 15) return { text: `Updated ${diff} min ago`, status: "FRESH" };
-  if (diff < 120) return { text: `Updated ${diff} min ago`, status: "STALE" };
+  if (diff < 60) return { text: `Updated ${diff} min ago`, status: "FRESH" };
   const hours = Math.floor(diff/60);
-  return { text: `Data may be outdated (${hours} hours old)`, status: "VERY_STALE" };
+  return { text: `Updated ${hours} hr ago`, status: "STALE" };
 }
 
 function applyFreshnessStyling(elementId, statusObj, prefix = "") {
@@ -351,7 +353,7 @@ function getUpcomingRainType(hourlyCodes) {
 function renderHero(data) {
   removeSkeleton("hero-temp", `${data.temp}°C`);
   removeSkeleton("hero-feels", `Feels ${data.feelsLike || data.temp}°`);
-  removeSkeleton("hero-high-low", "H: --° L: --°"); // Updated externally by Locality data
+  removeSkeleton("hero-high-low", "H: --° L: --°");
 
   const confBadge = document.getElementById("conf-badge");
   confBadge.classList.remove("skeleton", "bg-white/10", "border-white/20");
@@ -361,7 +363,8 @@ function renderHero(data) {
   confBadge.textContent = (data.confidence || "MEDIUM").toUpperCase();
 
   const freshness = getFreshness(data.generatedAt || data.fullTimestamp);
-  applyFreshnessStyling("hero-updated", freshness, data.isFallback ? "Live Fallback: " : "Backend ");
+  // Removed "Backend" Jargon
+  applyFreshnessStyling("hero-updated", freshness, data.isFallback ? "Fallback: " : "");
 
   let summaryText = `${data.condition === 'rainy' ? 'Rainy' : data.condition === 'clear' ? 'Clear' : 'Cloudy'} across Hyderabad today at ${data.temp}°C. `;
   if (data.chanceOfRain > 60) summaryText += `High chance of rain (${data.chanceOfRain}%). Sources agree.`;
@@ -487,7 +490,7 @@ async function fetchLocalityEnsemble(lat, lon, name) {
   const spread = Math.round((Math.max(...temps)-Math.min(...temps))*10)/10;
 
   let { agreement, confidenceText, confLevel } = voteAgreement(transformed);
-  if(spread>=3) { confidenceText = "High temperature uncertainty"; confLevel = "low"; }
+  if(spread>=3) { confidenceText = "High temp uncertainty"; confLevel = "low"; }
 
   const condition = (agreement==="all_wet"||agreement==="mostly_wet")?"rainy":primary.condition;
 
