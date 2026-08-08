@@ -543,8 +543,16 @@ async function loadLocality(idx){
   hideLocError();
   try {
     const data = await fetchLocalityEnsemble(loc.lat, loc.lon, loc.name);
+    // FIX #2: if the user has since switched to a different locality while
+    // this request was in flight, discard this now-stale response instead
+    // of overwriting the screen with data for the wrong place.
+    if (idx !== currentLocalityIdx) {
+      console.log(`Discarding stale response for ${loc.name} — user moved to a different locality.`);
+      return;
+    }
     renderLocality(data, loc.name);
   } catch(err) {
+    if (idx !== currentLocalityIdx) return; // stale error too — ignore it
     console.error(err);
     const msg = err.name === "AbortError"
       ? `Request for ${loc.name} timed out. Check your connection and retry.`
