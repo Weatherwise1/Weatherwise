@@ -7,22 +7,17 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
 <meta name="theme-color" content="#0B1220" id="theme-color-meta"/>
 
-<!-- Preconnects to shave DNS lookup time -->
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 
-<!-- Asynchronous Google Fonts -->
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"></noscript>
 
-<!-- Local minified Tailwind CSS -->
 <link rel="stylesheet" href="./output.css">
 
-<!-- Asynchronous Leaflet CSS -->
 <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript>
 
-<!-- Deferred JS libraries -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js" defer></script>
 
@@ -83,7 +78,6 @@
   #loc-error-banner{display:none;}
   #loc-error-banner.visible{display:flex;}
 
-  /* Skeletons */
   .skeleton {
     background: linear-gradient(90deg, rgba(255,255,255,0.07) 25%, rgba(255,255,255,0.14) 37%, rgba(255,255,255,0.07) 63%);
     background-size: 400% 100%;
@@ -216,13 +210,13 @@
       </div>
     </div>
 
-    <!-- Desktop WeatherWise Says Card -->
-    <div class="glass-card p-6 border-l-4 border-l-[var(--accent)] hidden lg:block">
+    <!-- Mobile WeatherWise Says Card -->
+    <div class="glass-card p-6 border-l-4 border-l-[var(--accent)] block lg:hidden">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="sparkles" class="w-4 h-4" style="color:var(--accent)"></i>
         <p class="text-[11px] uppercase tracking-wider opacity-80 font-semibold">WeatherWise Says</p>
       </div>
-      <p class="font-display text-lg font-medium leading-snug skeleton" id="ww-says-text-desktop">Generating neighborhood advice based on ensemble models...</p>
+      <p class="font-display text-lg font-medium leading-snug skeleton" id="ww-says-text-mobile">Generating neighborhood advice based on ensemble models...</p>
     </div>
 
     <!-- Live Radar -->
@@ -242,12 +236,13 @@
   <!-- RIGHT PANEL -->
   <div id="right-col" class="lg:col-span-2 flex flex-col gap-6">
 
-    <div id="ww-card" class="glass-card p-6 border-l-4 border-l-[var(--accent)]">
+    <!-- Desktop WeatherWise Says Card -->
+    <div class="glass-card p-6 border-l-4 border-l-[var(--accent)] hidden lg:block">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="sparkles" class="w-4 h-4" style="color:var(--accent)"></i>
         <p class="text-[11px] uppercase tracking-wider opacity-80 font-semibold">WeatherWise Says</p>
       </div>
-      <p class="font-display text-lg font-medium leading-snug skeleton" id="ww-says-text">Generating neighborhood advice based on ensemble models...</p>
+      <p class="font-display text-lg font-medium leading-snug skeleton" id="ww-says-text-desktop">Generating neighborhood advice based on ensemble models...</p>
     </div>
 
     <div>
@@ -601,6 +596,8 @@ function renderLocality(data, name) {
   } else {
     advice = `Quiet weather in ${name} right now. No major rain expected.`;
   }
+  
+  // Dual-target BOTH the mobile and desktop cards
   removeSkeleton("ww-says-text-mobile", advice);
   removeSkeleton("ww-says-text-desktop", advice);
   
@@ -740,7 +737,11 @@ async function loadLocality(idx, forceRefresh = false){
     removeSkeleton("loc-humidity", "--%");
     removeSkeleton("loc-wind", "--");
     removeSkeleton("loc-rain", "--%");
-    removeSkeleton("ww-says-text", "Advice unavailable due to network error.");
+    
+    // Dual-target BOTH cards in case of an error
+    removeSkeleton("ww-says-text-mobile", "Advice unavailable due to network error.");
+    removeSkeleton("ww-says-text-desktop", "Advice unavailable due to network error.");
+    
     removeSkeleton("loc-interpretation", "Forecast unavailable.");
     removeSkeleton("stat-sunrise", "--:--");
     removeSkeleton("stat-sunset", "--:--");
@@ -864,7 +865,8 @@ loadLocality(0);
 setTimeout(loadHotspots, 200); 
 
 document.addEventListener("DOMContentLoaded", () => {
-  enforceMobileLayout();
+  // Global scan to catch all the base icons (Sparkles, Map Pin, etc.)
+  if(window.lucide) lucide.createIcons();
   
   const observer = new IntersectionObserver((entries) => {
     if(entries[0].isIntersecting && !radarInitialized) {
