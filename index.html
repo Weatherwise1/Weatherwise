@@ -16,7 +16,7 @@
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"></noscript>
 
-<!-- Tailwind CDN (Render-blocking, but unavoidable without a build step) -->
+<!-- Tailwind CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
 
 <!-- Asynchronous Leaflet CSS -->
@@ -35,7 +35,7 @@
   *{box-sizing:border-box;}
   html,body{height:100%;margin:0;}
   
-  /* Hardcoded default theme prevents white flash FOUC while Tailwind compiles */
+  /* Hardcoded default theme prevents white flash FOUC */
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     overflow-x: hidden;
@@ -344,7 +344,7 @@ function applyTheme(cond,isDay){
   if(iconEl) {
       iconEl.setAttribute("data-lucide", t.icon);
       iconEl.style.color = t.accent;
-      if(window.lucide) lucide.createIcons({icons:{[t.icon]:true}});
+      if(window.lucide) lucide.createIcons({ root: document.getElementById('hero-bar') });
   }
 }
 
@@ -404,7 +404,6 @@ function renderHero(data) {
 
   removeSkeleton("hero-city-summary", data.isFallback ? `${data.condLabel} today at ${data.temp}°C. Live fallback data.` : summaryText);
   applyTheme(data.condition, data.isDay !== false);
-  if(window.lucide) lucide.createIcons();
 }
 
 async function loadCityHero(forceRefresh = false) {
@@ -421,12 +420,29 @@ async function loadCityHero(forceRefresh = false) {
     setCache(cacheKey, data);
     renderHero(data);
   } catch (e) {
-    const raw = await fetchOM(17.385, 78.4867, null);
-    const data = transformOM(raw, "Hyderabad");
-    data.isFallback = true;
-    data.confidence = "medium";
-    setCache(cacheKey, data);
-    renderHero(data);
+    try {
+      const raw = await fetchOM(17.385, 78.4867, null);
+      const data = transformOM(raw, "Hyderabad");
+      data.isFallback = true;
+      data.confidence = "medium";
+      setCache(cacheKey, data);
+      renderHero(data);
+    } catch (fallbackError) {
+      console.error("Total Hero API Failure:", fallbackError);
+      removeSkeleton("hero-temp", "--°C");
+      removeSkeleton("hero-feels", "Feels --°");
+      removeSkeleton("hero-high-low", "H: --° L: --°");
+      removeSkeleton("hero-city-summary", "Weather service temporarily unavailable.");
+      
+      const confBadge = document.getElementById("conf-badge");
+      confBadge.classList.remove("skeleton", "bg-white/10", "border-white/20");
+      confBadge.className = "font-mono font-medium px-2.5 py-0.5 rounded-full text-[10px] border bg-red-900/50 text-red-300 border-red-500/20";
+      confBadge.textContent = "OFFLINE";
+      
+      const updatedEl = document.getElementById("hero-updated");
+      updatedEl.textContent = "Live data unavailable";
+      updatedEl.className = "opacity-50 font-mono text-very-stale";
+    }
   }
 }
 
@@ -591,7 +607,6 @@ function renderLocality(data, name) {
   removeSkeleton("tech-spread", `${data.tempSpread}°C`);
   removeSkeleton("tech-agreement", data.agreement);
 
-  /* PERFORMANCE FIX: DOM Batching to prevent Tailwind thrashing */
   const strip = document.getElementById("hourly-strip");
   let hourlyHTML = "";
   for(let i=0;i<12;i++){
@@ -608,13 +623,12 @@ function renderLocality(data, name) {
         <span class="opacity-60 font-mono text-[10px]">${data.hourly.precipitation_probability[idx]}%</span>
       </div>`;
   }
-  strip.innerHTML = hourlyHTML; // Update DOM exactly once
-
-  if(window.lucide) lucide.createIcons();
+  strip.innerHTML = hourlyHTML; 
+  
+  if(window.lucide) lucide.createIcons({ root: strip });
 }
 
 function renderHotspotsDOM(results, container) {
-  /* PERFORMANCE FIX: DOM Batching to prevent Tailwind thrashing */
   let hotspotsHTML = "";
   results.forEach(r => {
     if (r.ok) {
@@ -637,8 +651,8 @@ function renderHotspotsDOM(results, container) {
       hotspotsHTML += `<div class="p-2.5 rounded-[0.875rem] border border-white/10 bg-white/5 opacity-50 flex justify-between text-xs"><span>${r.name}</span><span>Failed</span></div>`;
     }
   });
-  container.innerHTML = hotspotsHTML; // Update DOM exactly once
-  if(window.lucide) lucide.createIcons();
+  container.innerHTML = hotspotsHTML; 
+  if(window.lucide) lucide.createIcons({ root: container });
 }
 
 async function loadHotspots(forceRefresh = false) {
@@ -675,8 +689,9 @@ let currentLocalityIdx = 0;
 function hideLocError(){ document.getElementById("loc-error-banner").classList.remove("visible"); }
 function showLocError(msg){
   document.getElementById("loc-error-text").textContent = msg;
-  document.getElementById("loc-error-banner").classList.add("visible");
-  if(window.lucide) lucide.createIcons();
+  const banner = document.getElementById("loc-error-banner");
+  banner.classList.add("visible");
+  if(window.lucide) lucide.createIcons({ root: banner });
 }
 
 async function loadLocality(idx, forceRefresh = false){
@@ -695,19 +710,32 @@ async function loadLocality(idx, forceRefresh = false){
   }
 
   try {
-    const data = await fetchLocalityEnsemble(lat, lon, name);
-    // Left intentionally undefined for simulation fix
     const ensembleData = await fetchLocalityEnsemble(loc.lat, loc.lon, loc.name);
     if (idx !== currentLocalityIdx) return;
     setCache(cacheKey, ensembleData);
     renderLocality(ensembleData, loc.name);
   } catch(err) {
     if (idx !== currentLocalityIdx) return; 
-    console.error(err);
+    console.error("Locality API Failure:", err);
     const msg = err.name === "AbortError"
       ? `Request for ${loc.name} timed out. Check your connection and retry.`
       : `Couldn't load ${loc.name} — the weather service may be temporarily unavailable.`;
     showLocError(msg);
+    
+    removeSkeleton("loc-temp", "--°");
+    removeSkeleton("loc-humidity", "--%");
+    removeSkeleton("loc-wind", "--");
+    removeSkeleton("loc-rain", "--%");
+    removeSkeleton("ww-says-text", "Advice unavailable due to network error.");
+    removeSkeleton("loc-interpretation", "Forecast unavailable.");
+    removeSkeleton("stat-sunrise", "--:--");
+    removeSkeleton("stat-sunset", "--:--");
+    removeSkeleton("stat-visibility", "--");
+    if(document.getElementById("stat-uv")) removeSkeleton("stat-uv", "--");
+    removeSkeleton("stat-vis-label", "Offline");
+    
+    const strip = document.getElementById("hourly-strip");
+    strip.innerHTML = `<div class="opacity-50 text-xs p-4 w-full text-center">Hourly data unavailable</div>`;
   }
 }
 
@@ -762,6 +790,7 @@ let map;
 let radarLayers = [];
 let radarInterval = null;
 let currentRadarIdx = 0;
+let radarInitialized = false;
 
 async function initRadar() {
   try {
@@ -818,8 +847,10 @@ async function initRadar() {
     console.error("Radar failed to load:", e);
     document.getElementById("radar-map").classList.remove("skeleton");
     const hint = document.getElementById("radar-hint");
-    if(hint) hint.innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-400"></i> Radar feed temporarily offline.`;
-    if(window.lucide) lucide.createIcons();
+    if(hint) {
+        hint.innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-400"></i> Radar feed temporarily offline.`;
+        if(window.lucide) lucide.createIcons({ root: hint });
+    }
   }
 }
 
@@ -831,11 +862,17 @@ setTimeout(loadHotspots, 200);
 document.addEventListener("DOMContentLoaded", () => {
   enforceMobileLayout();
   
-  setTimeout(() => {
-    map = L.map("radar-map",{zoomControl:true,attributionControl:false,minZoom:4,maxZoom:11}).setView([17.385,78.4867],8);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:11}).addTo(map);
-    initRadar();
-  }, 300); 
+  const observer = new IntersectionObserver((entries) => {
+    if(entries[0].isIntersecting && !radarInitialized) {
+      radarInitialized = true;
+      map = L.map("radar-map",{zoomControl:true,attributionControl:false,minZoom:4,maxZoom:11}).setView([17.385,78.4867],8);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:11}).addTo(map);
+      initRadar();
+      observer.disconnect();
+    }
+  }, { rootMargin: "200px" });
+  
+  observer.observe(document.getElementById("radar-card"));
 });
 </script>
 </body>
