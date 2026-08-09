@@ -465,6 +465,89 @@ async function fetchOM(lat, lon, model) {
   if (!res.ok) throw new Error("Fetch failed");
   return res.json();
 }
+/**
+ * ============================================================================
+ * WEATHERWISE ENSEMBLE MATHEMATICS ENGINE
+ * Phase 1: Pure Meteorological Calculations
+ * These functions process data independently and do not manipulate the DOM.
+ * ============================================================================
+ */
+
+// 1. Core Statistical Functions
+function calculateMedian(values) {
+    if (!values || values.length === 0) return null;
+    const validValues = values.filter(v => v !== null && !isNaN(v)).sort((a, b) => a - b);
+    if (validValues.length === 0) return null;
+    
+    const mid = Math.floor(validValues.length / 2);
+    return validValues.length % 2 !== 0 
+        ? validValues[mid] 
+        : (validValues[mid - 1] + validValues[mid]) / 2;
+}
+
+function calculateSpread(values) {
+    if (!values || values.length < 2) return 0;
+    const validValues = values.filter(v => v !== null && !isNaN(v));
+    if (validValues.length < 2) return 0;
+    
+    return Math.max(...validValues) - Math.min(...validValues);
+}
+
+// 2. Temperature Uncertainty
+function calculateTemperatureUncertainty(values) {
+    const spread = calculateSpread(values);
+    if (spread <= 1.5) return "low";
+    if (spread <= 3.0) return "moderate";
+    return "high";
+}
+
+// 3. Precipitation Window Probability
+function calculateWindowRainProbability(hourlyProbabilities) {
+    if (!hourlyProbabilities || hourlyProbabilities.length === 0) return 0;
+    
+    const validProbs = hourlyProbabilities.map(p => p / 100);
+    
+    // Lower Bound: If hours are perfectly correlated, the window probability is just the maximum hourly probability.
+    const lowerBound = Math.max(...validProbs);
+    
+    // Upper Bound: If hours are perfectly independent, the probability of at least one rain event is the complement of no rain occurring.
+    const probabilityNoRain = validProbs.reduce((acc, p) => acc * (1 - p), 1);
+    const upperBound = 1 - probabilityNoRain;
+    
+    // Meteorological Reality: Weather hours are partially correlated. We use the midpoint.
+    const windowProb = (lowerBound + upperBound) / 2;
+    return Math.round(windowProb * 100);
+}
+
+// 4. Model Agreement & Confidence
+function calculateRainConfidence(rainProbabilities, precipNow) {
+    const total = rainProbabilities.length;
+    if (total === 0) return { validSources: 0, agreement: "no_data", confidenceLevel: "low" };
+    if (total === 1) return { validSources: 1, agreeingSources: 1, agreement: "single_source", confidenceLevel: "low" };
+
+    const wet = rainProbabilities.filter(p => p >= 40 || precipNow).length;
+    const dry = rainProbabilities.filter(p => p <= 20 && !precipNow).length;
+    
+    let agreement = "split";
+    let confidenceLevel = "low";
+    let agreeingSources = Math.max(wet, dry, total - wet - dry);
+
+    if (wet === total || dry === total) {
+        agreement = wet === total ? "all_wet" : "all_dry";
+        confidenceLevel = "high";
+        agreeingSources = total;
+    } else if (wet > total / 2 || dry > total / 2) {
+        agreement = wet > total / 2 ? "mostly_wet" : "mostly_dry";
+        confidenceLevel = "moderate";
+    }
+
+    return {
+        validSources: total,
+        agreeingSources: agreeingSources,
+        agreement: agreement,
+        confidenceLevel: confidenceLevel
+    };
+}
 
 function transformOM(raw, name) {
   const cur = raw.current;
@@ -881,5 +964,5 @@ document.addEventListener("DOMContentLoaded", () => {
   observer.observe(document.getElementById("radar-card"));
 });
 </script>
-</body>
+</body>]
 </html>
