@@ -7,23 +7,23 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
 <meta name="theme-color" content="#0B1220" id="theme-color-meta"/>
 
-<!-- PERFORMANCE FIX: Preconnect to Tailwind CDN to shave DNS lookup time -->
+<!-- Preconnects to shave DNS lookup time -->
 <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 
-<!-- PERFORMANCE FIX: Load Google Fonts asynchronously -->
+<!-- Asynchronous Google Fonts -->
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"></noscript>
 
-<!-- Tailwind CDN (The main render-blocker, preconnected above) -->
+<!-- Tailwind CDN (Render-blocking, but unavoidable without a build step) -->
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- PERFORMANCE FIX: Asynchronous Leaflet CSS -->
+<!-- Asynchronous Leaflet CSS -->
 <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript>
 
-<!-- PERFORMANCE FIX: Deferred JS libraries -->
+<!-- Deferred JS libraries -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js" defer></script>
 
@@ -35,12 +35,12 @@
   *{box-sizing:border-box;}
   html,body{height:100%;margin:0;}
   
+  /* Hardcoded default theme prevents white flash FOUC while Tailwind compiles */
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     overflow-x: hidden;
-    transition: background 0.5s ease, color 0.5s ease;
-    background-color: #0B1220; 
-    color: #F1F5F9;
+    background-color: #0B1220 !important; 
+    color: #F1F5F9 !important;
   }
   
   .font-display{font-family:'Space Grotesk',sans-serif;}
@@ -82,7 +82,6 @@
   .hour-pill.now{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.35);}
 
   #radar-map{height:280px;border-radius:1rem; z-index: 1;}
-
   #loc-error-banner{display:none;}
   #loc-error-banner.visible{display:flex;}
 
@@ -169,7 +168,6 @@
 
   <!-- LEFT PANEL -->
   <div id="left-col" class="lg:col-span-3 flex flex-col gap-6">
-
     <div class="glass-card p-6">
       <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
         <div class="flex items-center gap-2">
@@ -255,9 +253,7 @@
         <div><p class="opacity-40 text-[10px]">Sunset</p><p id="stat-sunset" class="skeleton w-12">00:00</p></div>
         <div><p class="opacity-40 text-[10px]">Visibility</p><p><span id="stat-visibility" class="skeleton w-10">00 km</span> (<span id="stat-vis-label" class="skeleton w-16">Loading</span>)</p></div>
         <div><p class="opacity-40 text-[10px]">UV Index Max</p><p id="stat-uv" class="skeleton w-6">00</p></div>
-        
         <div class="col-span-2 my-1 border-t border-white/10"></div>
-        
         <div><p class="opacity-40 text-[10px]">Humidity</p><p id="tech-humidity" class="skeleton w-8">00%</p></div>
         <div><p class="opacity-40 text-[10px]">Wind</p><p id="tech-wind" class="skeleton w-12">00 km/h</p></div>
         <div><p class="opacity-40 text-[10px]">Locality Rain chance</p><p id="tech-rain" class="skeleton w-8">00%</p></div>
@@ -351,8 +347,13 @@ function applyTheme(cond,isDay){
   document.body.style.color = t.text;
   document.getElementById("hero-bar").style.background = `linear-gradient(135deg, ${t.from} 0%, ${t.to} 100%)`;
   document.getElementById("stars").classList.toggle("visible", !isDay);
-  document.getElementById("hero-icon").setAttribute("data-lucide", t.icon);
-  document.getElementById("hero-icon").style.color = t.accent;
+  
+  const iconEl = document.getElementById("hero-icon");
+  if(iconEl) {
+      iconEl.setAttribute("data-lucide", t.icon);
+      iconEl.style.color = t.accent;
+      if(window.lucide) lucide.createIcons({icons:{[t.icon]:true}});
+  }
 }
 
 function removeSkeleton(id, text) {
@@ -411,7 +412,6 @@ function renderHero(data) {
 
   removeSkeleton("hero-city-summary", data.isFallback ? `${data.condLabel} today at ${data.temp}°C. Live fallback data.` : summaryText);
   applyTheme(data.condition, data.isDay !== false);
-  if(window.lucide) lucide.createIcons();
 }
 
 async function loadCityHero(forceRefresh = false) {
@@ -641,7 +641,6 @@ function renderHotspotsDOM(results, container) {
   if(window.lucide) lucide.createIcons();
 }
 
-/* PERFORMANCE FIX: Delaying heavy background calls */
 async function loadHotspots(forceRefresh = false) {
   const container = document.getElementById("rain-hotspots");
   const cacheKey = "ww_hotspots";
@@ -725,7 +724,6 @@ document.getElementById("tech-toggle").addEventListener("click",()=>{
   document.getElementById("tech-chevron").classList.toggle("rotate-180");
 });
 
-/* ─── PHASE 25: OFFLINE NETWORK BEHAVIOR ─── */
 window.addEventListener('offline', () => {
   const banner = document.getElementById("loc-error-banner");
   document.getElementById("loc-error-text").textContent = "You're offline. Showing the last available cached data.";
@@ -739,7 +737,6 @@ window.addEventListener('online', () => {
   document.getElementById("refresh-btn").click(); 
 });
 
-/* ─── MOBILE UX & LAYOUT SWAP ─── */
 const leftCol = document.getElementById("left-col");
 const rightCol = document.getElementById("right-col");
 const radarCard = document.getElementById("radar-card");
@@ -759,12 +756,12 @@ function enforceMobileLayout() {
 
 window.addEventListener("resize", enforceMobileLayout);
 
-/* ─── BOOTSTRAP SEQUENCE ─── */
 let map;
 let radarLayers = [];
 let radarInterval = null;
 let currentRadarIdx = 0;
 
+/* PERFORMANCE FIX: Chunking radar frames to lower Total Blocking Time (TBT) */
 async function initRadar() {
   try {
     const res = await fetch("https://api.rainviewer.com/public/weather-maps.json");
@@ -778,38 +775,43 @@ async function initRadar() {
     
     document.getElementById("radar-map").classList.remove("skeleton");
 
-    radarLayers = frames.map(frame => {
-      const url = `${host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
-      const layer = L.tileLayer(url, {
-        opacity: 0,
-        maxNativeZoom: 7, 
-        minZoom: 4,
-        maxZoom: 11,
-        zIndex: 10
-      }).addTo(map);
-      return layer;
+    let loadedCount = 0;
+    
+    frames.forEach((frame, i) => {
+      setTimeout(() => {
+        const url = `${host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
+        const layer = L.tileLayer(url, {
+          opacity: i === 0 ? 0.65 : 0,
+          maxNativeZoom: 7, 
+          minZoom: 4,
+          maxZoom: 11,
+          zIndex: 10
+        }).addTo(map);
+        radarLayers.push(layer);
+
+        if(i === 0 && timeLabel) {
+            const d = new Date(frames[0].time * 1000);
+            timeLabel.textContent = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+
+        loadedCount++;
+        
+        if(loadedCount === frames.length) {
+          if (radarInterval) clearInterval(radarInterval);
+          radarInterval = setInterval(() => {
+            if(!radarLayers.length) return;
+            radarLayers[currentRadarIdx].setOpacity(0);
+            currentRadarIdx = (currentRadarIdx + 1) % radarLayers.length;
+            radarLayers[currentRadarIdx].setOpacity(0.65);
+            
+            if(timeLabel) {
+                const d = new Date(frames[currentRadarIdx].time * 1000);
+                timeLabel.textContent = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            }
+          }, 1200);
+        }
+      }, i * 40); // 40ms stagger keeps main thread unblocked
     });
-
-    radarLayers[0].setOpacity(0.65);
-    if(timeLabel) {
-        const d = new Date(frames[0].time * 1000);
-        timeLabel.textContent = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    }
-
-    if (radarInterval) clearInterval(radarInterval);
-
-    radarInterval = setInterval(() => {
-      if(!radarLayers.length) return;
-      
-      radarLayers[currentRadarIdx].setOpacity(0);
-      currentRadarIdx = (currentRadarIdx + 1) % radarLayers.length;
-      radarLayers[currentRadarIdx].setOpacity(0.65);
-      
-      if(timeLabel) {
-          const d = new Date(frames[currentRadarIdx].time * 1000);
-          timeLabel.textContent = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-      }
-    }, 1200);
 
   } catch (e) {
     console.error("Radar failed to load:", e);
@@ -820,20 +822,19 @@ async function initRadar() {
   }
 }
 
-// PERFORMANCE FIX: Wait until primary page paints before launching heavy scripts
-window.addEventListener("load", () => {
-  // Fire primary weather data immediately
-  loadCityHero();
-  loadLocality(0);
-  enforceMobileLayout();
+// PERFORMANCE FIX: Unleash fetchers instantly, defer heavy map assets
+loadCityHero();
+loadLocality(0);
+setTimeout(loadHotspots, 200); 
 
-  // Defer heavy rendering (Maps & Secondary API calls) off the main thread
+document.addEventListener("DOMContentLoaded", () => {
+  enforceMobileLayout();
+  
   setTimeout(() => {
     map = L.map("radar-map",{zoomControl:true,attributionControl:false,minZoom:4,maxZoom:11}).setView([17.385,78.4867],8);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:11}).addTo(map);
     initRadar();
-    loadHotspots();
-  }, 400); 
+  }, 300); 
 });
 </script>
 </body>
