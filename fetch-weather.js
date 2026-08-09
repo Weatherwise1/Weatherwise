@@ -4,13 +4,68 @@ import { writeFileSync } from "fs";
 const DEFAULT_LAT = 17.385;
 const DEFAULT_LON = 78.4867;
 
-// ─── Weather Data Validation ─────────────────────────────────────────────────
-function validatePhysicalBounds(data, sourceName) {
+// ─── WEATHERWISE ENSEMBLE ENGINE (PHASE 1) ─────────────────────────────────
+function calculateMedian(values) {
+  if (!values || values.length === 0) return null;
+  const validValues = values.filter(v => v !== null && !isNaN(v)).sort((a, b) => a - b);
+  if (validValues.length === 0) return null;
+  const mid = Math.floor(validValues.length / 2);
+  return validValues.length % 2 !== 0 ? validValues[mid] : Math.round((validValues[mid - 1] + validValues[mid]) / 2);
+}
+
+function calculateSpread(values) {
+  if (!values || values.length < 2) return 0;
+  const validValues = values.filter(v => v !== null && !isNaN(v));
+  if (validValues.length < 2) return 0;
+  return Math.round((Math.max(...validValues) - Math.min(...validValues)) * 10) / 10;
+}
+
+function calculateWindowRainProbability(hourlyProbabilities) {
+  if (!hourlyProbabilities || hourlyProbabilities.length === 0) return 0;
+  const validProbs = hourlyProbabilities.filter(p => p !== null && !isNaN(p)).map(p => p / 100);
+  if (validProbs.length === 0) return 0;
+  const lowerBound = Math.max(...validProbs);
+  const probabilityNoRain = validProbs.reduce((acc, p) => acc * (1 - p), 1);
+  const upperBound = 1 - probabilityNoRain;
+  return Math.round(((lowerBound + upperBound) / 2) * 100);
+}
+
+function calculateRainConfidence(rainProbabilities, precipNow) {
+  const total = rainProbabilities.length;
+  if (total < 2) return { agreement: "single_source", confidenceText: "Limited data", confLevel: "low" };
+
+  const wet = rainProbabilities.filter(p => p >= 40 || precipNow).length;
+  const dry = rainProbabilities.filter(p => p <= 20 && !precipNow).length;
+  
+  if (wet === total || dry === total) return { agreement: wet === total ? "all_wet" : "all_dry", confidenceText: "Models agree", confLevel: "high" };
+  if (wet > total / 2 || dry > total / 2) return { agreement: wet > total / 2 ? "mostly_wet" : "mostly_dry", confidenceText: "Models mostly agree", confLevel: "medium" };
+  
+  return { agreement: "split", confidenceText: "Models disagree", confLevel: "low" };
+}
+
+// ─── DATA VALIDATION & NORMALIZATION (PHASE 2) ─────────────────────────────
+function normalizeAndValidate(data, sourceName) {
+  // Physical bounds validation to protect production data
   if (data.temp < -5 || data.temp > 55) throw new Error(`Unrealistic temperature detected (${data.temp}°C)`);
   if (data.humidity < 0 || data.humidity > 100) throw new Error(`Unrealistic humidity detected (${data.humidity}%)`);
   if (data.wind < 0 || data.wind > 200) throw new Error(`Unrealistic wind speed detected (${data.wind} km/h)`);
   if (data.chanceOfRain < 0 || data.chanceOfRain > 100) throw new Error(`Unrealistic rain probability detected (${data.chanceOfRain}%)`);
-  return data;
+  
+  // Standardized Provider Schema
+  return {
+    source: sourceName,
+    temp: Math.round(data.temp),
+    humidity: Math.round(data.humidity),
+    wind: Math.round(data.wind),
+    precipNow: !!data.precipNow,
+    chanceOfRain: Math.round(data.chanceOfRain),
+    isDay: data.isDay !== undefined ? !!data.isDay : true,
+    high: data.high != null ? Math.round(data.high) : null,
+    low: data.low != null ? Math.round(data.low) : null,
+    uv: data.uv != null ? data.uv : null,
+    feelsLike: data.feelsLike != null ? Math.round(data.feelsLike) : null,
+    airQuality: data.airQuality != null ? Math.round(data.airQuality) : null,
+  };
 }
 
 // ─── Fetch Helper with Timeout ───────────────────────────────────────────────
@@ -40,17 +95,15 @@ async function getOpenMeteoICON(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   const nowIdx = data.hourly.time.findIndex(t => t.startsWith(cur.time.slice(0, 13)));
   const next6 = data.hourly.precipitation_probability.slice(nowIdx, nowIdx + 6);
   
-  return validatePhysicalBounds({
-    source: "Open-Meteo ICON",
-    temp: Math.round(cur.temperature_2m),
+  return normalizeAndValidate({
+    temp: cur.temperature_2m,
     humidity: cur.relative_humidity_2m,
-    wind: Math.round(cur.wind_speed_10m),
+    wind: cur.wind_speed_10m,
     precipNow: cur.precipitation > 0,
-    chanceOfRain: next6.length ? Math.max(...next6) : 0,
-    weatherCode: cur.weather_code,
+    chanceOfRain: calculateWindowRainProbability(next6),
     isDay: cur.is_day === 1,
-    high: data.daily ? Math.round(data.daily.temperature_2m_max[0]) : null,
-    low: data.daily ? Math.round(data.daily.temperature_2m_min[0]) : null,
+    high: data.daily ? data.daily.temperature_2m_max[0] : null,
+    low: data.daily ? data.daily.temperature_2m_min[0] : null,
   }, "Open-Meteo ICON");
 }
 
@@ -64,14 +117,12 @@ async function getOpenMeteoECMWF(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   const nowIdx = data.hourly.time.findIndex(t => t.startsWith(cur.time.slice(0, 13)));
   const next6 = data.hourly.precipitation_probability.slice(nowIdx, nowIdx + 6);
   
-  return validatePhysicalBounds({
-    source: "Open-Meteo ECMWF",
-    temp: Math.round(cur.temperature_2m),
+  return normalizeAndValidate({
+    temp: cur.temperature_2m,
     humidity: cur.relative_humidity_2m,
-    wind: Math.round(cur.wind_speed_10m),
+    wind: cur.wind_speed_10m,
     precipNow: cur.precipitation > 0,
-    chanceOfRain: next6.length ? Math.max(...next6) : 0,
-    weatherCode: cur.weather_code,
+    chanceOfRain: calculateWindowRainProbability(next6),
   }, "Open-Meteo ECMWF");
 }
 
@@ -82,19 +133,19 @@ async function getWeatherAPI(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   const data = await fetchWithTimeout(url);
   const cur = data.current;
   
-  return validatePhysicalBounds({
-    source: "WeatherAPI",
-    temp: Math.round(cur.temp_c),
+  const hourlyProbs = data.forecast.forecastday[0].hour
+    .slice(new Date().getHours(), new Date().getHours() + 6)
+    .map(h => h.chance_of_rain);
+
+  return normalizeAndValidate({
+    temp: cur.temp_c,
     humidity: cur.humidity,
-    wind: Math.round(cur.wind_kph),
+    wind: cur.wind_kph,
     precipNow: cur.precip_mm > 0,
-    chanceOfRain: data.forecast.forecastday[0].hour
-      .slice(new Date().getHours(), new Date().getHours() + 6)
-      .reduce((max, h) => Math.max(max, h.chance_of_rain), 0),
-    conditionText: cur.condition.text,
+    chanceOfRain: calculateWindowRainProbability(hourlyProbs),
     uv: cur.uv,
-    feelsLike: Math.round(cur.feelslike_c),
-    airQuality: cur.air_quality ? Math.round(cur.air_quality.pm2_5) : null,
+    feelsLike: cur.feelslike_c,
+    airQuality: cur.air_quality ? cur.air_quality.pm2_5 : null,
   }, "WeatherAPI");
 }
 
@@ -107,95 +158,61 @@ async function getTomorrow(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   });
   const v = data.data.values;
   
-  return validatePhysicalBounds({
-    source: "Tomorrow.io",
-    temp: Math.round(v.temperature),
-    humidity: Math.round(v.humidity),
-    wind: Math.round(v.windSpeed * 3.6),
+  return normalizeAndValidate({
+    temp: v.temperature,
+    humidity: v.humidity,
+    wind: v.windSpeed * 3.6, // Convert m/s to km/h
     precipNow: v.precipitationIntensity > 0,
-    chanceOfRain: Math.round(v.precipitationProbability),
-    visibility: v.visibility,
-    uvIndex: v.uvIndex,
-    feelsLike: Math.round(v.temperatureApparent),
+    chanceOfRain: v.precipitationProbability,
+    uv: v.uvIndex,
+    feelsLike: v.temperatureApparent,
   }, "Tomorrow.io");
 }
 
-function median(nums) {
-  const sorted = [...nums].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 !== 0
-    ? sorted[mid]
-    : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
-}
-
-// ─── Reconciliation Engine ──────────────────────────────────────────────────
+// ─── Backend Reconciliation Engine ───────────────────────────────────────────
 function reconcile(results) {
   const good = results.filter(r => r.status === "ok").map(r => r.data);
   const failed = results.filter(r => r.status === "error").map(r => r.source);
 
-  // PHASE 1: Handle total API failure gracefully instead of throwing an error
   if (good.length === 0) {
     console.warn("\n! CRITICAL WARNING: All weather sources failed.");
-    return {
-      city: "Hyderabad",
-      stale: true,
-      sourcesFailed: failed,
-      sourcesUsed: [],
-      generatedAt: new Date().toISOString()
-    };
+    return { city: "Hyderabad", stale: true, sourcesFailed: failed, sourcesUsed: [], generatedAt: new Date().toISOString() };
   }
 
-  const avgTemp = Math.round(good.reduce((s, d) => s + d.temp, 0) / good.length);
-  const avgHumidity = Math.round(good.reduce((s, d) => s + d.humidity, 0) / good.length);
-  const avgWind = Math.round(good.reduce((s, d) => s + d.wind, 0) / good.length);
-  const rainChance = median(good.map(d => d.chanceOfRain));
+  // Use robust medians instead of naive averages
+  const avgTemp = calculateMedian(good.map(d => d.temp));
+  const avgHumidity = calculateMedian(good.map(d => d.humidity));
+  const avgWind = calculateMedian(good.map(d => d.wind));
+  const rainChance = calculateMedian(good.map(d => d.chanceOfRain));
 
   const temps = good.map(d => d.temp);
-  const tempSpread = Math.max(...temps) - Math.min(...temps);
+  const tempSpread = calculateSpread(temps);
+  
+  const anyPrecipNow = good.some(d => d.precipNow);
+  const rainProbs = good.map(d => d.chanceOfRain);
+  let { agreement, confLevel } = calculateRainConfidence(rainProbs, anyPrecipNow);
 
-  const wetVotes = good.filter(d => d.chanceOfRain > 40 || d.precipNow).length;
-  const dryVotes = good.filter(d => d.chanceOfRain < 20 && !d.precipNow).length;
-  const totalVotes = good.length;
-
-  let rainAgreement, confidence;
-  if (wetVotes === totalVotes) {
-    rainAgreement = "all_wet";
-    confidence = "high";
-  } else if (dryVotes === totalVotes) {
-    rainAgreement = "all_dry";
-    confidence = "high";
-  } else if (wetVotes > totalVotes / 2) {
-    rainAgreement = "mostly_wet";
-    confidence = "medium";
-  } else if (dryVotes > totalVotes / 2) {
-    rainAgreement = "mostly_dry";
-    confidence = "medium";
-  } else {
-    rainAgreement = "split";
-    confidence = "low";
-  }
-
-  if (tempSpread >= 3) confidence = "low";
+  // Override confidence if temperature models are chaotic
+  if (tempSpread >= 3) confLevel = "low";
 
   const isDay = good.find(d => d.isDay !== undefined)?.isDay ?? true;
   const high = good.find(d => d.high != null)?.high ?? null;
   const low = good.find(d => d.low != null)?.low ?? null;
-  const uv = good.find(d => d.uvIndex)?.uvIndex ?? good.find(d => d.uv)?.uv ?? null;
-  const feelsLike = good.find(d => d.feelsLike)?.feelsLike ?? null;
-  const airQuality = good.find(d => d.airQuality)?.airQuality ?? null;
+  const uv = good.find(d => d.uv != null)?.uv ?? null;
+  const feelsLike = good.find(d => d.feelsLike != null)?.feelsLike ?? null;
+  const airQuality = good.find(d => d.airQuality != null)?.airQuality ?? null;
 
   let condition;
-  if (rainAgreement === "all_wet" || rainAgreement === "mostly_wet") {
+  if (agreement === "all_wet" || agreement === "mostly_wet") {
     condition = "rainy";
-  } else if (rainAgreement === "all_dry" && avgTemp >= 30) {
+  } else if (agreement === "all_dry" && avgTemp >= 30) {
     condition = "clear";
-  } else if (rainAgreement === "all_dry") {
+  } else if (agreement === "all_dry") {
     condition = "clear";
   } else {
     condition = "cloudy";
   }
 
-  // PHASE 1: Ensure generatedAt updates even on partial success
   return {
     city: "Hyderabad",
     temp: avgTemp,
@@ -206,8 +223,8 @@ function reconcile(results) {
     isDay,
     high,
     low,
-    confidence,
-    rainAgreement,
+    confidence: confLevel,
+    rainAgreement: agreement,
     tempSpread,
     uv,
     feelsLike,
@@ -223,7 +240,6 @@ function reconcile(results) {
 async function main() {
   console.log("Fetching weather data across multi-model cluster...\n");
 
-  // PHASE 1: Isolate each API call so individual failures don't crash the script
   const results = await Promise.all([
     getOpenMeteoICON().then(d => ({ status: "ok", source: "Open-Meteo ICON", data: d }))
       .catch(e => ({ status: "error", source: "Open-Meteo ICON", error: e.message })),
@@ -247,7 +263,6 @@ async function main() {
   console.log("\n--- Reconciled Weather Payload ---");
   console.log(JSON.stringify(reconciled, null, 2));
 
-  // Always write the file, even if it's the fallback payload
   writeFileSync("weather.json", JSON.stringify(reconciled, null, 2));
   console.log("\n✓ weather.json updated successfully");
 }
