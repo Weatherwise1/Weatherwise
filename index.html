@@ -216,6 +216,15 @@
       </div>
     </div>
 
+    <!-- Desktop WeatherWise Says Card -->
+    <div class="glass-card p-6 border-l-4 border-l-[var(--accent)] hidden lg:block">
+      <div class="flex items-center gap-2 mb-3">
+        <i data-lucide="sparkles" class="w-4 h-4" style="color:var(--accent)"></i>
+        <p class="text-[11px] uppercase tracking-wider opacity-80 font-semibold">WeatherWise Says</p>
+      </div>
+      <p class="font-display text-lg font-medium leading-snug skeleton" id="ww-says-text-desktop">Generating neighborhood advice based on ensemble models...</p>
+    </div>
+
     <!-- Live Radar -->
     <div id="radar-card" class="glass-card p-5">
       <div class="flex items-center justify-between mb-3">
@@ -592,7 +601,8 @@ function renderLocality(data, name) {
   } else {
     advice = `Quiet weather in ${name} right now. No major rain expected.`;
   }
-  removeSkeleton("ww-says-text", advice);
+  removeSkeleton("ww-says-text-mobile", advice);
+  removeSkeleton("ww-says-text-desktop", advice);
   
   removeSkeleton("loc-interpretation", data.precipNow ? "Raining right now." : `Currently ${data.condLabel}.`);
 
@@ -770,25 +780,6 @@ window.addEventListener('online', () => {
   document.getElementById("loc-error-retry").style.display = "block";
   document.getElementById("refresh-btn").click(); 
 });
-
-const leftCol = document.getElementById("left-col");
-const rightCol = document.getElementById("right-col");
-const radarCard = document.getElementById("radar-card");
-const wwCard = document.getElementById("ww-card");
-
-function enforceMobileLayout() {
-  if (window.innerWidth < 1024) {
-    if (wwCard.parentElement !== leftCol) {
-      leftCol.insertBefore(wwCard, radarCard);
-    }
-  } else {
-    if (wwCard.parentElement !== rightCol) {
-      rightCol.insertBefore(wwCard, rightCol.firstChild);
-    }
-  }
-}
-
-window.addEventListener("resize", enforceMobileLayout);
 
 let map;
 let radarLayers = [];
