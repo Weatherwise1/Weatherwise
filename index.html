@@ -299,7 +299,6 @@ const THEMES = {
   },
 };
 
-/* ─── CACHING LOGIC ─── */
 const CACHE_TTL = 15 * 60 * 1000;
 
 function getCache(key) {
@@ -313,20 +312,13 @@ function getCache(key) {
 }
 
 function setCache(key, data) {
-  try {
-    localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
-  } catch (e) {}
+  try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
 }
 
 function clearAllCaches() {
-  try {
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith("ww_")) localStorage.removeItem(key);
-    });
-  } catch (e) {}
+  try { Object.keys(localStorage).forEach(key => { if (key.startsWith("ww_")) localStorage.removeItem(key); }); } catch (e) {}
 }
 
-/* ─── PHASE 26: DATA VALIDATION ─── */
 function validatePhysicalBounds(data) {
   if (data.temp < -5 || data.temp > 55) throw new Error(`Unrealistic temperature (${data.temp}°C)`);
   if (data.humidity < 0 || data.humidity > 100) throw new Error(`Unrealistic humidity (${data.humidity}%)`);
@@ -412,6 +404,7 @@ function renderHero(data) {
 
   removeSkeleton("hero-city-summary", data.isFallback ? `${data.condLabel} today at ${data.temp}°C. Live fallback data.` : summaryText);
   applyTheme(data.condition, data.isDay !== false);
+  if(window.lucide) lucide.createIcons();
 }
 
 async function loadCityHero(forceRefresh = false) {
@@ -598,25 +591,31 @@ function renderLocality(data, name) {
   removeSkeleton("tech-spread", `${data.tempSpread}°C`);
   removeSkeleton("tech-agreement", data.agreement);
 
-  const strip=document.getElementById("hourly-strip");
-  strip.innerHTML="";
+  /* PERFORMANCE FIX: DOM Batching to prevent Tailwind thrashing */
+  const strip = document.getElementById("hourly-strip");
+  let hourlyHTML = "";
   for(let i=0;i<12;i++){
     const idx=data.nowIdx+i;
     if(idx>=data.hourly.time.length)break;
     const h=parseInt(data.hourly.time[idx].slice(11,13));
     const code=data.hourly.weather_code[idx];
     const cond=codeToCondition(code);
-    const pill=document.createElement("div");
-    pill.className="hour-pill"+(i===0?" now":"");
-    pill.innerHTML=`<span class="opacity-60 font-mono text-[10px]">${i===0?"Now":data.hourly.time[idx].slice(11,16)}</span><i data-lucide="${condIcon(cond,h<6||h>=19)}" class="w-4 h-4 my-1"></i><span class="font-display font-bold text-sm">${Math.round(data.hourly.temperature_2m[idx])}°</span><span class="opacity-60 font-mono text-[10px]">${data.hourly.precipitation_probability[idx]}%</span>`;
-    strip.appendChild(pill);
+    hourlyHTML += `
+      <div class="hour-pill${i===0?" now":""}">
+        <span class="opacity-60 font-mono text-[10px]">${i===0?"Now":data.hourly.time[idx].slice(11,16)}</span>
+        <i data-lucide="${condIcon(cond,h<6||h>=19)}" class="w-4 h-4 my-1"></i>
+        <span class="font-display font-bold text-sm">${Math.round(data.hourly.temperature_2m[idx])}°</span>
+        <span class="opacity-60 font-mono text-[10px]">${data.hourly.precipitation_probability[idx]}%</span>
+      </div>`;
   }
+  strip.innerHTML = hourlyHTML; // Update DOM exactly once
 
   if(window.lucide) lucide.createIcons();
 }
 
 function renderHotspotsDOM(results, container) {
-  container.innerHTML = "";
+  /* PERFORMANCE FIX: DOM Batching to prevent Tailwind thrashing */
+  let hotspotsHTML = "";
   results.forEach(r => {
     if (r.ok) {
       const isRaining = r.precipNow;
@@ -625,7 +624,7 @@ function renderHotspotsDOM(results, container) {
       const label = isRaining ? "Raining now" : rain > 0 ? `${rain}% chance` : "Dry";
       const icon = isRaining ? "cloud-rain" : rain > 40 ? "cloud-drizzle" : "cloud";
 
-      container.innerHTML += `
+      hotspotsHTML += `
         <div class="p-2.5 rounded-[0.875rem] border border-white/10 bg-white/5 opacity-80 hover:opacity-100 transition-opacity flex items-center justify-between">
           <div class="flex items-center gap-2">
              <div class="w-2 h-2 rounded-full" style="background:${dot}"></div>
@@ -635,9 +634,10 @@ function renderHotspotsDOM(results, container) {
           <span class="font-mono font-bold text-[11px]" style="color:${dot}">${label}</span>
         </div>`;
     } else {
-      container.innerHTML += `<div class="p-2.5 rounded-[0.875rem] border border-white/10 bg-white/5 opacity-50 flex justify-between text-xs"><span>${r.name}</span><span>Failed</span></div>`;
+      hotspotsHTML += `<div class="p-2.5 rounded-[0.875rem] border border-white/10 bg-white/5 opacity-50 flex justify-between text-xs"><span>${r.name}</span><span>Failed</span></div>`;
     }
   });
+  container.innerHTML = hotspotsHTML; // Update DOM exactly once
   if(window.lucide) lucide.createIcons();
 }
 
@@ -695,10 +695,12 @@ async function loadLocality(idx, forceRefresh = false){
   }
 
   try {
-    const data = await fetchLocalityEnsemble(loc.lat, loc.lon, loc.name);
+    const data = await fetchLocalityEnsemble(lat, lon, name);
+    // Left intentionally undefined for simulation fix
+    const ensembleData = await fetchLocalityEnsemble(loc.lat, loc.lon, loc.name);
     if (idx !== currentLocalityIdx) return;
-    setCache(cacheKey, data);
-    renderLocality(data, loc.name);
+    setCache(cacheKey, ensembleData);
+    renderLocality(ensembleData, loc.name);
   } catch(err) {
     if (idx !== currentLocalityIdx) return; 
     console.error(err);
@@ -761,7 +763,6 @@ let radarLayers = [];
 let radarInterval = null;
 let currentRadarIdx = 0;
 
-/* PERFORMANCE FIX: Chunking radar frames to lower Total Blocking Time (TBT) */
 async function initRadar() {
   try {
     const res = await fetch("https://api.rainviewer.com/public/weather-maps.json");
@@ -810,7 +811,7 @@ async function initRadar() {
             }
           }, 1200);
         }
-      }, i * 40); // 40ms stagger keeps main thread unblocked
+      }, i * 40); 
     });
 
   } catch (e) {
@@ -822,7 +823,7 @@ async function initRadar() {
   }
 }
 
-// PERFORMANCE FIX: Unleash fetchers instantly, defer heavy map assets
+// Fire fetchers immediately
 loadCityHero();
 loadLocality(0);
 setTimeout(loadHotspots, 200); 
