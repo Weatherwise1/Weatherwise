@@ -4,7 +4,7 @@ import { writeFileSync } from "fs";
 const DEFAULT_LAT = 17.385;
 const DEFAULT_LON = 78.4867;
 
-// ─── WEATHERWISE ENSEMBLE ENGINE (PHASE 1) ─────────────────────────────────
+// ─── WEATHERWISE ENSEMBLE ENGINE (PHASE 1 & 4) ─────────────────────────────
 function calculateMedian(values) {
   if (!values || values.length === 0) return null;
   const validValues = values.filter(v => v !== null && !isNaN(v)).sort((a, b) => a - b);
@@ -13,11 +13,37 @@ function calculateMedian(values) {
   return validValues.length % 2 !== 0 ? validValues[mid] : Math.round((validValues[mid - 1] + validValues[mid]) / 2);
 }
 
+function calculateMean(values) {
+  if (!values || values.length === 0) return null;
+  const validValues = values.filter(v => v !== null && !isNaN(v));
+  if (validValues.length === 0) return null;
+  const sum = validValues.reduce((a, b) => a + b, 0);
+  return Math.round((sum / validValues.length) * 10) / 10;
+}
+
 function calculateSpread(values) {
   if (!values || values.length < 2) return 0;
   const validValues = values.filter(v => v !== null && !isNaN(v));
   if (validValues.length < 2) return 0;
   return Math.round((Math.max(...validValues) - Math.min(...validValues)) * 10) / 10;
+}
+
+// PHASE 4: Percentile Calculator for True Ensemble Bounds
+function calculatePercentile(values, percentile) {
+  if (!values || values.length === 0) return null;
+  const validValues = values.filter(v => v !== null && !isNaN(v)).sort((a, b) => a - b);
+  if (validValues.length === 0) return null;
+  
+  if (percentile <= 0) return validValues[0];
+  if (percentile >= 100) return validValues[validValues.length - 1];
+
+  const index = (percentile / 100) * (validValues.length - 1);
+  const lower = Math.floor(index);
+  const upper = Math.ceil(index);
+  const weight = index % 1;
+
+  if (lower === upper) return validValues[lower];
+  return Math.round((validValues[lower] * (1 - weight) + validValues[upper] * weight) * 10) / 10;
 }
 
 function calculateWindowRainProbability(hourlyProbabilities) {
@@ -43,7 +69,7 @@ function calculateRainConfidence(rainProbabilities, precipNow) {
   return { agreement: "split", confidenceText: "Models disagree", confLevel: "low" };
 }
 
-// ─── DATA VALIDATION & NORMALIZATION (PHASE 2 & 3) ─────────────────────────
+// ─── DATA VALIDATION & NORMALIZATION ───────────────────────────────────────
 function normalizeAndValidate(data, sourceName) {
   if (data.temp < -5 || data.temp > 55) throw new Error(`Unrealistic temperature detected (${data.temp}°C)`);
   if (data.humidity < 0 || data.humidity > 100) throw new Error(`Unrealistic humidity detected (${data.humidity}%)`);
@@ -83,7 +109,7 @@ async function fetchWithTimeout(url, options = {}, ms = 8000) {
   }
 }
 
-// ─── Data Fetchers (PHASE 3: Model Expansion & Freshness) ──────────────────
+// ─── Data Fetchers ───────────────────────────────────────────────────────────
 async function getOpenMeteoICON(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,weather_code,wind_speed_10m,relative_humidity_2m,is_day&hourly=precipitation_probability,temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&models=icon_seamless&forecast_days=1&timezone=Asia%2FKolkata`;
   const data = await fetchWithTimeout(url);
@@ -182,19 +208,36 @@ function reconcile(results) {
     return { city: "Hyderabad", stale: true, sourcesFailed: failed, sourcesUsed: [], generatedAt: new Date().toISOString() };
   }
 
-  const avgTemp = calculateMedian(good.map(d => d.temp));
+  const temps = good.map(d => d.temp);
+  const rainProbs = good.map(d => d.chanceOfRain);
+  
+  const avgTemp = calculateMedian(temps);
+  const tempSpread = calculateSpread(temps);
   const avgHumidity = calculateMedian(good.map(d => d.humidity));
   const avgWind = calculateMedian(good.map(d => d.wind));
-  const rainChance = calculateMedian(good.map(d => d.chanceOfRain));
+  const rainChance = calculateMedian(rainProbs);
 
-  const temps = good.map(d => d.temp);
-  const tempSpread = calculateSpread(temps);
-  
   const anyPrecipNow = good.some(d => d.precipNow);
-  const rainProbs = good.map(d => d.chanceOfRain);
   let { agreement, confLevel } = calculateRainConfidence(rainProbs, anyPrecipNow);
 
   if (tempSpread >= 3) confLevel = "low";
+
+  // PHASE 4: Ensemble Metrics Block
+  const ensembleMetrics = {
+    tempMean: calculateMean(temps),
+    tempMedian: avgTemp,
+    tempSpread: tempSpread,
+    tempP10: calculatePercentile(temps, 10),
+    tempP25: calculatePercentile(temps, 25),
+    tempP75: calculatePercentile(temps, 75),
+    tempP90: calculatePercentile(temps, 90)
+  };
+  
+  // Calculate a safe "expected range" using P25 and P75 to trim wild outliers
+  const expectedTempRange = {
+    min: Math.round(ensembleMetrics.tempP25),
+    max: Math.round(ensembleMetrics.tempP75)
+  };
 
   const isDay = good.find(d => d.isDay !== undefined)?.isDay ?? true;
   const high = good.find(d => d.high != null)?.high ?? null;
@@ -215,6 +258,8 @@ function reconcile(results) {
   return {
     city: "Hyderabad",
     temp: avgTemp,
+    expectedTempRange,
+    ensembleMetrics,
     humidity: avgHumidity,
     wind: avgWind,
     chanceOfRain: rainChance,

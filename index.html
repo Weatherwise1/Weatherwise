@@ -287,21 +287,31 @@ const HOTSPOT_INDICES = [1, 2, 5, 9];
 const MODELS = ["icon_seamless", "ecmwf_ifs025", "gfs_seamless"];
 
 const THEMES = {
-  clear: {
-    day: { bg:"#38BDF8", text:"#082F49", accent:"#0284C7", from:"#7DD3FC", to:"#0EA5E9", cloud:"rgba(255,255,255,0.7)", icon:"sun" },
-    night: { bg:"#060C1A", text:"#E5E7EB", accent:"#818CF8", from:"#0B1024", to:"#030712", cloud:"rgba(255,255,255,0.05)", icon:"moon" },
-  },
-  cloudy: {
-    day: { bg:"#94A3B8", text:"#0F172A", accent:"#334155", from:"#CBD5E1", to:"#94A3B8", cloud:"rgba(255,255,255,0.5)", icon:"cloud-sun" },
-    night: { bg:"#0F172A", text:"#E5E7EB", accent:"#94A3B8", from:"#1E2937", to:"#0F172A", cloud:"rgba(255,255,255,0.1)", icon:"cloud-moon" },
-  },
-  rainy: {
-    day: { bg:"#475569", text:"#F8FAFC", accent:"#CBD5E1", from:"#64748B", to:"#334155", cloud:"rgba(200,210,220,0.4)", icon:"cloud-rain" },
-    night: { bg:"#0B1220", text:"#F1F5F9", accent:"#38BDF8", from:"#1B2A4A", to:"#0B1220", cloud:"rgba(100,110,130,0.2)", icon:"cloud-moon-rain" },
-  },
+  clear: { day: { bg:"#38BDF8", text:"#082F49", accent:"#0284C7", from:"#7DD3FC", to:"#0EA5E9", cloud:"rgba(255,255,255,0.7)", icon:"sun" }, night: { bg:"#060C1A", text:"#E5E7EB", accent:"#818CF8", from:"#0B1024", to:"#030712", cloud:"rgba(255,255,255,0.05)", icon:"moon" } },
+  cloudy: { day: { bg:"#94A3B8", text:"#0F172A", accent:"#334155", from:"#CBD5E1", to:"#94A3B8", cloud:"rgba(255,255,255,0.5)", icon:"cloud-sun" }, night: { bg:"#0F172A", text:"#E5E7EB", accent:"#94A3B8", from:"#1E2937", to:"#0F172A", cloud:"rgba(255,255,255,0.1)", icon:"cloud-moon" } },
+  rainy: { day: { bg:"#475569", text:"#F8FAFC", accent:"#CBD5E1", from:"#64748B", to:"#334155", cloud:"rgba(200,210,220,0.4)", icon:"cloud-rain" }, night: { bg:"#0B1220", text:"#F1F5F9", accent:"#38BDF8", from:"#1B2A4A", to:"#0B1220", cloud:"rgba(100,110,130,0.2)", icon:"cloud-moon-rain" } },
 };
 
-const CACHE_TTL = 15 * 60 * 1000;
+// --- PHASE 11: STALE-WHILE-REVALIDATE ARCHITECTURE ---
+const STALE_THRESHOLD = 5 * 60 * 1000; // Background fetch triggers if data > 5 mins old
+
+function getCacheSWR(key) {
+  try {
+    const item = localStorage.getItem(key);
+    if (!item) return { data: null, isStale: true };
+    const parsed = JSON.parse(item);
+    const isStale = (Date.now() - parsed.ts) > STALE_THRESHOLD;
+    return { data: parsed.data, isStale };
+  } catch (e) { return { data: null, isStale: true }; }
+}
+
+function setCache(key, data) {
+  try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
+}
+
+function clearAllCaches() {
+  try { Object.keys(localStorage).forEach(key => { if (key.startsWith("ww_")) localStorage.removeItem(key); }); } catch (e) {}
+}
 
 // --- WEATHERWISE ENSEMBLE ENGINE (PHASE 1) ---
 function calculateMedian(values) {
@@ -340,24 +350,6 @@ function calculateRainConfidence(rainProbabilities, precipNow) {
     if (wet > total / 2 || dry > total / 2) return { agreement: wet > total / 2 ? "mostly_wet" : "mostly_dry", confidenceText: "Models mostly agree", confLevel: "medium" };
     
     return { agreement: "split", confidenceText: "Models disagree", confLevel: "low" };
-}
-
-function getCache(key) {
-  try {
-    const item = localStorage.getItem(key);
-    if (!item) return null;
-    const parsed = JSON.parse(item);
-    if (Date.now() - parsed.ts < CACHE_TTL) return parsed.data;
-    return null;
-  } catch (e) { return null; }
-}
-
-function setCache(key, data) {
-  try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
-}
-
-function clearAllCaches() {
-  try { Object.keys(localStorage).forEach(key => { if (key.startsWith("ww_")) localStorage.removeItem(key); }); } catch (e) {}
 }
 
 function validatePhysicalBounds(data) {
@@ -447,11 +439,15 @@ function renderHero(data) {
   applyTheme(data.condition, data.isDay !== false);
 }
 
+// --- PHASE 11 & 9: HERO DATA FETCH ---
 async function loadCityHero(forceRefresh = false) {
   const cacheKey = "ww_hero";
-  if (!forceRefresh) {
-      const cached = getCache(cacheKey);
-      if (cached) return renderHero(cached);
+  const cache = getCacheSWR(cacheKey);
+
+  // Stale-While-Revalidate: Instantly render if cache exists
+  if (cache.data) {
+      renderHero(cache.data);
+      if (!forceRefresh && !cache.isStale) return; // Exit early if data is under 5 mins old
   }
 
   try {
@@ -459,14 +455,20 @@ async function loadCityHero(forceRefresh = false) {
     if (!res.ok) throw new Error("weather.json not found");
     const data = await res.json();
     
+    // Phase 9: Protect good data from upstream failures
     if (data.stale === true) {
-        console.warn("Backend reported total API failure. Triggering client-side fallback.");
-        throw new Error("Backend data is stale");
+        if (cache.data) {
+            console.warn("Backend API failure detected. Retaining last known good cache to protect UI.");
+            return;
+        }
+        throw new Error("Backend data is stale and no cache exists");
     }
     
     setCache(cacheKey, data);
     renderHero(data);
   } catch (e) {
+    if (cache.data) return; // Silent failure if we already have a cached UI rendered
+
     try {
       const raw = await fetchOM(17.385, 78.4867, null);
       const data = transformOM(raw, "Hyderabad");
@@ -515,7 +517,6 @@ function transformOM(raw, name) {
   const next6Prob = raw.hourly.precipitation_probability.slice(ni,ni+6);
   const next6Codes = raw.hourly.weather_code.slice(ni,ni+6);
   
-  // PHASE 1 FIX: Calculate accurate cumulative probability window
   const chanceOfRain = calculateWindowRainProbability(next6Prob);
 
   const formatTime = (isoString) => {
@@ -559,7 +560,6 @@ async function fetchLocalityEnsemble(lat, lon, name) {
   const transformed = okOnes.map(o => ({ model: o.model, ...transformOM(o.raw, name) }));
   const primary = transformed[0];
 
-  // PHASE 1 FIX: Use medians instead of naive averages to discard extreme outliers
   const temps = transformed.map(d => d.temp);
   const avgTemp = calculateMedian(temps);
   const avgHumidity = calculateMedian(transformed.map(d => d.humidity));
@@ -567,11 +567,8 @@ async function fetchLocalityEnsemble(lat, lon, name) {
   const rainChance = calculateMedian(transformed.map(d => d.chanceOfRain));
   
   const anyPrecipNow = transformed.some(d => d.precipNow);
-  
-  // PHASE 1 FIX: Calculate true statistical spread
   const spread = calculateSpread(temps);
 
-  // PHASE 1 FIX: Use defensible confidence scoring
   const rainProbs = transformed.map(d => d.chanceOfRain);
   let { agreement, confidenceText, confLevel } = calculateRainConfidence(rainProbs, anyPrecipNow);
   
@@ -629,7 +626,6 @@ function renderLocality(data, name) {
     advice = `Quiet weather in ${name} right now. No major rain expected.`;
   }
   
-  // Dual-target BOTH the mobile and desktop cards
   removeSkeleton("ww-says-text-mobile", advice);
   removeSkeleton("ww-says-text-desktop", advice);
   
@@ -671,6 +667,58 @@ function renderLocality(data, name) {
   if(window.lucide) lucide.createIcons({ root: strip });
 }
 
+// --- PHASE 11 & 9: LOCALITY DATA FETCH ---
+async function loadLocality(idx, forceRefresh = false){
+  currentLocalityIdx = idx;
+  const loc=LOCALITIES[idx];
+  const cacheKey = `ww_loc_${idx}`;
+  
+  hideLocError();
+
+  const cache = getCacheSWR(cacheKey);
+  if (cache.data) {
+      renderLocality(cache.data, loc.name);
+      if (!forceRefresh && !cache.isStale) return; // Stale-While-Revalidate trigger
+  }
+
+  try {
+    const ensembleData = await fetchLocalityEnsemble(loc.lat, loc.lon, loc.name);
+    if (idx !== currentLocalityIdx) return;
+    setCache(cacheKey, ensembleData);
+    renderLocality(ensembleData, loc.name);
+  } catch(err) {
+    if (idx !== currentLocalityIdx) return; 
+    
+    // Phase 9: Protect UI if cache exists
+    if (cache.data) {
+        console.warn(`Locality fetch for ${loc.name} failed, preserving cached UI.`);
+        return;
+    }
+
+    console.error("Locality API Failure:", err);
+    const msg = err.name === "AbortError"
+      ? `Request for ${loc.name} timed out. Check your connection and retry.`
+      : `Couldn't load ${loc.name} — the weather service may be temporarily unavailable.`;
+    showLocError(msg);
+    
+    removeSkeleton("loc-temp", "--°");
+    removeSkeleton("loc-humidity", "--%");
+    removeSkeleton("loc-wind", "--");
+    removeSkeleton("loc-rain", "--%");
+    removeSkeleton("ww-says-text-mobile", "Advice unavailable due to network error.");
+    removeSkeleton("ww-says-text-desktop", "Advice unavailable due to network error.");
+    removeSkeleton("loc-interpretation", "Forecast unavailable.");
+    removeSkeleton("stat-sunrise", "--:--");
+    removeSkeleton("stat-sunset", "--:--");
+    removeSkeleton("stat-visibility", "--");
+    if(document.getElementById("stat-uv")) removeSkeleton("stat-uv", "--");
+    removeSkeleton("stat-vis-label", "Offline");
+    
+    const strip = document.getElementById("hourly-strip");
+    strip.innerHTML = `<div class="opacity-50 text-xs p-4 w-full text-center">Hourly data unavailable</div>`;
+  }
+}
+
 function renderHotspotsDOM(results, container) {
   let hotspotsHTML = "";
   results.forEach(r => {
@@ -698,13 +746,15 @@ function renderHotspotsDOM(results, container) {
   if(window.lucide) lucide.createIcons({ root: container });
 }
 
+// --- PHASE 11: HOTSPOT DATA FETCH ---
 async function loadHotspots(forceRefresh = false) {
   const container = document.getElementById("rain-hotspots");
   const cacheKey = "ww_hotspots";
 
-  if (!forceRefresh) {
-      const cached = getCache(cacheKey);
-      if (cached) return renderHotspotsDOM(cached, container);
+  const cache = getCacheSWR(cacheKey);
+  if (cache.data) {
+      renderHotspotsDOM(cache.data, container);
+      if (!forceRefresh && !cache.isStale) return; // Stale-While-Revalidate
   }
 
   const results = await Promise.all(
@@ -735,55 +785,6 @@ function showLocError(msg){
   const banner = document.getElementById("loc-error-banner");
   banner.classList.add("visible");
   if(window.lucide) lucide.createIcons({ root: banner });
-}
-
-async function loadLocality(idx, forceRefresh = false){
-  currentLocalityIdx = idx;
-  const loc=LOCALITIES[idx];
-  const cacheKey = `ww_loc_${idx}`;
-  
-  hideLocError();
-
-  if (!forceRefresh) {
-      const cached = getCache(cacheKey);
-      if (cached) {
-          renderLocality(cached, loc.name);
-          return;
-      }
-  }
-
-  try {
-    const ensembleData = await fetchLocalityEnsemble(loc.lat, loc.lon, loc.name);
-    if (idx !== currentLocalityIdx) return;
-    setCache(cacheKey, ensembleData);
-    renderLocality(ensembleData, loc.name);
-  } catch(err) {
-    if (idx !== currentLocalityIdx) return; 
-    console.error("Locality API Failure:", err);
-    const msg = err.name === "AbortError"
-      ? `Request for ${loc.name} timed out. Check your connection and retry.`
-      : `Couldn't load ${loc.name} — the weather service may be temporarily unavailable.`;
-    showLocError(msg);
-    
-    removeSkeleton("loc-temp", "--°");
-    removeSkeleton("loc-humidity", "--%");
-    removeSkeleton("loc-wind", "--");
-    removeSkeleton("loc-rain", "--%");
-    
-    // Dual-target BOTH cards in case of an error
-    removeSkeleton("ww-says-text-mobile", "Advice unavailable due to network error.");
-    removeSkeleton("ww-says-text-desktop", "Advice unavailable due to network error.");
-    
-    removeSkeleton("loc-interpretation", "Forecast unavailable.");
-    removeSkeleton("stat-sunrise", "--:--");
-    removeSkeleton("stat-sunset", "--:--");
-    removeSkeleton("stat-visibility", "--");
-    if(document.getElementById("stat-uv")) removeSkeleton("stat-uv", "--");
-    removeSkeleton("stat-vis-label", "Offline");
-    
-    const strip = document.getElementById("hourly-strip");
-    strip.innerHTML = `<div class="opacity-50 text-xs p-4 w-full text-center">Hourly data unavailable</div>`;
-  }
 }
 
 select.addEventListener("change",e=>loadLocality(Number(e.target.value)));
