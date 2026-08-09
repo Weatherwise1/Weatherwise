@@ -4,7 +4,7 @@ import { writeFileSync } from "fs";
 const DEFAULT_LAT = 17.385;
 const DEFAULT_LON = 78.4867;
 
-// ─── Phase 26: Weather Data Validation ───────────────────────────────────────
+// ─── Weather Data Validation ─────────────────────────────────────────────────
 function validatePhysicalBounds(data, sourceName) {
   if (data.temp < -5 || data.temp > 55) throw new Error(`Unrealistic temperature detected (${data.temp}°C)`);
   if (data.humidity < 0 || data.humidity > 100) throw new Error(`Unrealistic humidity detected (${data.humidity}%)`);
@@ -133,7 +133,17 @@ function reconcile(results) {
   const good = results.filter(r => r.status === "ok").map(r => r.data);
   const failed = results.filter(r => r.status === "error").map(r => r.source);
 
-  if (good.length === 0) throw new Error("All weather sources failed.");
+  // PHASE 1: Handle total API failure gracefully instead of throwing an error
+  if (good.length === 0) {
+    console.warn("\n! CRITICAL WARNING: All weather sources failed.");
+    return {
+      city: "Hyderabad",
+      stale: true,
+      sourcesFailed: failed,
+      sourcesUsed: [],
+      generatedAt: new Date().toISOString()
+    };
+  }
 
   const avgTemp = Math.round(good.reduce((s, d) => s + d.temp, 0) / good.length);
   const avgHumidity = Math.round(good.reduce((s, d) => s + d.humidity, 0) / good.length);
@@ -185,6 +195,7 @@ function reconcile(results) {
     condition = "cloudy";
   }
 
+  // PHASE 1: Ensure generatedAt updates even on partial success
   return {
     city: "Hyderabad",
     temp: avgTemp,
@@ -203,6 +214,7 @@ function reconcile(results) {
     airQuality,
     sourcesUsed: good.map(d => d.source),
     sourcesFailed: failed,
+    stale: false,
     generatedAt: new Date().toISOString(),
   };
 }
@@ -211,6 +223,7 @@ function reconcile(results) {
 async function main() {
   console.log("Fetching weather data across multi-model cluster...\n");
 
+  // PHASE 1: Isolate each API call so individual failures don't crash the script
   const results = await Promise.all([
     getOpenMeteoICON().then(d => ({ status: "ok", source: "Open-Meteo ICON", data: d }))
       .catch(e => ({ status: "error", source: "Open-Meteo ICON", error: e.message })),
@@ -234,6 +247,7 @@ async function main() {
   console.log("\n--- Reconciled Weather Payload ---");
   console.log(JSON.stringify(reconciled, null, 2));
 
+  // Always write the file, even if it's the fallback payload
   writeFileSync("weather.json", JSON.stringify(reconciled, null, 2));
   console.log("\n✓ weather.json updated successfully");
 }
