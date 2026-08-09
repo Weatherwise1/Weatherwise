@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Scripts deferred for faster First Contentful Paint -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js" defer></script>
@@ -137,7 +138,8 @@
 
 <div class="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 py-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
 
-  <div class="lg:col-span-3 flex flex-col gap-6">
+  <!-- LEFT PANEL -->
+  <div id="left-col" class="lg:col-span-3 flex flex-col gap-6">
 
     <div class="glass-card p-6">
       <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
@@ -189,7 +191,8 @@
       </div>
     </div>
 
-    <div class="glass-card p-5">
+    <!-- Live Radar -->
+    <div id="radar-card" class="glass-card p-5">
       <div class="flex items-center justify-between mb-3">
         <p class="text-[11px] uppercase tracking-wider opacity-60 font-semibold">Live Doppler Radar</p>
         <p class="text-[10px] opacity-80 font-mono bg-black/20 px-2 py-1 rounded">Frame: <span id="radar-time" class="text-white font-bold">--:--</span></p>
@@ -202,9 +205,10 @@
     </div>
   </div>
 
-  <div class="lg:col-span-2 flex flex-col gap-6">
+  <!-- RIGHT PANEL -->
+  <div id="right-col" class="lg:col-span-2 flex flex-col gap-6">
 
-    <div class="glass-card p-6 border-l-4 border-l-[var(--accent)]">
+    <div id="ww-card" class="glass-card p-6 border-l-4 border-l-[var(--accent)]">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="sparkles" class="w-4 h-4" style="color:var(--accent)"></i>
         <p class="text-[11px] uppercase tracking-wider opacity-80 font-semibold">WeatherWise Says</p>
@@ -378,7 +382,7 @@ function renderHero(data) {
 
   removeSkeleton("hero-city-summary", data.isFallback ? `${data.condLabel} today at ${data.temp}°C. Live fallback data.` : summaryText);
   applyTheme(data.condition, data.isDay !== false);
-  lucide.createIcons();
+  if(window.lucide) lucide.createIcons();
 }
 
 async function loadCityHero(forceRefresh = false) {
@@ -579,7 +583,7 @@ function renderLocality(data, name) {
     strip.appendChild(pill);
   }
 
-  lucide.createIcons();
+  if(window.lucide) lucide.createIcons();
 }
 
 function renderHotspotsDOM(results, container) {
@@ -605,7 +609,7 @@ function renderHotspotsDOM(results, container) {
       container.innerHTML += `<div class="p-2.5 rounded-[0.875rem] border border-white/10 bg-white/5 opacity-50 flex justify-between text-xs"><span>${r.name}</span><span>Failed</span></div>`;
     }
   });
-  lucide.createIcons();
+  if(window.lucide) lucide.createIcons();
 }
 
 async function loadHotspots(forceRefresh = false) {
@@ -643,7 +647,7 @@ function hideLocError(){ document.getElementById("loc-error-banner").classList.r
 function showLocError(msg){
   document.getElementById("loc-error-text").textContent = msg;
   document.getElementById("loc-error-banner").classList.add("visible");
-  lucide.createIcons();
+  if(window.lucide) lucide.createIcons();
 }
 
 async function loadLocality(idx, forceRefresh = false){
@@ -702,12 +706,31 @@ window.addEventListener('offline', () => {
 window.addEventListener('online', () => {
   hideLocError();
   document.getElementById("loc-error-retry").style.display = "block";
-  document.getElementById("refresh-btn").click(); // Auto-fetch live data immediately
+  document.getElementById("refresh-btn").click(); 
 });
 
-const map=L.map("radar-map",{zoomControl:true,attributionControl:false,minZoom:4,maxZoom:11}).setView([17.385,78.4867],8);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:11}).addTo(map);
+/* ─── MOBILE UX & LAYOUT SWAP ─── */
+const leftCol = document.getElementById("left-col");
+const rightCol = document.getElementById("right-col");
+const radarCard = document.getElementById("radar-card");
+const wwCard = document.getElementById("ww-card");
 
+function enforceMobileLayout() {
+  if (window.innerWidth < 1024) {
+    if (wwCard.parentElement !== leftCol) {
+      leftCol.insertBefore(wwCard, radarCard);
+    }
+  } else {
+    if (wwCard.parentElement !== rightCol) {
+      rightCol.insertBefore(wwCard, rightCol.firstChild);
+    }
+  }
+}
+
+window.addEventListener("resize", enforceMobileLayout);
+
+/* ─── BOOTSTRAP SEQUENCE ─── */
+let map;
 let radarLayers = [];
 let radarInterval = null;
 let currentRadarIdx = 0;
@@ -763,14 +786,21 @@ async function initRadar() {
     document.getElementById("radar-map").classList.remove("skeleton");
     const hint = document.getElementById("radar-hint");
     if(hint) hint.innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-400"></i> Radar feed temporarily offline.`;
-    lucide.createIcons();
+    if(window.lucide) lucide.createIcons();
   }
 }
 
-loadCityHero();
-loadLocality(0);
-setTimeout(loadHotspots, 1000);
-setTimeout(initRadar, 1500);
+document.addEventListener("DOMContentLoaded", () => {
+  map = L.map("radar-map",{zoomControl:true,attributionControl:false,minZoom:4,maxZoom:11}).setView([17.385,78.4867],8);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:11}).addTo(map);
+
+  enforceMobileLayout();
+
+  loadCityHero();
+  loadLocality(0);
+  setTimeout(loadHotspots, 1000);
+  setTimeout(initRadar, 1500);
+});
 </script>
 </body>
 </html>
