@@ -303,6 +303,45 @@ const THEMES = {
 
 const CACHE_TTL = 15 * 60 * 1000;
 
+// --- WEATHERWISE ENSEMBLE ENGINE (PHASE 1) ---
+function calculateMedian(values) {
+    if (!values || values.length === 0) return null;
+    const validValues = values.filter(v => v !== null && !isNaN(v)).sort((a, b) => a - b);
+    if (validValues.length === 0) return null;
+    const mid = Math.floor(validValues.length / 2);
+    return validValues.length % 2 !== 0 ? validValues[mid] : Math.round((validValues[mid - 1] + validValues[mid]) / 2);
+}
+
+function calculateSpread(values) {
+    if (!values || values.length < 2) return 0;
+    const validValues = values.filter(v => v !== null && !isNaN(v));
+    if (validValues.length < 2) return 0;
+    return Math.round((Math.max(...validValues) - Math.min(...validValues)) * 10) / 10;
+}
+
+function calculateWindowRainProbability(hourlyProbabilities) {
+    if (!hourlyProbabilities || hourlyProbabilities.length === 0) return 0;
+    const validProbs = hourlyProbabilities.filter(p => p !== null && !isNaN(p)).map(p => p / 100);
+    if (validProbs.length === 0) return 0;
+    const lowerBound = Math.max(...validProbs);
+    const probabilityNoRain = validProbs.reduce((acc, p) => acc * (1 - p), 1);
+    const upperBound = 1 - probabilityNoRain;
+    return Math.round(((lowerBound + upperBound) / 2) * 100);
+}
+
+function calculateRainConfidence(rainProbabilities, precipNow) {
+    const total = rainProbabilities.length;
+    if (total < 2) return { agreement: "single_source", confidenceText: "Limited data", confLevel: "low" };
+
+    const wet = rainProbabilities.filter(p => p >= 40 || precipNow).length;
+    const dry = rainProbabilities.filter(p => p <= 20 && !precipNow).length;
+    
+    if (wet === total || dry === total) return { agreement: wet === total ? "all_wet" : "all_dry", confidenceText: "Models agree", confLevel: "high" };
+    if (wet > total / 2 || dry > total / 2) return { agreement: wet > total / 2 ? "mostly_wet" : "mostly_dry", confidenceText: "Models mostly agree", confLevel: "medium" };
+    
+    return { agreement: "split", confidenceText: "Models disagree", confLevel: "low" };
+}
+
 function getCache(key) {
   try {
     const item = localStorage.getItem(key);
@@ -465,89 +504,6 @@ async function fetchOM(lat, lon, model) {
   if (!res.ok) throw new Error("Fetch failed");
   return res.json();
 }
-/**
- * ============================================================================
- * WEATHERWISE ENSEMBLE MATHEMATICS ENGINE
- * Phase 1: Pure Meteorological Calculations
- * These functions process data independently and do not manipulate the DOM.
- * ============================================================================
- */
-
-// 1. Core Statistical Functions
-function calculateMedian(values) {
-    if (!values || values.length === 0) return null;
-    const validValues = values.filter(v => v !== null && !isNaN(v)).sort((a, b) => a - b);
-    if (validValues.length === 0) return null;
-    
-    const mid = Math.floor(validValues.length / 2);
-    return validValues.length % 2 !== 0 
-        ? validValues[mid] 
-        : (validValues[mid - 1] + validValues[mid]) / 2;
-}
-
-function calculateSpread(values) {
-    if (!values || values.length < 2) return 0;
-    const validValues = values.filter(v => v !== null && !isNaN(v));
-    if (validValues.length < 2) return 0;
-    
-    return Math.max(...validValues) - Math.min(...validValues);
-}
-
-// 2. Temperature Uncertainty
-function calculateTemperatureUncertainty(values) {
-    const spread = calculateSpread(values);
-    if (spread <= 1.5) return "low";
-    if (spread <= 3.0) return "moderate";
-    return "high";
-}
-
-// 3. Precipitation Window Probability
-function calculateWindowRainProbability(hourlyProbabilities) {
-    if (!hourlyProbabilities || hourlyProbabilities.length === 0) return 0;
-    
-    const validProbs = hourlyProbabilities.map(p => p / 100);
-    
-    // Lower Bound: If hours are perfectly correlated, the window probability is just the maximum hourly probability.
-    const lowerBound = Math.max(...validProbs);
-    
-    // Upper Bound: If hours are perfectly independent, the probability of at least one rain event is the complement of no rain occurring.
-    const probabilityNoRain = validProbs.reduce((acc, p) => acc * (1 - p), 1);
-    const upperBound = 1 - probabilityNoRain;
-    
-    // Meteorological Reality: Weather hours are partially correlated. We use the midpoint.
-    const windowProb = (lowerBound + upperBound) / 2;
-    return Math.round(windowProb * 100);
-}
-
-// 4. Model Agreement & Confidence
-function calculateRainConfidence(rainProbabilities, precipNow) {
-    const total = rainProbabilities.length;
-    if (total === 0) return { validSources: 0, agreement: "no_data", confidenceLevel: "low" };
-    if (total === 1) return { validSources: 1, agreeingSources: 1, agreement: "single_source", confidenceLevel: "low" };
-
-    const wet = rainProbabilities.filter(p => p >= 40 || precipNow).length;
-    const dry = rainProbabilities.filter(p => p <= 20 && !precipNow).length;
-    
-    let agreement = "split";
-    let confidenceLevel = "low";
-    let agreeingSources = Math.max(wet, dry, total - wet - dry);
-
-    if (wet === total || dry === total) {
-        agreement = wet === total ? "all_wet" : "all_dry";
-        confidenceLevel = "high";
-        agreeingSources = total;
-    } else if (wet > total / 2 || dry > total / 2) {
-        agreement = wet > total / 2 ? "mostly_wet" : "mostly_dry";
-        confidenceLevel = "moderate";
-    }
-
-    return {
-        validSources: total,
-        agreeingSources: agreeingSources,
-        agreement: agreement,
-        confidenceLevel: confidenceLevel
-    };
-}
 
 function transformOM(raw, name) {
   const cur = raw.current;
@@ -558,7 +514,9 @@ function transformOM(raw, name) {
 
   const next6Prob = raw.hourly.precipitation_probability.slice(ni,ni+6);
   const next6Codes = raw.hourly.weather_code.slice(ni,ni+6);
-  const chanceOfRain = next6Prob.length ? Math.max(...next6Prob) : 0;
+  
+  // PHASE 1 FIX: Calculate accurate cumulative probability window
+  const chanceOfRain = calculateWindowRainProbability(next6Prob);
 
   const formatTime = (isoString) => {
     if(!isoString) return "--:--";
@@ -591,25 +549,6 @@ function transformOM(raw, name) {
   return validatePhysicalBounds(payload);
 }
 
-function median(nums){
-  const sorted = [...nums].sort((a,b)=>a-b);
-  const mid = Math.floor(sorted.length/2);
-  return sorted.length % 2 !== 0 ? sorted[mid] : Math.round((sorted[mid-1] + sorted[mid]) / 2);
-}
-
-function voteAgreement(list){
-  const total=list.length;
-  if(total<2) return{agreement:"single_source",confidenceText:"Not enough data", confLevel: "low"};
-
-  const wet=list.filter(d=>d.chanceOfRain>40||d.precipNow).length;
-  const dry=list.filter(d=>d.chanceOfRain<20&&!d.precipNow).length;
-  
-  if(wet===total || dry===total) return {agreement: wet === total ? "all_wet" : "all_dry", confidenceText: "Models agree", confLevel: "high"};
-  if(wet>total/2 || dry>total/2) return {agreement: wet>total/2 ? "mostly_wet" : "mostly_dry", confidenceText: "Models mostly agree", confLevel: "medium"};
-  
-  return{agreement:"split",confidenceText:"Models disagree", confLevel: "low"};
-}
-
 async function fetchLocalityEnsemble(lat, lon, name) {
   const settled = await Promise.allSettled(MODELS.map(m => fetchOM(lat, lon, m)));
   const outcomes = settled.map((s, i) => ({ model: MODELS[i], ok: s.status === "fulfilled", raw: s.status === "fulfilled" ? s.value : null }));
@@ -620,30 +559,40 @@ async function fetchLocalityEnsemble(lat, lon, name) {
   const transformed = okOnes.map(o => ({ model: o.model, ...transformOM(o.raw, name) }));
   const primary = transformed[0];
 
-  const avgTemp = Math.round(transformed.reduce((s,d)=>s+d.temp,0)/transformed.length);
-  const avgHumidity = Math.round(transformed.reduce((s,d)=>s+d.humidity,0)/transformed.length);
-  const avgWind = Math.round(transformed.reduce((s,d)=>s+d.wind,0)/transformed.length);
-  const rainChance = median(transformed.map(d=>d.chanceOfRain));
+  // PHASE 1 FIX: Use medians instead of naive averages to discard extreme outliers
+  const temps = transformed.map(d => d.temp);
+  const avgTemp = calculateMedian(temps);
+  const avgHumidity = calculateMedian(transformed.map(d => d.humidity));
+  const avgWind = calculateMedian(transformed.map(d => d.wind));
+  const rainChance = calculateMedian(transformed.map(d => d.chanceOfRain));
   
-  const anyPrecipNow = transformed.some(d=>d.precipNow);
-  const temps = transformed.map(d=>d.temp);
-  const spread = Math.round((Math.max(...temps)-Math.min(...temps))*10)/10;
+  const anyPrecipNow = transformed.some(d => d.precipNow);
+  
+  // PHASE 1 FIX: Calculate true statistical spread
+  const spread = calculateSpread(temps);
 
-  let { agreement, confidenceText, confLevel } = voteAgreement(transformed);
-  if(spread>=3) { confidenceText = "High temp uncertainty"; confLevel = "low"; }
+  // PHASE 1 FIX: Use defensible confidence scoring
+  const rainProbs = transformed.map(d => d.chanceOfRain);
+  let { agreement, confidenceText, confLevel } = calculateRainConfidence(rainProbs, anyPrecipNow);
+  
+  if (spread >= 3) { confidenceText = "High temp uncertainty"; confLevel = "low"; }
 
-  const condition = (agreement==="all_wet"||agreement==="mostly_wet")?"rainy":primary.condition;
+  const condition = (agreement === "all_wet" || agreement === "mostly_wet") ? "rainy" : primary.condition;
 
   return {
-    temp: avgTemp, humidity: avgHumidity, wind: avgWind, chanceOfRain: rainChance, precipNow: anyPrecipNow,
+    temp: Math.round(avgTemp), 
+    humidity: Math.round(avgHumidity), 
+    wind: Math.round(avgWind), 
+    chanceOfRain: Math.round(rainChance), 
+    precipNow: anyPrecipNow,
     upcomingRainType: primary.upcomingRainType,
     visibility: primary.visibility, sunrise: primary.sunrise, sunset: primary.sunset, uvIndex: primary.uvIndex,
     high: primary.high, low: primary.low,
     condition, condLabel: primary.condLabel, isDay: primary.isDay,
     hourly: primary.hourly, nowIdx: primary.nowIdx,
     locationName: name, fullTimestamp: primary.fullTimestamp, weatherCode: primary.weatherCode,
-    sourcesUsed: transformed.map(t=>t.model),
-    sourcesFailed: outcomes.filter(o=>!o.ok).map(o=>o.model),
+    sourcesUsed: transformed.map(t => t.model),
+    sourcesFailed: outcomes.filter(o => !o.ok).map(o => o.model),
     confidenceText, confLevel, agreement, tempSpread: spread,
   };
 }
@@ -948,7 +897,7 @@ loadLocality(0);
 setTimeout(loadHotspots, 200); 
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Global scan to catch all the base icons (Sparkles, Map Pin, etc.)
+  // Global scan to catch all the base icons
   if(window.lucide) lucide.createIcons();
   
   const observer = new IntersectionObserver((entries) => {
@@ -964,5 +913,5 @@ document.addEventListener("DOMContentLoaded", () => {
   observer.observe(document.getElementById("radar-card"));
 });
 </script>
-</body>]
+</body>
 </html>
