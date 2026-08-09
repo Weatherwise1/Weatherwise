@@ -7,12 +7,16 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
 <meta name="theme-color" content="#0B1220" id="theme-color-meta"/>
 
-<!-- Preconnect to Google Fonts for faster DNS lookup -->
+<!-- PERFORMANCE FIX: Preconnect to Tailwind CDN to shave DNS lookup time -->
+<link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 
-<!-- Tailwind CDN -->
+<!-- PERFORMANCE FIX: Load Google Fonts asynchronously -->
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"></noscript>
+
+<!-- Tailwind CDN (The main render-blocker, preconnected above) -->
 <script src="https://cdn.tailwindcss.com"></script>
 
 <!-- PERFORMANCE FIX: Asynchronous Leaflet CSS -->
@@ -31,12 +35,11 @@
   *{box-sizing:border-box;}
   html,body{height:100%;margin:0;}
   
-  /* PERFORMANCE FIX: Hardcoded default dark background prevents white flash */
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     overflow-x: hidden;
     transition: background 0.5s ease, color 0.5s ease;
-    background-color: #0B1220; /* Default rainy night */
+    background-color: #0B1220; 
     color: #F1F5F9;
   }
   
@@ -57,7 +60,6 @@
   .cloud.c4{width:120px;top:28%;animation-duration:70s;animation-delay:-12s;opacity:.4;}
   @keyframes floatCloud{from{transform:translateX(-32%);}to{transform:translateX(132%);}}
 
-  /* PERFORMANCE FIX: Default Hero gradient */
   #hero-bar {
     transition: background 0.8s ease;
     position: relative;
@@ -639,6 +641,7 @@ function renderHotspotsDOM(results, container) {
   if(window.lucide) lucide.createIcons();
 }
 
+/* PERFORMANCE FIX: Delaying heavy background calls */
 async function loadHotspots(forceRefresh = false) {
   const container = document.getElementById("rain-hotspots");
   const cacheKey = "ww_hotspots";
@@ -817,16 +820,20 @@ async function initRadar() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  map = L.map("radar-map",{zoomControl:true,attributionControl:false,minZoom:4,maxZoom:11}).setView([17.385,78.4867],8);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:11}).addTo(map);
-
-  enforceMobileLayout();
-
+// PERFORMANCE FIX: Wait until primary page paints before launching heavy scripts
+window.addEventListener("load", () => {
+  // Fire primary weather data immediately
   loadCityHero();
   loadLocality(0);
-  setTimeout(loadHotspots, 1000);
-  setTimeout(initRadar, 1500);
+  enforceMobileLayout();
+
+  // Defer heavy rendering (Maps & Secondary API calls) off the main thread
+  setTimeout(() => {
+    map = L.map("radar-map",{zoomControl:true,attributionControl:false,minZoom:4,maxZoom:11}).setView([17.385,78.4867],8);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:11}).addTo(map);
+    initRadar();
+    loadHotspots();
+  }, 400); 
 });
 </script>
 </body>
