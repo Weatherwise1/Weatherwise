@@ -5,20 +5,41 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Weatherwise — Hyderabad</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
-<meta name="theme-color" content="#1B2A4A" id="theme-color-meta"/>
+<meta name="theme-color" content="#0B1220" id="theme-color-meta"/>
+
+<!-- Preconnect to Google Fonts for faster DNS lookup -->
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+<!-- Tailwind CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- Scripts deferred for faster First Contentful Paint -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<!-- PERFORMANCE FIX: Asynchronous Leaflet CSS -->
+<link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript>
+
+<!-- PERFORMANCE FIX: Deferred JS libraries -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js" defer></script>
+
 <style>
-  :root{--accent:#5EEAD4;--cloud-color:rgba(255,255,255,0.7);}
+  :root {
+    --accent: #38BDF8; 
+    --cloud-color: rgba(100,110,130,0.2);
+  }
   *{box-sizing:border-box;}
   html,body{height:100%;margin:0;}
-  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;overflow-x:hidden;transition:background 0.5s ease, color 0.5s ease;}
+  
+  /* PERFORMANCE FIX: Hardcoded default dark background prevents white flash */
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow-x: hidden;
+    transition: background 0.5s ease, color 0.5s ease;
+    background-color: #0B1220; /* Default rainy night */
+    color: #F1F5F9;
+  }
+  
   .font-display{font-family:'Space Grotesk',sans-serif;}
   .font-mono{font-family:'IBM Plex Mono',monospace;}
 
@@ -36,7 +57,13 @@
   .cloud.c4{width:120px;top:28%;animation-duration:70s;animation-delay:-12s;opacity:.4;}
   @keyframes floatCloud{from{transform:translateX(-32%);}to{transform:translateX(132%);}}
 
-  #hero-bar{transition:background 0.8s ease;position:relative;overflow:hidden;}
+  /* PERFORMANCE FIX: Default Hero gradient */
+  #hero-bar {
+    transition: background 0.8s ease;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1B2A4A 0%, #0B1220 100%);
+  }
 
   .glow-field{position:absolute;inset:0;pointer-events:none;filter:blur(70px);z-index:0;}
   .glow-blob{position:absolute;border-radius:9999px;opacity:0.4;animation:drift 20s ease-in-out infinite alternate;}
@@ -84,7 +111,7 @@
 </svg>
 
 <div id="bg-decor">
-  <div class="stars" id="stars"></div>
+  <div class="stars visible" id="stars"></div>
   <div class="cloud-layer">
     <svg class="cloud c1"><use href="#cloud-shape"></use></svg>
     <svg class="cloud c2"><use href="#cloud-shape"></use></svg>
