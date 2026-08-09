@@ -8,7 +8,6 @@
 <meta name="theme-color" content="#0B1220" id="theme-color-meta"/>
 
 <!-- Preconnects to shave DNS lookup time -->
-<link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 
@@ -16,8 +15,8 @@
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"></noscript>
 
-<!-- Tailwind CDN -->
-<script src="https://cdn.tailwindcss.com"></script>
+<!-- Local minified Tailwind CSS -->
+<link rel="stylesheet" href="./output.css">
 
 <!-- Asynchronous Leaflet CSS -->
 <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -35,7 +34,6 @@
   *{box-sizing:border-box;}
   html,body{height:100%;margin:0;}
   
-  /* Hardcoded default theme prevents white flash FOUC */
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     overflow-x: hidden;
@@ -76,12 +74,12 @@
   #locality-select{appearance:none;-webkit-appearance:none;background:transparent;cursor:pointer;}
   #locality-select option { background-color: #0F172A; color: #F1F5F9; padding: 8px; }
 
-  #hourly-strip{display:flex;gap:0.5rem;overflow-x:auto;padding-bottom:0.25rem;scrollbar-width:none;}
+  #hourly-strip{display:flex;gap:0.5rem;overflow-x:auto;padding-bottom:0.25rem;scrollbar-width:none;min-height: 80px;}
   #hourly-strip::-webkit-scrollbar{display:none;}
   .hour-pill{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0.25rem;padding:0.6rem 0.8rem;border-radius:1rem;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);font-size:0.75rem;min-width:60px;}
   .hour-pill.now{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.35);}
 
-  #radar-map{height:280px;border-radius:1rem; z-index: 1;}
+  #radar-map{height:280px;min-height: 280px;border-radius:1rem; z-index: 1;}
   #loc-error-banner{display:none;}
   #loc-error-banner.visible{display:flex;}
 
@@ -222,7 +220,7 @@
     <div id="radar-card" class="glass-card p-5">
       <div class="flex items-center justify-between mb-3">
         <p class="text-[11px] uppercase tracking-wider opacity-60 font-semibold">Live Doppler Radar</p>
-        <p class="text-[10px] opacity-80 font-mono bg-black/20 px-2 py-1 rounded">Frame: <span id="radar-time" class="text-white font-bold">--:--</span></p>
+        <p class="text-[10px] opacity-80 font-mono bg-black/20 px-2 py-1 rounded">Frame: <span id="frame-time" class="text-white font-bold">--:--</span></p>
       </div>
       <div id="radar-map" class="skeleton"></div>
       <p id="radar-hint" class="text-[10px] opacity-60 mt-3 flex items-start gap-1.5 leading-tight">
@@ -418,7 +416,6 @@ async function loadCityHero(forceRefresh = false) {
     if (!res.ok) throw new Error("weather.json not found");
     const data = await res.json();
     
-    // PHASE 2: Intercept the backend stale flag
     if (data.stale === true) {
         console.warn("Backend reported total API failure. Triggering client-side fallback.");
         throw new Error("Backend data is stale");
@@ -428,7 +425,6 @@ async function loadCityHero(forceRefresh = false) {
     renderHero(data);
   } catch (e) {
     try {
-      // The Pivot: Fetch directly from the browser if backend is stale or missing
       const raw = await fetchOM(17.385, 78.4867, null);
       const data = transformOM(raw, "Hyderabad");
       data.isFallback = true;
@@ -453,6 +449,7 @@ async function loadCityHero(forceRefresh = false) {
     }
   }
 }
+
 async function fetchOM(lat, lon, model) {
   const modelParam = model ? `&models=${model}` : "";
   const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`+
@@ -799,6 +796,12 @@ let radarInterval = null;
 let currentRadarIdx = 0;
 let radarInitialized = false;
 
+const formatIST = (unixTime) => {
+    if (!unixTime) return "--:--";
+    const date = new Date(unixTime * 1000);
+    return date.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false });
+};
+
 async function initRadar() {
   try {
     const res = await fetch("https://api.rainviewer.com/public/weather-maps.json");
@@ -806,9 +809,12 @@ async function initRadar() {
     
     const host = data.host || "https://tilecache.rainviewer.com";
     const frames = data.radar.past;
-    const timeLabel = document.getElementById("radar-time");
+    const timeLabel = document.getElementById("frame-time");
     
-    if (!frames || frames.length === 0) return;
+    if (!frames || frames.length === 0) {
+        if(timeLabel) timeLabel.textContent = "--:--";
+        return;
+    }
     
     document.getElementById("radar-map").classList.remove("skeleton");
 
@@ -827,8 +833,7 @@ async function initRadar() {
         radarLayers.push(layer);
 
         if(i === 0 && timeLabel) {
-            const d = new Date(frames[0].time * 1000);
-            timeLabel.textContent = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            timeLabel.textContent = formatIST(frames[0].time);
         }
 
         loadedCount++;
@@ -842,8 +847,7 @@ async function initRadar() {
             radarLayers[currentRadarIdx].setOpacity(0.65);
             
             if(timeLabel) {
-                const d = new Date(frames[currentRadarIdx].time * 1000);
-                timeLabel.textContent = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                timeLabel.textContent = formatIST(frames[currentRadarIdx].time);
             }
           }, 1200);
         }
@@ -858,6 +862,8 @@ async function initRadar() {
         hint.innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-400"></i> Radar feed temporarily offline.`;
         if(window.lucide) lucide.createIcons({ root: hint });
     }
+    const timeLabel = document.getElementById("frame-time");
+    if(timeLabel) timeLabel.textContent = "--:--";
   }
 }
 
