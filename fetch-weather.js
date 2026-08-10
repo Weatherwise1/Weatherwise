@@ -1,4 +1,4 @@
-import { writeFileSync } from "fs";
+import { writeFileSync, existsSync, readFileSync } from "fs";
 
 // ─── Default Coordinates (Hyderabad Central) ─────────────────────────────────
 const DEFAULT_LAT = 17.385;
@@ -68,7 +68,6 @@ function calculateRainConfidence(rainProbabilities, precipNow) {
   return { agreement: "split", confidenceText: "Models disagree", confLevel: "low" };
 }
 
-// ─── DATA VALIDATION & NORMALIZATION (PHASE 19: Hardware vs Model) ─────────
 function normalizeAndValidate(data, sourceName, observationType) {
   if (data.temp < -5 || data.temp > 55) throw new Error(`Unrealistic temperature detected (${data.temp}°C)`);
   if (data.humidity < 0 || data.humidity > 100) throw new Error(`Unrealistic humidity detected (${data.humidity}%)`);
@@ -77,7 +76,7 @@ function normalizeAndValidate(data, sourceName, observationType) {
   
   return {
     source: sourceName,
-    type: observationType, // "hardware" or "model"
+    type: observationType, 
     temp: Math.round(data.temp),
     humidity: Math.round(data.humidity),
     wind: Math.round(data.wind),
@@ -208,11 +207,8 @@ function reconcile(results) {
     return { city: "Hyderabad", stale: true, sourcesFailed: failed, sourcesUsed: [], generatedAt: new Date().toISOString() };
   }
 
-  // PHASE 19: Hardware vs. Model Segregation
   const hardwareSources = good.filter(d => d.type === "hardware");
   const modelSources = good.filter(d => d.type === "model");
-
-  // Prioritize hardware observations for "Current Reality". Fallback to models if stations are offline.
   const currentSources = hardwareSources.length > 0 ? hardwareSources : modelSources;
   const observationType = hardwareSources.length > 0 ? "hardware" : "model";
 
@@ -224,7 +220,6 @@ function reconcile(results) {
   const feelsLike = currentSources.find(d => d.feelsLike != null)?.feelsLike ?? null;
   const airQuality = currentSources.find(d => d.airQuality != null)?.airQuality ?? null;
 
-  // Forecast data (Rain, Highs/Lows) relies on the full ensemble for robustness
   const temps = good.map(d => d.temp);
   const rainProbs = good.map(d => d.chanceOfRain);
   const tempSpread = calculateSpread(temps);
@@ -235,7 +230,7 @@ function reconcile(results) {
 
   const ensembleMetrics = {
     tempMean: calculateMean(temps),
-    tempMedian: calculateMedian(temps), // Global median across all sources
+    tempMedian: calculateMedian(temps), 
     tempSpread: tempSpread,
     tempP10: calculatePercentile(temps, 10),
     tempP25: calculatePercentile(temps, 25),
@@ -263,7 +258,7 @@ function reconcile(results) {
 
   return {
     city: "Hyderabad",
-    observationType, // "hardware" or "model"
+    observationType, 
     temp: currentTemp,
     expectedTempRange,
     ensembleMetrics,
@@ -309,8 +304,44 @@ async function main() {
   console.log("\n--- Reconciled Weather Payload ---");
   console.log(JSON.stringify(reconciled, null, 2));
 
+  // Write standard weather payload
   writeFileSync("weather.json", JSON.stringify(reconciled, null, 2));
   console.log("\n✓ weather.json updated successfully");
+
+  // PHASE 7: Historical Verification Logging
+  const historyFile = "history.json";
+  const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  let history = [];
+
+  if (existsSync(historyFile)) {
+    try {
+      history = JSON.parse(readFileSync(historyFile, "utf-8"));
+    } catch (e) {
+      console.error("Could not parse history.json, starting fresh.");
+    }
+  }
+
+  // Only append once per day to prevent Git commit bloat
+  if (!history.some(entry => entry.date === today) && !reconciled.stale) {
+    history.push({
+      date: today,
+      timestamp: reconciled.generatedAt,
+      observedTemp: reconciled.temp, 
+      expectedTempRange: reconciled.expectedTempRange, 
+      ensembleMean: reconciled.ensembleMetrics?.tempMean,
+      condition: reconciled.condition
+    });
+
+    // Keep only the last 30 days to prevent infinite file growth
+    if (history.length > 30) {
+      history = history.slice(-30);
+    }
+
+    writeFileSync(historyFile, JSON.stringify(history, null, 2));
+    console.log(`✓ history.json appended with today's data (${today})`);
+  } else {
+    console.log(`- history.json already has an entry for ${today} (or data is stale). Skipping to save Git commits.`);
+  }
 }
 
 main();

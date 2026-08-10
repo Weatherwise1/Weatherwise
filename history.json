@@ -1,0 +1,13 @@
+[
+  {
+    "date": "2026-08-10",
+    "timestamp": "2026-08-10T04:04:59.418Z",
+    "observedTemp": 27,
+    "expectedTempRange": {
+      "min": 27,
+      "max": 27
+    },
+    "ensembleMean": 27,
+    "condition": "cloudy"
+  }
+]

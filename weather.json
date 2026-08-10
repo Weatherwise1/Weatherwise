@@ -1,33 +1,33 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 26,
+  "temp": 27,
   "expectedTempRange": {
-    "min": 26,
-    "max": 26
+    "min": 27,
+    "max": 27
   },
   "ensembleMetrics": {
-    "tempMean": 25.8,
-    "tempMedian": 26,
-    "tempSpread": 1,
-    "tempP10": 25.4,
-    "tempP25": 26,
-    "tempP75": 26,
-    "tempP90": 26
+    "tempMean": 27,
+    "tempMedian": 27,
+    "tempSpread": 2,
+    "tempP10": 26.4,
+    "tempP25": 27,
+    "tempP75": 27,
+    "tempP90": 27.6
   },
-  "humidity": 76,
-  "wind": 16,
-  "chanceOfRain": 6,
+  "humidity": 71,
+  "wind": 20,
+  "chanceOfRain": 13,
   "condition": "cloudy",
   "isDay": true,
-  "high": 31,
+  "high": 32,
   "low": 24,
   "confidence": "medium",
   "rainAgreement": "mostly_dry",
-  "tempSpread": 1,
-  "uv": 3,
-  "feelsLike": 26,
-  "airQuality": 8,
+  "tempSpread": 2,
+  "uv": 5.8,
+  "feelsLike": 29,
+  "airQuality": 10,
   "sourcesUsed": [
     "Open-Meteo ICON",
     "Open-Meteo ECMWF",
@@ -39,30 +39,30 @@
   "sourcesMeta": {
     "Open-Meteo ICON": {
       "type": "model",
-      "validTime": "2026-08-10T08:15",
-      "ageMinutes": 5
+      "validTime": "2026-08-10T09:30",
+      "ageMinutes": 4
     },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-08-10T08:15",
-      "ageMinutes": 5
+      "validTime": "2026-08-10T09:30",
+      "ageMinutes": 4
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-08-10T08:15",
-      "ageMinutes": 5
+      "validTime": "2026-08-10T09:30",
+      "ageMinutes": 4
     },
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-08-10 08:00",
-      "ageMinutes": 20
+      "validTime": "2026-08-10 09:30",
+      "ageMinutes": 4
     },
     "Tomorrow.io": {
       "type": "hardware",
-      "validTime": "2026-08-10T02:50:00Z",
+      "validTime": "2026-08-10T04:04:00Z",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-08-10T02:50:51.287Z"
+  "generatedAt": "2026-08-10T04:04:59.418Z"
 }
