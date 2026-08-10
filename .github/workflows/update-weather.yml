@@ -1,7 +1,11 @@
 name: Update Weather Data
 
 on:
+<<<<<<< HEAD
 schedule:
+=======
+  schedule:
+>>>>>>> 0ae9cd0f1c82eeb30bbc052cee8141612b19401c
     # Runs at minute 14 and 44 of every hour to avoid GitHub's queue delays
     - cron: '14,44 * * * *'
   workflow_dispatch: # Allows you to click "Run workflow" manually from the Actions tab
