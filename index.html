@@ -266,6 +266,23 @@
         <div class="col-span-2"><p class="opacity-40 text-[10px] mb-1">Source Model Freshness (Data Age)</p><div id="tech-sources-meta" class="opacity-80 text-[11px] leading-relaxed">Loading source metadata...</div></div>
       </div>
     </div>
+
+    <!-- NEW HISTORY SECTION -->
+    <div>
+      <button id="history-toggle" class="glass-card w-full flex items-center justify-between p-4 text-xs font-semibold opacity-70 hover:opacity-100 transition-opacity mt-2">
+        <span>Historical Accuracy & Verification</span>
+        <i data-lucide="chevron-down" id="history-chevron" class="w-4 h-4 transition-transform"></i>
+      </button>
+      <div id="history-panel" class="hidden mt-2 glass-card p-5 font-mono text-xs flex flex-col gap-3">
+        <p class="opacity-60 leading-relaxed" id="history-text">Fetching historical data...</p>
+        <div id="history-stats" class="grid grid-cols-2 gap-4 hidden border-t border-white/10 pt-3">
+          <div><p class="opacity-40 text-[10px]">Recorded Forecast</p><p id="hist-forecast" class="text-sm font-bold">--°C</p></div>
+          <div><p class="opacity-40 text-[10px]">Actual Observation</p><p id="hist-actual" class="text-sm font-bold text-cyan-300">--°C</p></div>
+          <div class="col-span-2"><p class="opacity-40 text-[10px]">Model Error Margin</p><p id="hist-mae" class="text-sm font-bold">--</p></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -286,33 +303,13 @@ const LOCALITIES = [
 const HOTSPOT_INDICES = [1, 2, 5, 9];
 const MODELS = ["icon_seamless", "ecmwf_ifs025", "gfs_seamless"];
 
-// --- PHASE 21: DYNAMIC WEATHER STATES ---
-// The themes have been expanded to include severe and extreme conditions, mapped to vivid color gradients.
 const THEMES = {
-  clear: { 
-    day: { bg:"#0284C7", from:"#0284C7", to:"#0369A1", accent:"#38BDF8", cloud:"rgba(255,255,255,0.2)", icon:"sun", glow:"#0EA5E9" }, 
-    night: { bg:"#0F172A", from:"#0F172A", to:"#020617", accent:"#818CF8", cloud:"rgba(255,255,255,0.02)", icon:"moon", glow:"#312E81" } 
-  },
-  cloudy: { 
-    day: { bg:"#64748B", from:"#64748B", to:"#475569", accent:"#94A3B8", cloud:"rgba(255,255,255,0.4)", icon:"cloud", glow:"#94A3B8" }, 
-    night: { bg:"#1E293B", from:"#1E293B", to:"#0F172A", accent:"#94A3B8", cloud:"rgba(255,255,255,0.05)", icon:"cloud-moon", glow:"#334155" } 
-  },
-  rainy: { 
-    day: { bg:"#334155", from:"#334155", to:"#1E293B", accent:"#60A5FA", cloud:"rgba(200,210,220,0.3)", icon:"cloud-rain", glow:"#475569" }, 
-    night: { bg:"#0B1220", from:"#1B2A4A", to:"#0B1220", accent:"#38BDF8", cloud:"rgba(100,110,130,0.2)", icon:"cloud-moon-rain", glow:"#1D4ED8" } 
-  },
-  heavy_rain: { 
-    day: { bg:"#1E3A8A", from:"#1E3A8A", to:"#1E40AF", accent:"#60A5FA", cloud:"rgba(200,220,255,0.4)", icon:"cloud-lightning", glow:"#2563EB" }, 
-    night: { bg:"#082F49", from:"#082F49", to:"#020617", accent:"#38BDF8", cloud:"rgba(150,180,220,0.2)", icon:"cloud-lightning", glow:"#0284C7" } 
-  },
-  thunderstorm: { 
-    day: { bg:"#312E81", from:"#312E81", to:"#1E1B4B", accent:"#A78BFA", cloud:"rgba(180,180,220,0.3)", icon:"cloud-lightning", glow:"#4C1D95" }, 
-    night: { bg:"#1E1B4B", from:"#1E1B4B", to:"#000000", accent:"#818CF8", cloud:"rgba(150,150,200,0.1)", icon:"cloud-lightning", glow:"#312E81" } 
-  },
-  extreme_heat: { 
-    day: { bg:"#991B1B", from:"#B91C1C", to:"#7F1D1D", accent:"#FCA5A5", cloud:"rgba(255,200,200,0.1)", icon:"sun-dim", glow:"#DC2626" }, 
-    night: { bg:"#450A0A", from:"#450A0A", to:"#000000", accent:"#FCA5A5", cloud:"rgba(255,200,200,0.05)", icon:"moon", glow:"#7F1D1D" } 
-  },
+  clear: { day: { bg:"#0284C7", from:"#0284C7", to:"#0369A1", accent:"#38BDF8", cloud:"rgba(255,255,255,0.2)", icon:"sun", glow:"#0EA5E9" }, night: { bg:"#0F172A", from:"#0F172A", to:"#020617", accent:"#818CF8", cloud:"rgba(255,255,255,0.02)", icon:"moon", glow:"#312E81" } },
+  cloudy: { day: { bg:"#64748B", from:"#64748B", to:"#475569", accent:"#94A3B8", cloud:"rgba(255,255,255,0.4)", icon:"cloud", glow:"#94A3B8" }, night: { bg:"#1E293B", from:"#1E293B", to:"#0F172A", accent:"#94A3B8", cloud:"rgba(255,255,255,0.05)", icon:"cloud-moon", glow:"#334155" } },
+  rainy: { day: { bg:"#334155", from:"#334155", to:"#1E293B", accent:"#60A5FA", cloud:"rgba(200,210,220,0.3)", icon:"cloud-rain", glow:"#475569" }, night: { bg:"#0B1220", from:"#1B2A4A", to:"#0B1220", accent:"#38BDF8", cloud:"rgba(100,110,130,0.2)", icon:"cloud-moon-rain", glow:"#1D4ED8" } },
+  heavy_rain: { day: { bg:"#1E3A8A", from:"#1E3A8A", to:"#1E40AF", accent:"#60A5FA", cloud:"rgba(200,220,255,0.4)", icon:"cloud-lightning", glow:"#2563EB" }, night: { bg:"#082F49", from:"#082F49", to:"#020617", accent:"#38BDF8", cloud:"rgba(150,180,220,0.2)", icon:"cloud-lightning", glow:"#0284C7" } },
+  thunderstorm: { day: { bg:"#312E81", from:"#312E81", to:"#1E1B4B", accent:"#A78BFA", cloud:"rgba(180,180,220,0.3)", icon:"cloud-lightning", glow:"#4C1D95" }, night: { bg:"#1E1B4B", from:"#1E1B4B", to:"#000000", accent:"#818CF8", cloud:"rgba(150,150,200,0.1)", icon:"cloud-lightning", glow:"#312E81" } },
+  extreme_heat: { day: { bg:"#991B1B", from:"#B91C1C", to:"#7F1D1D", accent:"#FCA5A5", cloud:"rgba(255,200,200,0.1)", icon:"sun-dim", glow:"#DC2626" }, night: { bg:"#450A0A", from:"#450A0A", to:"#000000", accent:"#FCA5A5", cloud:"rgba(255,200,200,0.05)", icon:"moon", glow:"#7F1D1D" } },
 };
 
 const STALE_THRESHOLD = 5 * 60 * 1000;
@@ -385,11 +382,8 @@ function codeToCondition(c){if(c===0)return"clear";if([1,2,3,45,48].includes(c))
 function codeToLabel(c){const m={0:"Clear",1:"Mostly Clear",2:"Partly Cloudy",3:"Overcast",51:"Drizzle",61:"Light Rain",63:"Rain",65:"Heavy Rain",80:"Showers",95:"Thunderstorms",96:"Thunderstorms",99:"Severe Thunderstorms"};return m[c]||"Cloudy";}
 function condIcon(cond,night){if(cond==="clear")return night?"moon":"sun";if(cond==="cloudy")return night?"cloud-moon":"cloud-sun";return night?"cloud-moon-rain":"cloud-sun-rain";}
 
-// --- PHASE 21: Contextual Theme Application ---
 function applyTheme(cond, isDay, temp = 25, weatherCode = 0) {
   let state = cond;
-  
-  // Intercept normal conditions to check for severity
   if ([95, 96, 99].includes(weatherCode)) state = "thunderstorm";
   else if ([65, 82].includes(weatherCode) || (cond === "rainy" && temp < 20)) state = "heavy_rain";
   else if (temp >= 38 && isDay) state = "extreme_heat";
@@ -506,7 +500,6 @@ function renderHero(data) {
     sourcesMetaEl.innerHTML = metaHTML || "No source metadata available.";
   }
 
-  // Pass temperature into the theme engine to catch Extreme Heat triggers
   applyTheme(data.condition, data.isDay !== false, data.temp, data.weatherCode || 0);
 }
 
@@ -548,6 +541,49 @@ async function loadCityHero(forceRefresh = false) {
       removeSkeleton("hero-high-low", "H: --° L: --°");
       removeSkeleton("hero-city-summary", "Weather service temporarily unavailable.");
     }
+  }
+}
+
+// --- NEW FUNCTION: Fetch & Grade Historical Accuracy ---
+async function loadHistory() {
+  try {
+    const res = await fetch(`history.json?t=${Date.now()}`);
+    if (!res.ok) throw new Error("No history found");
+    const history = await res.json();
+    
+    if (history && history.length > 1) {
+      const target = history[history.length - 2]; 
+      
+      const forecastMin = target.expectedTempRange.min;
+      const forecastMax = target.expectedTempRange.max;
+      const actual = target.observedTemp;
+      
+      let mae = 0;
+      let accuracyText = "";
+      
+      if (actual >= forecastMin && actual <= forecastMax) {
+         mae = 0;
+         accuracyText = "Perfect hit. The actual temperature fell exactly within the models' expected probabilistic range.";
+      } else {
+         const diffMin = Math.abs(actual - forecastMin);
+         const diffMax = Math.abs(actual - forecastMax);
+         mae = Math.min(diffMin, diffMax);
+         accuracyText = `Models missed by ${mae}°C. The actual temperature was ${actual > forecastMax ? 'warmer' : 'cooler'} than the ensemble bounds.`;
+      }
+      
+      document.getElementById("hist-forecast").textContent = `${forecastMin}°C – ${forecastMax}°C`;
+      document.getElementById("hist-actual").textContent = `${actual}°C`;
+      document.getElementById("hist-mae").textContent = `${mae}°C Error`;
+      document.getElementById("history-text").textContent = `On ${target.date}, how did the ensemble perform? ${accuracyText}`;
+      document.getElementById("history-stats").classList.remove("hidden");
+      
+    } else if (history && history.length === 1) {
+      document.getElementById("history-text").textContent = "History tracking initialized today. Model verification will be available tomorrow when we have past data to grade.";
+    } else {
+      document.getElementById("history-text").textContent = "Not enough historical data collected yet.";
+    }
+  } catch (e) {
+    document.getElementById("history-text").textContent = "Historical tracking is currently building baseline data. Check back tomorrow.";
   }
 }
 
@@ -709,7 +745,6 @@ function renderLocality(data, name) {
   strip.innerHTML = hourlyHTML; 
   if(window.lucide) lucide.createIcons({ root: strip });
   
-  // Pass dynamic locale conditions to override the main theme as the user selects neighborhoods
   applyTheme(data.condition, data.isDay !== false, data.temp, data.weatherCode || 0);
 }
 
@@ -815,6 +850,7 @@ document.getElementById("refresh-btn").addEventListener("click", () => {
     loadCityHero(true);
     loadLocality(currentLocalityIdx, true);
     loadHotspots(true);
+    loadHistory();
 });
 
 window.addEventListener('offline', () => {
@@ -909,7 +945,8 @@ async function initRadar() {
 
 loadCityHero();
 loadLocality(0);
-setTimeout(loadHotspots, 200); 
+setTimeout(loadHotspots, 200);
+loadHistory();
 
 document.addEventListener("DOMContentLoaded", () => {
   if(window.lucide) lucide.createIcons();
@@ -917,6 +954,11 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("tech-toggle").addEventListener("click",()=>{
     document.getElementById("tech-panel").classList.toggle("hidden");
     document.getElementById("tech-chevron").classList.toggle("rotate-180");
+  });
+  
+  document.getElementById("history-toggle").addEventListener("click",()=>{
+    document.getElementById("history-panel").classList.toggle("hidden");
+    document.getElementById("history-chevron").classList.toggle("rotate-180");
   });
 
   const observer = new IntersectionObserver((entries) => {
