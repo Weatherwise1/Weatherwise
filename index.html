@@ -33,8 +33,9 @@
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     overflow-x: hidden;
-    background-color: #0B1220 !important; 
-    color: #F1F5F9 !important;
+    background-color: #0B1220; 
+    color: #F8FAFC;
+    transition: background-color 0.8s ease, color 0.8s ease;
   }
   
   .font-display{font-family:'Space Grotesk',sans-serif;}
@@ -62,7 +63,7 @@
   }
 
   .glow-field{position:absolute;inset:0;pointer-events:none;filter:blur(70px);z-index:0;}
-  .glow-blob{position:absolute;border-radius:9999px;opacity:0.4;animation:drift 20s ease-in-out infinite alternate;}
+  .glow-blob{position:absolute;border-radius:9999px;opacity:0.4;animation:drift 20s ease-in-out infinite alternate; transition: background 1s ease;}
 
   .glass-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:1.25rem;transition:transform 0.2s ease,border-color 0.2s ease;}
   .glass-card:hover{border-color:rgba(255,255,255,0.22);}
@@ -116,8 +117,8 @@
 
 <div id="hero-bar" class="relative z-10 w-full border-b border-white/10">
   <div class="glow-field">
-    <div class="glow-blob b1" style="width:300px;height:300px;left:-5%;top:-40%;"></div>
-    <div class="glow-blob b2" style="width:220px;height:220px;right:10%;top:-20%;"></div>
+    <div class="glow-blob b1" id="glow1" style="width:300px;height:300px;left:-5%;top:-40%;background:rgba(255,255,255,0.1);"></div>
+    <div class="glow-blob b2" id="glow2" style="width:220px;height:220px;right:10%;top:-20%;background:rgba(255,255,255,0.05);"></div>
   </div>
 
   <div class="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 py-8 grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
@@ -285,10 +286,33 @@ const LOCALITIES = [
 const HOTSPOT_INDICES = [1, 2, 5, 9];
 const MODELS = ["icon_seamless", "ecmwf_ifs025", "gfs_seamless"];
 
+// --- PHASE 21: DYNAMIC WEATHER STATES ---
+// The themes have been expanded to include severe and extreme conditions, mapped to vivid color gradients.
 const THEMES = {
-  clear: { day: { bg:"#38BDF8", text:"#082F49", accent:"#0284C7", from:"#7DD3FC", to:"#0EA5E9", cloud:"rgba(255,255,255,0.7)", icon:"sun" }, night: { bg:"#060C1A", text:"#E5E7EB", accent:"#818CF8", from:"#0B1024", to:"#030712", cloud:"rgba(255,255,255,0.05)", icon:"moon" } },
-  cloudy: { day: { bg:"#94A3B8", text:"#0F172A", accent:"#334155", from:"#CBD5E1", to:"#94A3B8", cloud:"rgba(255,255,255,0.5)", icon:"cloud-sun" }, night: { bg:"#0F172A", text:"#E5E7EB", accent:"#94A3B8", from:"#1E2937", to:"#0F172A", cloud:"rgba(255,255,255,0.1)", icon:"cloud-moon" } },
-  rainy: { day: { bg:"#475569", text:"#F8FAFC", accent:"#CBD5E1", from:"#64748B", to:"#334155", cloud:"rgba(200,210,220,0.4)", icon:"cloud-rain" }, night: { bg:"#0B1220", text:"#F1F5F9", accent:"#38BDF8", from:"#1B2A4A", to:"#0B1220", cloud:"rgba(100,110,130,0.2)", icon:"cloud-moon-rain" } },
+  clear: { 
+    day: { bg:"#0284C7", from:"#0284C7", to:"#0369A1", accent:"#38BDF8", cloud:"rgba(255,255,255,0.2)", icon:"sun", glow:"#0EA5E9" }, 
+    night: { bg:"#0F172A", from:"#0F172A", to:"#020617", accent:"#818CF8", cloud:"rgba(255,255,255,0.02)", icon:"moon", glow:"#312E81" } 
+  },
+  cloudy: { 
+    day: { bg:"#64748B", from:"#64748B", to:"#475569", accent:"#94A3B8", cloud:"rgba(255,255,255,0.4)", icon:"cloud", glow:"#94A3B8" }, 
+    night: { bg:"#1E293B", from:"#1E293B", to:"#0F172A", accent:"#94A3B8", cloud:"rgba(255,255,255,0.05)", icon:"cloud-moon", glow:"#334155" } 
+  },
+  rainy: { 
+    day: { bg:"#334155", from:"#334155", to:"#1E293B", accent:"#60A5FA", cloud:"rgba(200,210,220,0.3)", icon:"cloud-rain", glow:"#475569" }, 
+    night: { bg:"#0B1220", from:"#1B2A4A", to:"#0B1220", accent:"#38BDF8", cloud:"rgba(100,110,130,0.2)", icon:"cloud-moon-rain", glow:"#1D4ED8" } 
+  },
+  heavy_rain: { 
+    day: { bg:"#1E3A8A", from:"#1E3A8A", to:"#1E40AF", accent:"#60A5FA", cloud:"rgba(200,220,255,0.4)", icon:"cloud-lightning", glow:"#2563EB" }, 
+    night: { bg:"#082F49", from:"#082F49", to:"#020617", accent:"#38BDF8", cloud:"rgba(150,180,220,0.2)", icon:"cloud-lightning", glow:"#0284C7" } 
+  },
+  thunderstorm: { 
+    day: { bg:"#312E81", from:"#312E81", to:"#1E1B4B", accent:"#A78BFA", cloud:"rgba(180,180,220,0.3)", icon:"cloud-lightning", glow:"#4C1D95" }, 
+    night: { bg:"#1E1B4B", from:"#1E1B4B", to:"#000000", accent:"#818CF8", cloud:"rgba(150,150,200,0.1)", icon:"cloud-lightning", glow:"#312E81" } 
+  },
+  extreme_heat: { 
+    day: { bg:"#991B1B", from:"#B91C1C", to:"#7F1D1D", accent:"#FCA5A5", cloud:"rgba(255,200,200,0.1)", icon:"sun-dim", glow:"#DC2626" }, 
+    night: { bg:"#450A0A", from:"#450A0A", to:"#000000", accent:"#FCA5A5", cloud:"rgba(255,200,200,0.05)", icon:"moon", glow:"#7F1D1D" } 
+  },
 };
 
 const STALE_THRESHOLD = 5 * 60 * 1000;
@@ -358,17 +382,33 @@ function validatePhysicalBounds(data) {
 }
 
 function codeToCondition(c){if(c===0)return"clear";if([1,2,3,45,48].includes(c))return"cloudy";return"rainy";}
-function codeToLabel(c){const m={0:"Clear",1:"Mostly Clear",2:"Partly Cloudy",3:"Overcast",51:"Drizzle",61:"Light Rain",63:"Rain",65:"Heavy Rain",80:"Showers",95:"Thunderstorms"};return m[c]||"Cloudy";}
+function codeToLabel(c){const m={0:"Clear",1:"Mostly Clear",2:"Partly Cloudy",3:"Overcast",51:"Drizzle",61:"Light Rain",63:"Rain",65:"Heavy Rain",80:"Showers",95:"Thunderstorms",96:"Thunderstorms",99:"Severe Thunderstorms"};return m[c]||"Cloudy";}
 function condIcon(cond,night){if(cond==="clear")return night?"moon":"sun";if(cond==="cloudy")return night?"cloud-moon":"cloud-sun";return night?"cloud-moon-rain":"cloud-sun-rain";}
 
-function applyTheme(cond,isDay){
-  const t = THEMES[cond]?.[isDay?"day":"night"] ?? THEMES.rainy.night;
+// --- PHASE 21: Contextual Theme Application ---
+function applyTheme(cond, isDay, temp = 25, weatherCode = 0) {
+  let state = cond;
+  
+  // Intercept normal conditions to check for severity
+  if ([95, 96, 99].includes(weatherCode)) state = "thunderstorm";
+  else if ([65, 82].includes(weatherCode) || (cond === "rainy" && temp < 20)) state = "heavy_rain";
+  else if (temp >= 38 && isDay) state = "extreme_heat";
+
+  const t = THEMES[state]?.[isDay ? "day" : "night"] ?? THEMES.clear.day;
+  
   document.documentElement.style.setProperty("--accent", t.accent);
   document.documentElement.style.setProperty("--cloud-color", t.cloud);
-  document.body.style.background = t.bg;
-  document.body.style.color = t.text;
+  
+  document.body.style.backgroundColor = t.bg;
   document.getElementById("hero-bar").style.background = `linear-gradient(135deg, ${t.from} 0%, ${t.to} 100%)`;
+  
+  document.getElementById("glow1").style.background = t.glow;
+  document.getElementById("glow2").style.background = t.accent;
+  
   document.getElementById("stars").classList.toggle("visible", !isDay);
+  
+  const metaTheme = document.getElementById("theme-color-meta");
+  if(metaTheme) metaTheme.setAttribute("content", t.bg);
   
   const iconEl = document.getElementById("hero-icon");
   if(iconEl) {
@@ -466,7 +506,8 @@ function renderHero(data) {
     sourcesMetaEl.innerHTML = metaHTML || "No source metadata available.";
   }
 
-  applyTheme(data.condition, data.isDay !== false);
+  // Pass temperature into the theme engine to catch Extreme Heat triggers
+  applyTheme(data.condition, data.isDay !== false, data.temp, data.weatherCode || 0);
 }
 
 async function loadCityHero(forceRefresh = false) {
@@ -635,6 +676,8 @@ function renderLocality(data, name) {
     advice = `Models expect rain in ${name} (${data.chanceOfRain}% chance), but radar and sensors currently show little nearby precipitation. Keep an umbrella handy just in case.`;
   } else if (data.chanceOfRain > 30) {
     advice = `There is a moderate chance of rain (${data.chanceOfRain}%) in ${name}. It might pass, but stay aware.`;
+  } else if (data.temp >= 38 && data.isDay) {
+    advice = `Extreme heat warning in ${name} (${data.temp}°C). Avoid outdoor activities and stay hydrated.`;
   } else if (data.temp >= 33 && data.isDay) {
     advice = `It is hot in ${name} (${data.temp}°C). Stay hydrated and avoid prolonged sun exposure.`;
   } else if (data.condition === "clear") {
@@ -665,6 +708,9 @@ function renderLocality(data, name) {
   }
   strip.innerHTML = hourlyHTML; 
   if(window.lucide) lucide.createIcons({ root: strip });
+  
+  // Pass dynamic locale conditions to override the main theme as the user selects neighborhoods
+  applyTheme(data.condition, data.isDay !== false, data.temp, data.weatherCode || 0);
 }
 
 async function loadLocality(idx, forceRefresh = false){
@@ -771,11 +817,6 @@ document.getElementById("refresh-btn").addEventListener("click", () => {
     loadHotspots(true);
 });
 
-document.getElementById("tech-toggle").addEventListener("click",()=>{
-  document.getElementById("tech-panel").classList.toggle("hidden");
-  document.getElementById("tech-chevron").classList.toggle("rotate-180");
-});
-
 window.addEventListener('offline', () => {
   const banner = document.getElementById("loc-error-banner");
   document.getElementById("loc-error-text").textContent = "You're offline. Showing the last available cached data.";
@@ -873,6 +914,11 @@ setTimeout(loadHotspots, 200);
 document.addEventListener("DOMContentLoaded", () => {
   if(window.lucide) lucide.createIcons();
   
+  document.getElementById("tech-toggle").addEventListener("click",()=>{
+    document.getElementById("tech-panel").classList.toggle("hidden");
+    document.getElementById("tech-chevron").classList.toggle("rotate-180");
+  });
+
   const observer = new IntersectionObserver((entries) => {
     if(entries[0].isIntersecting && !radarInitialized) {
       radarInitialized = true;
@@ -885,7 +931,6 @@ document.addEventListener("DOMContentLoaded", () => {
   
   observer.observe(document.getElementById("radar-card"));
 
-  // --- PHASE 24: Register Service Worker ---
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').catch(err => console.error("SW Reg Failed:", err));
