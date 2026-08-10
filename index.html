@@ -247,23 +247,21 @@
 
     <div>
       <button id="tech-toggle" class="glass-card w-full flex items-center justify-between p-4 text-xs font-semibold opacity-70 hover:opacity-100 transition-opacity mt-2">
-        <span>Advanced Forecast & Sun Details</span>
+        <span>Advanced Forecast & Ensemble Details</span>
         <i data-lucide="chevron-down" id="tech-chevron" class="w-4 h-4 transition-transform"></i>
       </button>
       <div id="tech-panel" class="hidden mt-2 glass-card p-5 font-mono text-xs grid grid-cols-2 gap-4">
-        <div><p class="opacity-40 text-[10px]">Sunrise</p><p id="stat-sunrise" class="skeleton w-12">00:00</p></div>
-        <div><p class="opacity-40 text-[10px]">Sunset</p><p id="stat-sunset" class="skeleton w-12">00:00</p></div>
-        <div><p class="opacity-40 text-[10px]">Visibility</p><p><span id="stat-visibility" class="skeleton w-10">00 km</span> (<span id="stat-vis-label" class="skeleton w-16">Loading</span>)</p></div>
-        <div><p class="opacity-40 text-[10px]">UV Index Max</p><p id="stat-uv" class="skeleton w-6">00</p></div>
+        <div><p class="opacity-40 text-[10px]">Expected Temp Range</p><p id="tech-expected-range" class="skeleton w-20">--°C – --°C</p></div>
+        <div><p class="opacity-40 text-[10px]">Model Spread (P90-P10)</p><p id="tech-ensemble-spread" class="skeleton w-12">--°C</p></div>
+        <div><p class="opacity-40 text-[10px]">Ensemble Mean</p><p id="tech-ensemble-mean" class="skeleton w-12">--°C</p></div>
+        <div><p class="opacity-40 text-[10px]">Agreement Status</p><p id="tech-agreement" class="skeleton w-16">checking</p></div>
         <div class="col-span-2 my-1 border-t border-white/10"></div>
         <div><p class="opacity-40 text-[10px]">Humidity</p><p id="tech-humidity" class="skeleton w-8">00%</p></div>
         <div><p class="opacity-40 text-[10px]">Wind</p><p id="tech-wind" class="skeleton w-12">00 km/h</p></div>
-        <div><p class="opacity-40 text-[10px]">Locality Rain chance</p><p id="tech-rain" class="skeleton w-8">00%</p></div>
-        <div><p class="opacity-40 text-[10px]">Locality Code</p><p id="tech-code" class="skeleton w-16">000 - Cloud</p></div>
-        <div><p class="opacity-40 text-[10px]">Models Used</p><p id="tech-loc-sources" class="skeleton w-24">Model1, Model2</p></div>
-        <div><p class="opacity-40 text-[10px]">Models Failed</p><p id="tech-loc-failed" class="skeleton w-10">None</p></div>
-        <div><p class="opacity-40 text-[10px]">Temp Spread</p><p id="tech-spread" class="skeleton w-8">0.0°C</p></div>
-        <div><p class="opacity-40 text-[10px]">Model Agreement</p><p id="tech-agreement" class="skeleton w-16">checking</p></div>
+        <div><p class="opacity-40 text-[10px]">UV Index Max</p><p id="stat-uv" class="skeleton w-6">00</p></div>
+        <div><p class="opacity-40 text-[10px]">Visibility</p><p><span id="stat-visibility" class="skeleton w-10">00 km</span></p></div>
+        <div class="col-span-2 my-1 border-t border-white/10"></div>
+        <div class="col-span-2"><p class="opacity-40 text-[10px] mb-1">Source Model Freshness (Data Age)</p><div id="tech-sources-meta" class="opacity-80 text-[11px] leading-relaxed">Loading source metadata...</div></div>
       </div>
     </div>
   </div>
@@ -292,8 +290,7 @@ const THEMES = {
   rainy: { day: { bg:"#475569", text:"#F8FAFC", accent:"#CBD5E1", from:"#64748B", to:"#334155", cloud:"rgba(200,210,220,0.4)", icon:"cloud-rain" }, night: { bg:"#0B1220", text:"#F1F5F9", accent:"#38BDF8", from:"#1B2A4A", to:"#0B1220", cloud:"rgba(100,110,130,0.2)", icon:"cloud-moon-rain" } },
 };
 
-// --- PHASE 11: STALE-WHILE-REVALIDATE ARCHITECTURE ---
-const STALE_THRESHOLD = 5 * 60 * 1000; // Background fetch triggers if data > 5 mins old
+const STALE_THRESHOLD = 5 * 60 * 1000;
 
 function getCacheSWR(key) {
   try {
@@ -313,7 +310,7 @@ function clearAllCaches() {
   try { Object.keys(localStorage).forEach(key => { if (key.startsWith("ww_")) localStorage.removeItem(key); }); } catch (e) {}
 }
 
-// --- WEATHERWISE ENSEMBLE ENGINE (PHASE 1) ---
+// --- WEATHERWISE ENSEMBLE ENGINE ---
 function calculateMedian(values) {
     if (!values || values.length === 0) return null;
     const validValues = values.filter(v => v !== null && !isNaN(v)).sort((a, b) => a - b);
@@ -415,10 +412,11 @@ function getUpcomingRainType(hourlyCodes) {
     return "Showers are";
 }
 
+// --- RENDER HERO & TRANSPARENCY PANEL ---
 function renderHero(data) {
   removeSkeleton("hero-temp", `${data.temp}°C`);
   removeSkeleton("hero-feels", `Feels ${data.feelsLike || data.temp}°`);
-  removeSkeleton("hero-high-low", "H: --° L: --°");
+  removeSkeleton("hero-high-low", `H: ${data.high || '--'}° L: ${data.low || '--'}°`);
 
   const confBadge = document.getElementById("conf-badge");
   confBadge.classList.remove("skeleton", "bg-white/10", "border-white/20");
@@ -436,18 +434,42 @@ function renderHero(data) {
   else summaryText += `No significant rain expected.`;
 
   removeSkeleton("hero-city-summary", data.isFallback ? `${data.condLabel} today at ${data.temp}°C. Live fallback data.` : summaryText);
+  
+  // Populate Transparency / Advanced Technical Panel with Backend Metrics
+  if (data.expectedTempRange) {
+    removeSkeleton("tech-expected-range", `${data.expectedTempRange.min}°C – ${data.expectedTempRange.max}°C`);
+  }
+  if (data.ensembleMetrics) {
+    removeSkeleton("tech-ensemble-spread", `${data.ensembleMetrics.tempSpread}°C`);
+    removeSkeleton("tech-ensemble-mean", `${data.ensembleMetrics.tempMean}°C`);
+  }
+  removeSkeleton("tech-agreement", data.rainAgreement || "checked");
+  removeSkeleton("tech-humidity", `${data.humidity}%`);
+  removeSkeleton("tech-wind", `${data.wind} km/h`);
+  removeSkeleton("stat-uv", data.uv !== undefined && data.uv !== null ? data.uv : "--");
+  removeSkeleton("stat-visibility", `${data.visibility || 10} km`);
+
+  // Render individual source freshness breakdown
+  const sourcesMetaEl = document.getElementById("tech-sources-meta");
+  if (sourcesMetaEl && data.sourcesMeta) {
+    sourcesMetaEl.classList.remove("skeleton");
+    let metaHTML = "";
+    for (const [src, info] of Object.entries(data.sourcesMeta)) {
+      metaHTML += `<div class="flex justify-between py-0.5 border-b border-white/5"><span>${src}</span><span class="font-mono text-cyan-300">${info.ageMinutes} mins ago</span></div>`;
+    }
+    sourcesMetaEl.innerHTML = metaHTML || "No source metadata available.";
+  }
+
   applyTheme(data.condition, data.isDay !== false);
 }
 
-// --- PHASE 11 & 9: HERO DATA FETCH ---
 async function loadCityHero(forceRefresh = false) {
   const cacheKey = "ww_hero";
   const cache = getCacheSWR(cacheKey);
 
-  // Stale-While-Revalidate: Instantly render if cache exists
   if (cache.data) {
       renderHero(cache.data);
-      if (!forceRefresh && !cache.isStale) return; // Exit early if data is under 5 mins old
+      if (!forceRefresh && !cache.isStale) return;
   }
 
   try {
@@ -455,19 +477,15 @@ async function loadCityHero(forceRefresh = false) {
     if (!res.ok) throw new Error("weather.json not found");
     const data = await res.json();
     
-    // Phase 9: Protect good data from upstream failures
     if (data.stale === true) {
-        if (cache.data) {
-            console.warn("Backend API failure detected. Retaining last known good cache to protect UI.");
-            return;
-        }
-        throw new Error("Backend data is stale and no cache exists");
+        if (cache.data) return;
+        throw new Error("Backend data is stale");
     }
     
     setCache(cacheKey, data);
     renderHero(data);
   } catch (e) {
-    if (cache.data) return; // Silent failure if we already have a cached UI rendered
+    if (cache.data) return;
 
     try {
       const raw = await fetchOM(17.385, 78.4867, null);
@@ -482,15 +500,6 @@ async function loadCityHero(forceRefresh = false) {
       removeSkeleton("hero-feels", "Feels --°");
       removeSkeleton("hero-high-low", "H: --° L: --°");
       removeSkeleton("hero-city-summary", "Weather service temporarily unavailable.");
-      
-      const confBadge = document.getElementById("conf-badge");
-      confBadge.classList.remove("skeleton", "bg-white/10", "border-white/20");
-      confBadge.className = "font-mono font-medium px-2.5 py-0.5 rounded-full text-[10px] border bg-red-900/50 text-red-300 border-red-500/20";
-      confBadge.textContent = "OFFLINE";
-      
-      const updatedEl = document.getElementById("hero-updated");
-      updatedEl.textContent = "Live data unavailable";
-      updatedEl.className = "opacity-50 font-mono text-very-stale";
     }
   }
 }
@@ -589,7 +598,7 @@ async function fetchLocalityEnsemble(lat, lon, name) {
     hourly: primary.hourly, nowIdx: primary.nowIdx,
     locationName: name, fullTimestamp: primary.fullTimestamp, weatherCode: primary.weatherCode,
     sourcesUsed: transformed.map(t => t.model),
-    sourcesFailed: outcomes.filter(o => !o.ok).map(o => o.model),
+    sourcesFailed: outcomes.filter(o=>!o.ok).map(o=>o.model),
     confidenceText, confLevel, agreement, tempSpread: spread,
   };
 }
@@ -628,23 +637,7 @@ function renderLocality(data, name) {
   
   removeSkeleton("ww-says-text-mobile", advice);
   removeSkeleton("ww-says-text-desktop", advice);
-  
   removeSkeleton("loc-interpretation", data.precipNow ? "Raining right now." : `Currently ${data.condLabel}.`);
-
-  removeSkeleton("stat-sunrise", data.sunrise);
-  removeSkeleton("stat-sunset", data.sunset);
-  removeSkeleton("stat-visibility", `${data.visibility} km`);
-  if(document.getElementById("stat-uv")) removeSkeleton("stat-uv", data.uvIndex !== undefined ? data.uvIndex : "--");
-  removeSkeleton("stat-vis-label", data.visibility > 8 ? "Clear view" : data.visibility > 3 ? "Haze or mist" : "Poor visibility");
-
-  removeSkeleton("tech-humidity", `${data.humidity}%`);
-  removeSkeleton("tech-wind", `${data.wind} km/h`);
-  removeSkeleton("tech-rain", `${data.chanceOfRain}%`);
-  removeSkeleton("tech-code", `${data.weatherCode} — ${data.condLabel}`);
-  removeSkeleton("tech-loc-sources", data.sourcesUsed.join(", "));
-  removeSkeleton("tech-loc-failed", data.sourcesFailed.length ? data.sourcesFailed.join(", ") : "None");
-  removeSkeleton("tech-spread", `${data.tempSpread}°C`);
-  removeSkeleton("tech-agreement", data.agreement);
 
   const strip = document.getElementById("hourly-strip");
   let hourlyHTML = "";
@@ -663,11 +656,9 @@ function renderLocality(data, name) {
       </div>`;
   }
   strip.innerHTML = hourlyHTML; 
-  
   if(window.lucide) lucide.createIcons({ root: strip });
 }
 
-// --- PHASE 11 & 9: LOCALITY DATA FETCH ---
 async function loadLocality(idx, forceRefresh = false){
   currentLocalityIdx = idx;
   const loc=LOCALITIES[idx];
@@ -678,7 +669,7 @@ async function loadLocality(idx, forceRefresh = false){
   const cache = getCacheSWR(cacheKey);
   if (cache.data) {
       renderLocality(cache.data, loc.name);
-      if (!forceRefresh && !cache.isStale) return; // Stale-While-Revalidate trigger
+      if (!forceRefresh && !cache.isStale) return;
   }
 
   try {
@@ -688,34 +679,10 @@ async function loadLocality(idx, forceRefresh = false){
     renderLocality(ensembleData, loc.name);
   } catch(err) {
     if (idx !== currentLocalityIdx) return; 
-    
-    // Phase 9: Protect UI if cache exists
-    if (cache.data) {
-        console.warn(`Locality fetch for ${loc.name} failed, preserving cached UI.`);
-        return;
-    }
+    if (cache.data) return;
 
     console.error("Locality API Failure:", err);
-    const msg = err.name === "AbortError"
-      ? `Request for ${loc.name} timed out. Check your connection and retry.`
-      : `Couldn't load ${loc.name} — the weather service may be temporarily unavailable.`;
-    showLocError(msg);
-    
-    removeSkeleton("loc-temp", "--°");
-    removeSkeleton("loc-humidity", "--%");
-    removeSkeleton("loc-wind", "--");
-    removeSkeleton("loc-rain", "--%");
-    removeSkeleton("ww-says-text-mobile", "Advice unavailable due to network error.");
-    removeSkeleton("ww-says-text-desktop", "Advice unavailable due to network error.");
-    removeSkeleton("loc-interpretation", "Forecast unavailable.");
-    removeSkeleton("stat-sunrise", "--:--");
-    removeSkeleton("stat-sunset", "--:--");
-    removeSkeleton("stat-visibility", "--");
-    if(document.getElementById("stat-uv")) removeSkeleton("stat-uv", "--");
-    removeSkeleton("stat-vis-label", "Offline");
-    
-    const strip = document.getElementById("hourly-strip");
-    strip.innerHTML = `<div class="opacity-50 text-xs p-4 w-full text-center">Hourly data unavailable</div>`;
+    showLocError(`Couldn't load ${loc.name} — the weather service may be temporarily unavailable.`);
   }
 }
 
@@ -746,7 +713,6 @@ function renderHotspotsDOM(results, container) {
   if(window.lucide) lucide.createIcons({ root: container });
 }
 
-// --- PHASE 11: HOTSPOT DATA FETCH ---
 async function loadHotspots(forceRefresh = false) {
   const container = document.getElementById("rain-hotspots");
   const cacheKey = "ww_hotspots";
@@ -754,7 +720,7 @@ async function loadHotspots(forceRefresh = false) {
   const cache = getCacheSWR(cacheKey);
   if (cache.data) {
       renderHotspotsDOM(cache.data, container);
-      if (!forceRefresh && !cache.isStale) return; // Stale-While-Revalidate
+      if (!forceRefresh && !cache.isStale) return;
   }
 
   const results = await Promise.all(
@@ -892,13 +858,11 @@ async function initRadar() {
   }
 }
 
-// Fire fetchers immediately
 loadCityHero();
 loadLocality(0);
 setTimeout(loadHotspots, 200); 
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Global scan to catch all the base icons
   if(window.lucide) lucide.createIcons();
   
   const observer = new IntersectionObserver((entries) => {
