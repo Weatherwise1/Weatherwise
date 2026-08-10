@@ -1,9 +1,9 @@
 name: Update Weather Data
 
 on:
-  schedule:
-    # Runs at minute 0 and 30 of every hour
-    - cron: '*/30 * * * *'
+schedule:
+    # Runs at minute 14 and 44 of every hour to avoid GitHub's queue delays
+    - cron: '14,44 * * * *'
   workflow_dispatch: # Allows you to click "Run workflow" manually from the Actions tab
 
 # This is the missing block! It grants the bot permission to push to your repository.

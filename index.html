@@ -267,7 +267,7 @@
       </div>
     </div>
 
-    <!-- NEW HISTORY SECTION -->
+    <!-- HISTORY SECTION -->
     <div>
       <button id="history-toggle" class="glass-card w-full flex items-center justify-between p-4 text-xs font-semibold opacity-70 hover:opacity-100 transition-opacity mt-2">
         <span>Historical Accuracy & Verification</span>
@@ -461,18 +461,18 @@ function renderHero(data) {
   const freshness = getFreshness(data.generatedAt || data.fullTimestamp);
   applyFreshnessStyling("hero-updated", freshness, data.isFallback ? "Fallback: " : "");
 
-  let summaryText = `${data.condition === 'rainy' ? 'Rainy' : data.condition === 'clear' ? 'Clear' : 'Cloudy'} across Hyderabad today at ${data.temp}°C. `;
+  let summaryText = `${data.condition === 'rainy' ? 'Rainy' : data.condition === 'clear' ? 'Clear skies' : 'Cloudy weather'} in Hyderabad right now at ${data.temp}°C. `;
   
   if (data.chanceOfRain > 50 && data.precipNow) {
-      summaryText += `Rain confirmed by local sensors. High chance of continued precipitation (${data.chanceOfRain}%).`;
+      summaryText += `It's raining, and models show it will likely continue for the next few hours.`;
   } else if (data.chanceOfRain > 50 && !data.precipNow) {
-      summaryText += `Models expect rain (${data.chanceOfRain}%), but radar and sensors show clear conditions right now.`;
+      summaryText += `It looks dry right now, but a high chance of rain (${data.chanceOfRain}%) is expected to start soon.`;
   } else if (data.chanceOfRain <= 20 && data.precipNow) {
-      summaryText += `Unforecasted precipitation detected locally. Models expect it to pass quickly.`;
+      summaryText += `There's some light rain falling, but it should clear up very soon.`;
   } else if (data.chanceOfRain > 30) {
-      summaryText += `Moderate rain chance (${data.chanceOfRain}%).`;
+      summaryText += `There's a moderate chance of rain (${data.chanceOfRain}%) later, so keep an umbrella handy.`;
   } else {
-      summaryText += `No significant rain expected.`;
+      summaryText += `No rain expected anytime soon.`;
   }
 
   removeSkeleton("hero-city-summary", data.isFallback ? `${data.condLabel} today at ${data.temp}°C. Live fallback data.` : summaryText);
@@ -544,7 +544,6 @@ async function loadCityHero(forceRefresh = false) {
   }
 }
 
-// --- NEW FUNCTION: Fetch & Grade Historical Accuracy ---
 async function loadHistory() {
   try {
     const res = await fetch(`history.json?t=${Date.now()}`);
@@ -705,21 +704,21 @@ function renderLocality(data, name) {
 
   let advice = "";
   if (data.precipNow && data.chanceOfRain > 40) {
-    advice = `Rain confirmed. Sensors detect active precipitation in ${name}, and models predict continued wet conditions (${data.chanceOfRain}% chance).`;
+    advice = `It's raining in ${name} right now, and models show it will likely continue for the next few hours.`;
   } else if (data.precipNow && data.chanceOfRain <= 40) {
-    advice = `Brief precipitation detected in ${name}, though models expect it to clear up soon (${data.chanceOfRain}% forecast chance).`;
+    advice = `Just some light rain in ${name} at the moment. It should pass very soon.`;
   } else if (!data.precipNow && data.chanceOfRain > 50) {
-    advice = `Models expect rain in ${name} (${data.chanceOfRain}% chance), but radar and sensors currently show little nearby precipitation. Keep an umbrella handy just in case.`;
+    advice = `Grab an umbrella! Models show a high chance (${data.chanceOfRain}%) of rain starting in ${name} soon.`;
   } else if (data.chanceOfRain > 30) {
-    advice = `There is a moderate chance of rain (${data.chanceOfRain}%) in ${name}. It might pass, but stay aware.`;
+    advice = `There's a slight chance (${data.chanceOfRain}%) of rain in ${name} today, but nothing major expected.`;
   } else if (data.temp >= 38 && data.isDay) {
-    advice = `Extreme heat warning in ${name} (${data.temp}°C). Avoid outdoor activities and stay hydrated.`;
+    advice = `It's extremely hot in ${name} today (${data.temp}°C). Try to stay indoors and drink plenty of water!`;
   } else if (data.temp >= 33 && data.isDay) {
-    advice = `It is hot in ${name} (${data.temp}°C). Stay hydrated and avoid prolonged sun exposure.`;
+    advice = `It's pretty hot in ${name} right now (${data.temp}°C). Keep cool if you're heading out.`;
   } else if (data.condition === "clear") {
-    advice = `Good conditions in ${name}. Expect clear skies and no significant weather disruptions.`;
+    advice = `Beautiful clear skies in ${name}. Looks like a great time to be outside!`;
   } else {
-    advice = `Quiet weather in ${name} right now. Radar shows no active rain.`;
+    advice = `Quiet, cloudy weather in ${name} right now. No rain on the radar.`;
   }
   
   removeSkeleton("ww-says-text-mobile", advice);
@@ -746,33 +745,6 @@ function renderLocality(data, name) {
   if(window.lucide) lucide.createIcons({ root: strip });
   
   applyTheme(data.condition, data.isDay !== false, data.temp, data.weatherCode || 0);
-}
-
-async function loadLocality(idx, forceRefresh = false){
-  currentLocalityIdx = idx;
-  const loc=LOCALITIES[idx];
-  const cacheKey = `ww_loc_${idx}`;
-  
-  hideLocError();
-
-  const cache = getCacheSWR(cacheKey);
-  if (cache.data) {
-      renderLocality(cache.data, loc.name);
-      if (!forceRefresh && !cache.isStale) return;
-  }
-
-  try {
-    const ensembleData = await fetchLocalityEnsemble(loc.lat, loc.lon, loc.name);
-    if (idx !== currentLocalityIdx) return;
-    setCache(cacheKey, ensembleData);
-    renderLocality(ensembleData, loc.name);
-  } catch(err) {
-    if (idx !== currentLocalityIdx) return; 
-    if (cache.data) return;
-
-    console.error("Locality API Failure:", err);
-    showLocError(`Couldn't load ${loc.name} — the weather service may be temporarily unavailable.`);
-  }
 }
 
 function renderHotspotsDOM(results, container) {
