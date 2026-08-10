@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Weatherwise — Hyderabad</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+<link rel="manifest" href="manifest.webmanifest"/>
 <meta name="theme-color" content="#0B1220" id="theme-color-meta"/>
 
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -310,7 +311,6 @@ function clearAllCaches() {
   try { Object.keys(localStorage).forEach(key => { if (key.startsWith("ww_")) localStorage.removeItem(key); }); } catch (e) {}
 }
 
-// --- WEATHERWISE ENSEMBLE ENGINE ---
 function calculateMedian(values) {
     if (!values || values.length === 0) return null;
     const validValues = values.filter(v => v !== null && !isNaN(v)).sort((a, b) => a - b);
@@ -412,7 +412,6 @@ function getUpcomingRainType(hourlyCodes) {
     return "Showers are";
 }
 
-// --- RENDER HERO & TRANSPARENCY PANEL ---
 function renderHero(data) {
   removeSkeleton("hero-temp", `${data.temp}°C`);
   removeSkeleton("hero-feels", `Feels ${data.feelsLike || data.temp}°`);
@@ -428,7 +427,6 @@ function renderHero(data) {
   const freshness = getFreshness(data.generatedAt || data.fullTimestamp);
   applyFreshnessStyling("hero-updated", freshness, data.isFallback ? "Fallback: " : "");
 
-  // PHASE 15: Radar / Model Cross-Check Logic for Hero Panel
   let summaryText = `${data.condition === 'rainy' ? 'Rainy' : data.condition === 'clear' ? 'Clear' : 'Cloudy'} across Hyderabad today at ${data.temp}°C. `;
   
   if (data.chanceOfRain > 50 && data.precipNow) {
@@ -628,7 +626,6 @@ function renderLocality(data, name) {
          data.confLevel === "low" ? "bg-red-900/50 text-red-300 border-red-500/20" : "bg-yellow-900/50 text-yellow-300 border-yellow-500/20");
   locBadge.textContent = data.confidenceText.toUpperCase();
 
-  // PHASE 15: Radar / Model Cross-Check Logic for WeatherWise Says
   let advice = "";
   if (data.precipNow && data.chanceOfRain > 40) {
     advice = `Rain confirmed. Sensors detect active precipitation in ${name}, and models predict continued wet conditions (${data.chanceOfRain}% chance).`;
@@ -887,6 +884,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }, { rootMargin: "200px" });
   
   observer.observe(document.getElementById("radar-card"));
+
+  // --- PHASE 24: Register Service Worker ---
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(err => console.error("SW Reg Failed:", err));
+    });
+  }
 });
 </script>
 </body>
