@@ -428,14 +428,23 @@ function renderHero(data) {
   const freshness = getFreshness(data.generatedAt || data.fullTimestamp);
   applyFreshnessStyling("hero-updated", freshness, data.isFallback ? "Fallback: " : "");
 
+  // PHASE 15: Radar / Model Cross-Check Logic for Hero Panel
   let summaryText = `${data.condition === 'rainy' ? 'Rainy' : data.condition === 'clear' ? 'Clear' : 'Cloudy'} across Hyderabad today at ${data.temp}°C. `;
-  if (data.chanceOfRain > 60) summaryText += `High chance of rain (${data.chanceOfRain}%). Sources agree.`;
-  else if (data.chanceOfRain > 30) summaryText += `Moderate rain chance (${data.chanceOfRain}%).`;
-  else summaryText += `No significant rain expected.`;
+  
+  if (data.chanceOfRain > 50 && data.precipNow) {
+      summaryText += `Rain confirmed by local sensors. High chance of continued precipitation (${data.chanceOfRain}%).`;
+  } else if (data.chanceOfRain > 50 && !data.precipNow) {
+      summaryText += `Models expect rain (${data.chanceOfRain}%), but radar and sensors show clear conditions right now.`;
+  } else if (data.chanceOfRain <= 20 && data.precipNow) {
+      summaryText += `Unforecasted precipitation detected locally. Models expect it to pass quickly.`;
+  } else if (data.chanceOfRain > 30) {
+      summaryText += `Moderate rain chance (${data.chanceOfRain}%).`;
+  } else {
+      summaryText += `No significant rain expected.`;
+  }
 
   removeSkeleton("hero-city-summary", data.isFallback ? `${data.condLabel} today at ${data.temp}°C. Live fallback data.` : summaryText);
   
-  // Populate Transparency / Advanced Technical Panel with Backend Metrics
   if (data.expectedTempRange) {
     removeSkeleton("tech-expected-range", `${data.expectedTempRange.min}°C – ${data.expectedTempRange.max}°C`);
   }
@@ -449,13 +458,12 @@ function renderHero(data) {
   removeSkeleton("stat-uv", data.uv !== undefined && data.uv !== null ? data.uv : "--");
   removeSkeleton("stat-visibility", `${data.visibility || 10} km`);
 
-  // Render individual source freshness breakdown
   const sourcesMetaEl = document.getElementById("tech-sources-meta");
   if (sourcesMetaEl && data.sourcesMeta) {
     sourcesMetaEl.classList.remove("skeleton");
     let metaHTML = "";
     for (const [src, info] of Object.entries(data.sourcesMeta)) {
-      metaHTML += `<div class="flex justify-between py-0.5 border-b border-white/5"><span>${src}</span><span class="font-mono text-cyan-300">${info.ageMinutes} mins ago</span></div>`;
+      metaHTML += `<div class="flex justify-between py-0.5 border-b border-white/5"><span>${src} [${info.type}]</span><span class="font-mono text-cyan-300">${info.ageMinutes} mins ago</span></div>`;
     }
     sourcesMetaEl.innerHTML = metaHTML || "No source metadata available.";
   }
@@ -620,11 +628,14 @@ function renderLocality(data, name) {
          data.confLevel === "low" ? "bg-red-900/50 text-red-300 border-red-500/20" : "bg-yellow-900/50 text-yellow-300 border-yellow-500/20");
   locBadge.textContent = data.confidenceText.toUpperCase();
 
+  // PHASE 15: Radar / Model Cross-Check Logic for WeatherWise Says
   let advice = "";
-  if (data.precipNow) {
-    advice = `Carry an umbrella. It is actively raining in ${name}, and conditions remain wet.`;
-  } else if (data.chanceOfRain > 60) {
-    advice = `Rain is highly likely in ${name} soon (${data.chanceOfRain}% chance). Bring an umbrella if you are heading out.`;
+  if (data.precipNow && data.chanceOfRain > 40) {
+    advice = `Rain confirmed. Sensors detect active precipitation in ${name}, and models predict continued wet conditions (${data.chanceOfRain}% chance).`;
+  } else if (data.precipNow && data.chanceOfRain <= 40) {
+    advice = `Brief precipitation detected in ${name}, though models expect it to clear up soon (${data.chanceOfRain}% forecast chance).`;
+  } else if (!data.precipNow && data.chanceOfRain > 50) {
+    advice = `Models expect rain in ${name} (${data.chanceOfRain}% chance), but radar and sensors currently show little nearby precipitation. Keep an umbrella handy just in case.`;
   } else if (data.chanceOfRain > 30) {
     advice = `There is a moderate chance of rain (${data.chanceOfRain}%) in ${name}. It might pass, but stay aware.`;
   } else if (data.temp >= 33 && data.isDay) {
@@ -632,7 +643,7 @@ function renderLocality(data, name) {
   } else if (data.condition === "clear") {
     advice = `Good conditions in ${name}. Expect clear skies and no significant weather disruptions.`;
   } else {
-    advice = `Quiet weather in ${name} right now. No major rain expected.`;
+    advice = `Quiet weather in ${name} right now. Radar shows no active rain.`;
   }
   
   removeSkeleton("ww-says-text-mobile", advice);

@@ -4,7 +4,7 @@ import { writeFileSync } from "fs";
 const DEFAULT_LAT = 17.385;
 const DEFAULT_LON = 78.4867;
 
-// ─── WEATHERWISE ENSEMBLE ENGINE (PHASE 1 & 4) ─────────────────────────────
+// ─── WEATHERWISE ENSEMBLE ENGINE ───────────────────────────────────────────
 function calculateMedian(values) {
   if (!values || values.length === 0) return null;
   const validValues = values.filter(v => v !== null && !isNaN(v)).sort((a, b) => a - b);
@@ -28,7 +28,6 @@ function calculateSpread(values) {
   return Math.round((Math.max(...validValues) - Math.min(...validValues)) * 10) / 10;
 }
 
-// PHASE 4: Percentile Calculator for True Ensemble Bounds
 function calculatePercentile(values, percentile) {
   if (!values || values.length === 0) return null;
   const validValues = values.filter(v => v !== null && !isNaN(v)).sort((a, b) => a - b);
@@ -69,8 +68,8 @@ function calculateRainConfidence(rainProbabilities, precipNow) {
   return { agreement: "split", confidenceText: "Models disagree", confLevel: "low" };
 }
 
-// ─── DATA VALIDATION & NORMALIZATION ───────────────────────────────────────
-function normalizeAndValidate(data, sourceName) {
+// ─── DATA VALIDATION & NORMALIZATION (PHASE 19: Hardware vs Model) ─────────
+function normalizeAndValidate(data, sourceName, observationType) {
   if (data.temp < -5 || data.temp > 55) throw new Error(`Unrealistic temperature detected (${data.temp}°C)`);
   if (data.humidity < 0 || data.humidity > 100) throw new Error(`Unrealistic humidity detected (${data.humidity}%)`);
   if (data.wind < 0 || data.wind > 200) throw new Error(`Unrealistic wind speed detected (${data.wind} km/h)`);
@@ -78,6 +77,7 @@ function normalizeAndValidate(data, sourceName) {
   
   return {
     source: sourceName,
+    type: observationType, // "hardware" or "model"
     temp: Math.round(data.temp),
     humidity: Math.round(data.humidity),
     wind: Math.round(data.wind),
@@ -125,7 +125,7 @@ async function getOpenMeteoICON(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
     isDay: cur.is_day === 1, high: data.daily ? data.daily.temperature_2m_max[0] : null,
     low: data.daily ? data.daily.temperature_2m_min[0] : null,
     validTime: cur.time, ageMinutes: Math.max(0, ageMinutes),
-  }, "Open-Meteo ICON");
+  }, "Open-Meteo ICON", "model");
 }
 
 async function getOpenMeteoECMWF(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
@@ -141,7 +141,7 @@ async function getOpenMeteoECMWF(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
     temp: cur.temperature_2m, humidity: cur.relative_humidity_2m, wind: cur.wind_speed_10m,
     precipNow: cur.precipitation > 0, chanceOfRain: calculateWindowRainProbability(next6),
     validTime: cur.time, ageMinutes: Math.max(0, ageMinutes),
-  }, "Open-Meteo ECMWF");
+  }, "Open-Meteo ECMWF", "model");
 }
 
 async function getOpenMeteoGFS(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
@@ -157,7 +157,7 @@ async function getOpenMeteoGFS(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
     temp: cur.temperature_2m, humidity: cur.relative_humidity_2m, wind: cur.wind_speed_10m,
     precipNow: cur.precipitation > 0, chanceOfRain: calculateWindowRainProbability(next6),
     validTime: cur.time, ageMinutes: Math.max(0, ageMinutes),
-  }, "Open-Meteo GFS");
+  }, "Open-Meteo GFS", "model");
 }
 
 async function getWeatherAPI(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
@@ -178,7 +178,7 @@ async function getWeatherAPI(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
     precipNow: cur.precip_mm > 0, chanceOfRain: calculateWindowRainProbability(hourlyProbs),
     uv: cur.uv, feelsLike: cur.feelslike_c, airQuality: cur.air_quality ? cur.air_quality.pm2_5 : null,
     validTime: cur.last_updated, ageMinutes: Math.max(0, ageMinutes),
-  }, "WeatherAPI");
+  }, "WeatherAPI", "hardware");
 }
 
 async function getTomorrow(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
@@ -195,7 +195,7 @@ async function getTomorrow(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
     precipNow: v.precipitationIntensity > 0, chanceOfRain: v.precipitationProbability,
     uv: v.uvIndex, feelsLike: v.temperatureApparent,
     validTime: data.data.time, ageMinutes: Math.max(0, ageMinutes),
-  }, "Tomorrow.io");
+  }, "Tomorrow.io", "hardware");
 }
 
 // ─── Backend Reconciliation Engine ───────────────────────────────────────────
@@ -208,24 +208,34 @@ function reconcile(results) {
     return { city: "Hyderabad", stale: true, sourcesFailed: failed, sourcesUsed: [], generatedAt: new Date().toISOString() };
   }
 
+  // PHASE 19: Hardware vs. Model Segregation
+  const hardwareSources = good.filter(d => d.type === "hardware");
+  const modelSources = good.filter(d => d.type === "model");
+
+  // Prioritize hardware observations for "Current Reality". Fallback to models if stations are offline.
+  const currentSources = hardwareSources.length > 0 ? hardwareSources : modelSources;
+  const observationType = hardwareSources.length > 0 ? "hardware" : "model";
+
+  const currentTemp = calculateMedian(currentSources.map(d => d.temp));
+  const currentHumidity = calculateMedian(currentSources.map(d => d.humidity));
+  const currentWind = calculateMedian(currentSources.map(d => d.wind));
+  const anyPrecipNow = currentSources.some(d => d.precipNow);
+  const uv = currentSources.find(d => d.uv != null)?.uv ?? null;
+  const feelsLike = currentSources.find(d => d.feelsLike != null)?.feelsLike ?? null;
+  const airQuality = currentSources.find(d => d.airQuality != null)?.airQuality ?? null;
+
+  // Forecast data (Rain, Highs/Lows) relies on the full ensemble for robustness
   const temps = good.map(d => d.temp);
   const rainProbs = good.map(d => d.chanceOfRain);
-  
-  const avgTemp = calculateMedian(temps);
   const tempSpread = calculateSpread(temps);
-  const avgHumidity = calculateMedian(good.map(d => d.humidity));
-  const avgWind = calculateMedian(good.map(d => d.wind));
   const rainChance = calculateMedian(rainProbs);
 
-  const anyPrecipNow = good.some(d => d.precipNow);
   let { agreement, confLevel } = calculateRainConfidence(rainProbs, anyPrecipNow);
-
   if (tempSpread >= 3) confLevel = "low";
 
-  // PHASE 4: Ensemble Metrics Block
   const ensembleMetrics = {
     tempMean: calculateMean(temps),
-    tempMedian: avgTemp,
+    tempMedian: calculateMedian(temps), // Global median across all sources
     tempSpread: tempSpread,
     tempP10: calculatePercentile(temps, 10),
     tempP25: calculatePercentile(temps, 25),
@@ -233,7 +243,6 @@ function reconcile(results) {
     tempP90: calculatePercentile(temps, 90)
   };
   
-  // Calculate a safe "expected range" using P25 and P75 to trim wild outliers
   const expectedTempRange = {
     min: Math.round(ensembleMetrics.tempP25),
     max: Math.round(ensembleMetrics.tempP75)
@@ -242,9 +251,6 @@ function reconcile(results) {
   const isDay = good.find(d => d.isDay !== undefined)?.isDay ?? true;
   const high = good.find(d => d.high != null)?.high ?? null;
   const low = good.find(d => d.low != null)?.low ?? null;
-  const uv = good.find(d => d.uv != null)?.uv ?? null;
-  const feelsLike = good.find(d => d.feelsLike != null)?.feelsLike ?? null;
-  const airQuality = good.find(d => d.airQuality != null)?.airQuality ?? null;
 
   let condition = "cloudy";
   if (agreement === "all_wet" || agreement === "mostly_wet") condition = "rainy";
@@ -252,16 +258,17 @@ function reconcile(results) {
 
   const sourcesMeta = {};
   good.forEach(d => {
-    sourcesMeta[d.source] = { validTime: d.validTime, ageMinutes: d.ageMinutes };
+    sourcesMeta[d.source] = { type: d.type, validTime: d.validTime, ageMinutes: d.ageMinutes };
   });
 
   return {
     city: "Hyderabad",
-    temp: avgTemp,
+    observationType, // "hardware" or "model"
+    temp: currentTemp,
     expectedTempRange,
     ensembleMetrics,
-    humidity: avgHumidity,
-    wind: avgWind,
+    humidity: currentHumidity,
+    wind: currentWind,
     chanceOfRain: rainChance,
     condition,
     isDay,
@@ -294,7 +301,7 @@ async function main() {
   ]);
 
   results.forEach(r => {
-    if (r.status === "ok") console.log(`✓ ${r.source}: ${r.data.temp}°C, ${r.data.chanceOfRain}% rain (${r.data.ageMinutes} mins old)`);
+    if (r.status === "ok") console.log(`✓ ${r.source} [${r.data.type}]: ${r.data.temp}°C, ${r.data.chanceOfRain}% rain (${r.data.ageMinutes} mins old)`);
     else console.log(`✗ ${r.source}: FAILED — ${r.error}`);
   });
 

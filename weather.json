@@ -1,59 +1,68 @@
 {
   "city": "Hyderabad",
-  "temp": 25,
+  "observationType": "hardware",
+  "temp": 26,
   "expectedTempRange": {
-    "min": 25,
-    "max": 25
+    "min": 26,
+    "max": 26
   },
   "ensembleMetrics": {
-    "tempMean": 25,
-    "tempMedian": 25,
-    "tempSpread": 0,
-    "tempP10": 25,
-    "tempP25": 25,
-    "tempP75": 25,
-    "tempP90": 25
+    "tempMean": 25.8,
+    "tempMedian": 26,
+    "tempSpread": 1,
+    "tempP10": 25.4,
+    "tempP25": 26,
+    "tempP75": 26,
+    "tempP90": 26
   },
-  "humidity": 81,
-  "wind": 18,
-  "chanceOfRain": 5,
+  "humidity": 76,
+  "wind": 16,
+  "chanceOfRain": 6,
   "condition": "cloudy",
   "isDay": true,
   "high": 31,
   "low": 24,
   "confidence": "medium",
   "rainAgreement": "mostly_dry",
-  "tempSpread": 0,
-  "uv": 1.1,
-  "feelsLike": 25,
+  "tempSpread": 1,
+  "uv": 3,
+  "feelsLike": 26,
   "airQuality": 8,
   "sourcesUsed": [
     "Open-Meteo ICON",
     "Open-Meteo ECMWF",
     "Open-Meteo GFS",
-    "WeatherAPI"
-  ],
-  "sourcesFailed": [
+    "WeatherAPI",
     "Tomorrow.io"
   ],
+  "sourcesFailed": [],
   "sourcesMeta": {
     "Open-Meteo ICON": {
-      "validTime": "2026-08-10T07:45",
-      "ageMinutes": 0
+      "type": "model",
+      "validTime": "2026-08-10T08:15",
+      "ageMinutes": 5
     },
     "Open-Meteo ECMWF": {
-      "validTime": "2026-08-10T07:45",
-      "ageMinutes": 0
+      "type": "model",
+      "validTime": "2026-08-10T08:15",
+      "ageMinutes": 5
     },
     "Open-Meteo GFS": {
-      "validTime": "2026-08-10T07:45",
-      "ageMinutes": 0
+      "type": "model",
+      "validTime": "2026-08-10T08:15",
+      "ageMinutes": 5
     },
     "WeatherAPI": {
-      "validTime": "2026-08-10 07:30",
+      "type": "hardware",
+      "validTime": "2026-08-10 08:00",
+      "ageMinutes": 20
+    },
+    "Tomorrow.io": {
+      "type": "hardware",
+      "validTime": "2026-08-10T02:50:00Z",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-08-10T02:15:57.025Z"
+  "generatedAt": "2026-08-10T02:50:51.287Z"
 }
