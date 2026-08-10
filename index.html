@@ -588,10 +588,10 @@ async function loadHistory() {
 
 async function fetchOM(lat, lon, model) {
   const modelParam = model ? `&models=${model}` : "";
-  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`+
-    `&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day,precipitation,visibility`+
-    `&hourly=temperature_2m,precipitation_probability,weather_code`+
-    `&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max`+
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+    `&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day,precipitation,visibility` +
+    `&hourly=temperature_2m,precipitation_probability,weather_code` +
+    `&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max` +
     `${modelParam}&forecast_days=1&timezone=Asia%2FKolkata`;
   const res = await fetch(url);
   if (!res.ok) throw new Error("Fetch failed");
@@ -601,19 +601,18 @@ async function fetchOM(lat, lon, model) {
 function transformOM(raw, name) {
   const cur = raw.current;
   const cond = codeToCondition(cur.weather_code);
-  const prefix = cur.time.slice(0,13);
-  let ni = raw.hourly.time.findIndex(t=>t.startsWith(prefix));
-  if(ni === -1) ni = 0;
+  const prefix = cur.time.slice(0, 13);
+  let ni = raw.hourly.time.findIndex(t => t.startsWith(prefix));
+  if (ni === -1) ni = 0;
 
-  const next6Prob = raw.hourly.precipitation_probability.slice(ni,ni+6);
-  const next6Codes = raw.hourly.weather_code.slice(ni,ni+6);
-  
+  const next6Prob = raw.hourly.precipitation_probability.slice(ni, ni + 6);
+  const next6Codes = raw.hourly.weather_code.slice(ni, ni + 6);
   const chanceOfRain = calculateWindowRainProbability(next6Prob);
 
   const formatTime = (isoString) => {
-    if(!isoString) return "--:--";
+    if (!isoString) return "--:--";
     const d = new Date(isoString);
-    return d.toLocaleTimeString('en-IN', {hour: '2-digit', minute:'2-digit'});
+    return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
   };
 
   const payload = {
@@ -622,11 +621,11 @@ function transformOM(raw, name) {
     wind: Math.round(cur.wind_speed_10m),
     precipNow: cur.precipitation > 0,
     visibility: cur.visibility ? Math.round(cur.visibility / 1000) : "--",
-    sunrise: raw.daily ? formatTime(raw.daily.sunrise[0]) : "--:--",
-    sunset: raw.daily ? formatTime(raw.daily.sunset[0]) : "--:--",
+    sunrise: raw.daily && raw.daily.sunrise ? formatTime(raw.daily.sunrise[0]) : "--:--",
+    sunset: raw.daily && raw.daily.sunset ? formatTime(raw.daily.sunset[0]) : "--:--",
     uvIndex: raw.daily && raw.daily.uv_index_max ? raw.daily.uv_index_max[0] : "--",
-    high: raw.daily ? Math.round(raw.daily.temperature_2m_max[0]) : null,
-    low: raw.daily ? Math.round(raw.daily.temperature_2m_min[0]) : null,
+    high: raw.daily && raw.daily.temperature_2m_max ? Math.round(raw.daily.temperature_2m_max[0]) : null,
+    low: raw.daily && raw.daily.temperature_2m_min ? Math.round(raw.daily.temperature_2m_min[0]) : null,
     chanceOfRain: chanceOfRain,
     upcomingRainType: getUpcomingRainType(next6Codes),
     condition: cond,
@@ -700,7 +699,7 @@ function renderLocality(data, name) {
   locBadge.className = "font-mono font-medium px-2.5 py-0.5 rounded-full text-[10px] border " +
         (data.confLevel === "high" ? "bg-green-900/50 text-green-300 border-green-500/20" :
          data.confLevel === "low" ? "bg-red-900/50 text-red-300 border-red-500/20" : "bg-yellow-900/50 text-yellow-300 border-yellow-500/20");
-  locBadge.textContent = data.confidenceText.toUpperCase();
+  locBadge.textContent = (data.confidenceText || "MEDIUM").toUpperCase();
 
   let advice = "";
   if (data.precipNow && data.chanceOfRain > 40) {
@@ -723,28 +722,73 @@ function renderLocality(data, name) {
   
   removeSkeleton("ww-says-text-mobile", advice);
   removeSkeleton("ww-says-text-desktop", advice);
-  removeSkeleton("loc-interpretation", data.precipNow ? "Raining right now." : `Currently ${data.condLabel}.`);
+  removeSkeleton("loc-interpretation", data.precipNow ? "Raining right now." : `Currently ${data.condLabel || data.condition}.`);
 
   const strip = document.getElementById("hourly-strip");
   let hourlyHTML = "";
-  for(let i=0;i<12;i++){
-    const idx=data.nowIdx+i;
-    if(idx>=data.hourly.time.length)break;
-    const h=parseInt(data.hourly.time[idx].slice(11,13));
-    const code=data.hourly.weather_code[idx];
-    const cond=codeToCondition(code);
-    hourlyHTML += `
-      <div class="hour-pill${i===0?" now":""}">
-        <span class="opacity-60 font-mono text-[10px]">${i===0?"Now":data.hourly.time[idx].slice(11,16)}</span>
-        <i data-lucide="${condIcon(cond,h<6||h>=19)}" class="w-4 h-4 my-1"></i>
-        <span class="font-display font-bold text-sm">${Math.round(data.hourly.temperature_2m[idx])}°</span>
-        <span class="opacity-60 font-mono text-[10px]">${data.hourly.precipitation_probability[idx]}%</span>
-      </div>`;
+  
+  if (data.hourly && data.hourly.time && data.hourly.time.length > 0) {
+    for(let i=0;i<12;i++){
+      const idx=data.nowIdx+i;
+      if(idx>=data.hourly.time.length)break;
+      const h=parseInt(data.hourly.time[idx].slice(11,13));
+      const code=data.hourly.weather_code[idx];
+      const cond=codeToCondition(code);
+      hourlyHTML += `
+        <div class="hour-pill${i===0?" now":""}">
+          <span class="opacity-60 font-mono text-[10px]">${i===0?"Now":data.hourly.time[idx].slice(11,16)}</span>
+          <i data-lucide="${condIcon(cond,h<6||h>=19)}" class="w-4 h-4 my-1"></i>
+          <span class="font-display font-bold text-sm">${Math.round(data.hourly.temperature_2m[idx])}°</span>
+          <span class="opacity-60 font-mono text-[10px]">${data.hourly.precipitation_probability[idx]}%</span>
+        </div>`;
+    }
+  } else {
+      hourlyHTML = `<div class="p-4 text-xs opacity-50 text-center w-full">Hourly data unavailable</div>`;
   }
+  
   strip.innerHTML = hourlyHTML; 
   if(window.lucide) lucide.createIcons({ root: strip });
   
   applyTheme(data.condition, data.isDay !== false, data.temp, data.weatherCode || 0);
+}
+
+async function loadLocality(idx, forceRefresh = false) {
+  currentLocalityIdx = idx;
+  const loc = LOCALITIES[idx];
+  const cacheKey = `ww_loc_${idx}`;
+  
+  hideLocError();
+
+  const cache = getCacheSWR(cacheKey);
+  if (cache.data) {
+      renderLocality(cache.data, loc.name);
+      if (!forceRefresh && !cache.isStale) return;
+  }
+
+  try {
+    const ensembleData = await fetchLocalityEnsemble(loc.lat, loc.lon, loc.name);
+    if (idx !== currentLocalityIdx) return;
+    setCache(cacheKey, ensembleData);
+    renderLocality(ensembleData, loc.name);
+  } catch (err) {
+    if (idx !== currentLocalityIdx) return; 
+    
+    const heroCache = getCacheSWR("ww_hero");
+    if (heroCache.data) {
+      const fallbackData = {
+        ...heroCache.data,
+        locationName: loc.name,
+        confidenceText: "FALLBACK DATA",
+        confLevel: "medium",
+        nowIdx: 0,
+        hourly: { time: [], weather_code: [], temperature_2m: [], precipitation_probability: [] }
+      };
+      renderLocality(fallbackData, loc.name);
+    } else {
+      console.error("Locality API Failure:", err);
+      showLocError(`Couldn't load ${loc.name} — weather service unavailable.`);
+    }
+  }
 }
 
 function renderHotspotsDOM(results, container) {
