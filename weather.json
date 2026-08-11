@@ -15,15 +15,15 @@
     "tempP75": 24.3,
     "tempP90": 24.7
   },
-  "humidity": 78,
-  "wind": 15,
-  "chanceOfRain": 10,
-  "condition": "rainy",
+  "humidity": 81,
+  "wind": 16,
+  "chanceOfRain": 4,
+  "condition": "cloudy",
   "isDay": false,
   "high": 32,
   "low": 24,
-  "confidence": "high",
-  "rainAgreement": "all_wet",
+  "confidence": "medium",
+  "rainAgreement": "mostly_dry",
   "tempSpread": 1,
   "uv": 0,
   "feelsLike": 25,
@@ -40,25 +40,25 @@
   "sourcesMeta": {
     "Open-Meteo ICON": {
       "type": "model",
-      "validTime": "2026-08-11T04:00",
-      "ageMinutes": 3
+      "validTime": "2026-08-11T05:30",
+      "ageMinutes": 4
     },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-08-11T04:00",
-      "ageMinutes": 3
+      "validTime": "2026-08-11T05:30",
+      "ageMinutes": 4
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-08-11T04:00",
-      "ageMinutes": 3
+      "validTime": "2026-08-11T05:30",
+      "ageMinutes": 4
     },
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-08-11 03:45",
+      "validTime": "2026-08-11 05:30",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-08-10T22:33:36.058Z"
+  "generatedAt": "2026-08-11T00:04:39.414Z"
 }
