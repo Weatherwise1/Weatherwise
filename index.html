@@ -133,7 +133,6 @@
       </div>
       <p class="font-display text-xl sm:text-2xl font-bold leading-snug opacity-90 mb-4 max-w-xl skeleton" id="hero-city-summary">Loading weather data for Hyderabad...</p>
       <div class="flex items-center gap-3 text-xs">
-        <!-- Scrubbed jargon: Renamed Confidence to Certainty -->
         <span class="opacity-50">Certainty</span>
         <span id="conf-badge" class="bg-white/10 text-white font-mono font-medium px-2.5 py-0.5 rounded-full border border-white/20 skeleton">LOADING</span>
         <span class="opacity-30">·</span>
@@ -252,7 +251,6 @@
       <div id="tech-panel" class="hidden mt-2 glass-card p-5 font-mono text-xs grid grid-cols-2 gap-4">
         <div><p class="opacity-40 text-[10px]">Expected Temp Range</p><p id="tech-expected-range" class="skeleton w-20">--°C</p></div>
         <div><p class="opacity-40 text-[10px]">Forecast Uncertainty</p><p id="tech-ensemble-spread" class="skeleton w-12">--°C</p></div>
-        <!-- Scrubbed jargon: Renamed from Agreement Status -->
         <div><p class="opacity-40 text-[10px]">Rain Outlook</p><p id="tech-agreement" class="skeleton w-16">checking</p></div>
         <div><p class="opacity-40 text-[10px]">Ensemble Mean</p><p id="tech-ensemble-mean" class="skeleton w-12">--°C</p></div>
         <div class="col-span-2 my-1 border-t border-white/10"></div>
@@ -285,6 +283,7 @@
 </div>
 
 <script>
+// =============== CONSTANTS ===============
 const LOCALITIES = [
   { name:"Hyderabad (Central)", lat:17.3850, lon:78.4867 },
   { name:"Gachibowli",          lat:17.4401, lon:78.3489 },
@@ -298,8 +297,9 @@ const LOCALITIES = [
   { name:"Charminar",           lat:17.3616, lon:78.4747 },
   { name:"Uppal",               lat:17.4058, lon:78.5591 },
 ];
-const HOTSPOT_INDICES = [1, 2, 5, 9];
+const HOTSPOT_INDICES = [1, 2, 5, 9]; 
 const MODELS = ["icon_seamless", "ecmwf_ifs025", "gfs_seamless"];
+const STALE_THRESHOLD = 5 * 60 * 1000;
 
 const THEMES = {
   clear: { day: { bg:"#0284C7", from:"#0284C7", to:"#0369A1", accent:"#38BDF8", cloud:"rgba(255,255,255,0.2)", icon:"sun", glow:"#0EA5E9" }, night: { bg:"#0F172A", from:"#0F172A", to:"#020617", accent:"#818CF8", cloud:"rgba(255,255,255,0.02)", icon:"moon", glow:"#312E81" } },
@@ -309,8 +309,6 @@ const THEMES = {
   thunderstorm: { day: { bg:"#312E81", from:"#312E81", to:"#1E1B4B", accent:"#A78BFA", cloud:"rgba(180,180,220,0.3)", icon:"cloud-lightning", glow:"#4C1D95" }, night: { bg:"#1E1B4B", from:"#1E1B4B", to:"#000000", accent:"#818CF8", cloud:"rgba(150,150,200,0.1)", icon:"cloud-lightning", glow:"#312E81" } },
   extreme_heat: { day: { bg:"#991B1B", from:"#B91C1C", to:"#7F1D1D", accent:"#FCA5A5", cloud:"rgba(255,200,200,0.1)", icon:"sun-dim", glow:"#DC2626" }, night: { bg:"#450A0A", from:"#450A0A", to:"#000000", accent:"#FCA5A5", cloud:"rgba(255,200,200,0.05)", icon:"moon", glow:"#7F1D1D" } },
 };
-
-const STALE_THRESHOLD = 5 * 60 * 1000;
 
 // =============== CACHE HELPERS ===============
 function getCacheSWR(key) {
@@ -350,10 +348,9 @@ function generateHumanSummary(data) {
   let precip = "Staying Dry", context = "No rain expected anytime soon.", tempVocab = "Comfortable", windVocab = "Calm";
   let firstRainHour = -1, firstClearHour = -1;
 
-  // Scan upcoming hours
-  if(data.hourly && data.hourly.precipitation_probability) {
+  if(data.hourly && data.hourly.precipitation_probability && data.hourly.time) {
       for(let i=1; i<8; i++){
-          const idx = data.nowIdx + i;
+          const idx = (data.nowIdx || 0) + i;
           if(idx >= data.hourly.precipitation_probability.length) break;
           const prob = data.hourly.precipitation_probability[idx];
           const timeStr = new Date(data.hourly.time[idx]).toLocaleTimeString('en-IN', {hour: 'numeric', minute:'2-digit', hour12: true});
@@ -363,19 +360,20 @@ function generateHumanSummary(data) {
       }
   }
 
-  // Precipitation Vocabulary
-  if (data.precipNow) {
+  const isRaining = data.precipNow !== undefined ? data.precipNow : (data.condition === 'rainy' || data.condition === 'heavy_rain' || data.condition === 'thunderstorm');
+  const agreementCode = data.agreement || data.rainAgreement || "checking";
+
+  if (isRaining) {
       precip = "It's Raining";
       context = firstClearHour !== -1 ? `expected to clear up around ${firstClearHour}.` : `models show it continuing for the next few hours.`;
   } else {
       if (firstRainHour !== -1 && data.chanceOfRain > 50) { precip = "Rain is Approaching"; context = `expected to start around ${firstRainHour}.`; }
       else if (data.chanceOfRain > 60) { precip = "Rain is Likely"; context = `high chance of showers later today.`; }
       else if (data.chanceOfRain > 30) { precip = "Rain is Possible"; context = `keep an umbrella handy just in case.`; }
-      else if (data.agreement === "split") { precip = "Could Go Either Way"; context = `models are completely divided on if we'll see rain.`; }
+      else if (agreementCode === "split") { precip = "Could Go Either Way"; context = `models are completely divided on if we'll see rain.`; }
       else if (data.chanceOfRain > 0) { precip = "Rain is Unlikely"; context = `mostly dry conditions expected.`; }
   }
 
-  // Temp Vocabulary
   if (data.temp >= 40) tempVocab = "Extreme Heat";
   else if (data.temp >= 36) tempVocab = "Very Hot";
   else if (data.temp >= 32) tempVocab = "Hot";
@@ -384,7 +382,6 @@ function generateHumanSummary(data) {
   else if (data.temp >= 10) tempVocab = "Cool";
   else tempVocab = "Cold";
 
-  // Wind Vocabulary
   if (data.wind > 35) windVocab = "Very Windy";
   else if (data.wind > 20) windVocab = "Windy";
   else if (data.wind > 10) windVocab = "Breezy";
@@ -395,7 +392,7 @@ function generateHumanSummary(data) {
     "split": "Highly Unpredictable", "single_source": "Limited Data"
   };
 
-  return { precip, context, tempVocab, windVocab, agreementStr: humanAgreement[data.agreement] || "Checking" };
+  return { precip, context, tempVocab, windVocab, agreementStr: humanAgreement[agreementCode] || "Checking" };
 }
 
 // =============== CORE LOGIC ===============
@@ -454,7 +451,6 @@ function renderHero(data) {
   confBadge.className = "font-mono font-medium px-2.5 py-0.5 rounded-full text-[10px] border " +
       (data.confidence === "high" ? "bg-green-900/50 text-green-300 border-green-500/20" :
        data.confidence === "low" ? "bg-red-900/50 text-red-300 border-red-500/20" : "bg-yellow-900/50 text-yellow-300 border-yellow-500/20");
-  // Scrubbed jargon: Badges now just say HIGH, MEDIUM, LOW
   confBadge.textContent = (data.confidence || "MEDIUM").toUpperCase();
 
   const freshness = getFreshness(data.generatedAt || data.fullTimestamp);
@@ -465,9 +461,11 @@ function renderHero(data) {
   }
 
   const vocab = generateHumanSummary(data);
+  const safeLabel = data.condLabel || data.condition || "Cloudy";
+  
   const heroSummary = data.isFallback 
-      ? `${data.condLabel} today at ${data.temp}°C. Live fallback data.` 
-      : `${vocab.tempVocab} and ${data.condLabel.toLowerCase()}. ${vocab.precip} — ${vocab.context}`;
+      ? `${safeLabel} today at ${data.temp}°C. Live fallback data.` 
+      : `${vocab.tempVocab} and ${safeLabel.toLowerCase()}. ${vocab.precip} — ${vocab.context}`;
   
   removeSkeleton("hero-city-summary", heroSummary);
   
@@ -519,20 +517,19 @@ function renderLocality(data, name) {
   locBadge.className = "font-mono font-medium px-2.5 py-0.5 rounded-full text-[10px] border " +
         (data.confLevel === "high" ? "bg-green-900/50 text-green-300 border-green-500/20" :
          data.confLevel === "low" ? "bg-red-900/50 text-red-300 border-red-500/20" : "bg-yellow-900/50 text-yellow-300 border-yellow-500/20");
-  // Scrubbed jargon: Locality badges now say HIGH CERTAINTY instead of model agreement
   locBadge.textContent = `${(data.confLevel || "MEDIUM").toUpperCase()} CERTAINTY`;
 
   const advice = `${vocab.precip} in ${name} — ${vocab.context}`;
   
   removeSkeleton("ww-says-text-mobile", advice);
   removeSkeleton("ww-says-text-desktop", advice);
-  removeSkeleton("loc-interpretation", data.precipNow ? "Raining right now." : `Currently ${data.condLabel}.`);
+  removeSkeleton("loc-interpretation", data.precipNow ? "Raining right now." : `Currently ${data.condLabel || data.condition || "Cloudy"}.`);
 
   const strip = document.getElementById("hourly-strip");
   let hourlyHTML = "";
   if (data.hourly && data.hourly.time && data.hourly.time.length > 0) {
     for(let i=0;i<12;i++){
-      const idx=data.nowIdx+i;
+      const idx = (data.nowIdx || 0) + i;
       if(idx>=data.hourly.time.length)break;
       const h=parseInt(data.hourly.time[idx].slice(11,13));
       const code=data.hourly.weather_code[idx];
@@ -607,7 +604,6 @@ async function fetchLocalityEnsemble(lat, lon, name) {
   const temps = transformed.map(d => d.temp);
   const rainProbs = transformed.map(d => d.chanceOfRain);
 
-  // Majority Consensus Vote
   const wetModelsCount = transformed.filter(d => d.precipNow).length;
   const anyPrecipNow = wetModelsCount >= Math.ceil(transformed.length / 2);
   
@@ -727,8 +723,6 @@ async function loadHistory() {
 }
 
 // =============== INITIALIZATION & RADAR ===============
-const LOCALITIES = [{name:"Hyderabad (Central)",lat:17.3850,lon:78.4867},{name:"Gachibowli",lat:17.4401,lon:78.3489},{name:"Banjara Hills",lat:17.4156,lon:78.4347},{name:"Madhapur",lat:17.4483,lon:78.3915},{name:"Hitech City",lat:17.4435,lon:78.3772},{name:"Secunderabad",lat:17.4399,lon:78.4983},{name:"Malakpet",lat:17.3702,lon:78.4990},{name:"Kukatpally",lat:17.4849,lon:78.4138},{name:"Kondapur",lat:17.4615,lon:78.3672},{name:"Charminar",lat:17.3616,lon:78.4747},{name:"Uppal",lat:17.4058,lon:78.5591}];
-const HOTSPOT_INDICES = [1, 2, 5, 9]; const MODELS = ["icon_seamless", "ecmwf_ifs025", "gfs_seamless"];
 let currentLocalityIdx = 0; let radarInterval = null; let currentRadarIdx = 0; let radarInitialized = false;
 
 const select = document.getElementById("locality-select");
