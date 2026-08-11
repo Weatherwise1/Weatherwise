@@ -619,7 +619,7 @@ function transformOM(raw, name) {
     temp: Math.round(cur.temperature_2m),
     humidity: cur.relative_humidity_2m,
     wind: Math.round(cur.wind_speed_10m),
-    precipNow: cur.precipitation > 0,
+   precipNow: cur.precipitation >= 0.2, // Ignores trace model noise
     visibility: cur.visibility ? Math.round(cur.visibility / 1000) : "--",
     sunrise: raw.daily && raw.daily.sunrise ? formatTime(raw.daily.sunrise[0]) : "--:--",
     sunset: raw.daily && raw.daily.sunset ? formatTime(raw.daily.sunset[0]) : "--:--",
@@ -656,7 +656,9 @@ async function fetchLocalityEnsemble(lat, lon, name) {
   const avgWind = calculateMedian(transformed.map(d => d.wind));
   const rainChance = calculateMedian(transformed.map(d => d.chanceOfRain));
   
-  const anyPrecipNow = transformed.some(d => d.precipNow);
+// Require a majority vote among models to declare active rain
+const wetModelsCount = transformed.filter(d => d.precipNow).length;
+const anyPrecipNow = wetModelsCount >= Math.ceil(transformed.length / 2);
   const spread = calculateSpread(temps);
 
   const rainProbs = transformed.map(d => d.chanceOfRain);
