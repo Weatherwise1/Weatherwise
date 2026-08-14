@@ -42,5 +42,16 @@
     },
     "ensembleMean": 28.8,
     "condition": "rainy"
+  },
+  {
+    "date": "2026-08-14",
+    "timestamp": "2026-08-14T05:16:36.878Z",
+    "observedTemp": 28,
+    "expectedTempRange": {
+      "min": 28,
+      "max": 28
+    },
+    "ensembleMean": 28.3,
+    "condition": "rainy"
   }
 ]
