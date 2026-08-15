@@ -53,5 +53,16 @@
     },
     "ensembleMean": 28.3,
     "condition": "rainy"
+  },
+  {
+    "date": "2026-08-15",
+    "timestamp": "2026-08-15T03:08:01.335Z",
+    "observedTemp": 25,
+    "expectedTempRange": {
+      "min": 25,
+      "max": 26
+    },
+    "ensembleMean": 25.5,
+    "condition": "cloudy"
   }
 ]
