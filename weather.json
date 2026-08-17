@@ -41,24 +41,24 @@
     "Open-Meteo ICON": {
       "type": "model",
       "validTime": "2026-08-17T17:15",
-      "ageMinutes": 3
+      "ageMinutes": 12
     },
     "Open-Meteo ECMWF": {
       "type": "model",
       "validTime": "2026-08-17T17:15",
-      "ageMinutes": 3
+      "ageMinutes": 12
     },
     "Open-Meteo GFS": {
       "type": "model",
       "validTime": "2026-08-17T17:15",
-      "ageMinutes": 3
+      "ageMinutes": 12
     },
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-08-17 17:00",
+      "validTime": "2026-08-17 17:15",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-08-17T11:48:38.793Z"
+  "generatedAt": "2026-08-17T11:57:07.063Z"
 }
