@@ -69,10 +69,10 @@ function calculateRainConfidence(rainProbabilities, precipNow) {
 }
 
 function normalizeAndValidate(data, sourceName, observationType) {
-  if (data.temp < -5 || data.temp > 55) throw new Error(`Unrealistic temperature detected (${data.temp}°C)`);
-  if (data.humidity < 0 || data.humidity > 100) throw new Error(`Unrealistic humidity detected (${data.humidity}%)`);
-  if (data.wind < 0 || data.wind > 200) throw new Error(`Unrealistic wind speed detected (${data.wind} km/h)`);
-  if (data.chanceOfRain < 0 || data.chanceOfRain > 100) throw new Error(`Unrealistic rain probability detected (${data.chanceOfRain}%)`);
+  if (!Number.isFinite(data.temp) || data.temp < -5 || data.temp > 55) throw new Error(`Invalid temperature detected (${data.temp}°C)`);
+  if (!Number.isFinite(data.humidity) || data.humidity < 0 || data.humidity > 100) throw new Error(`Invalid humidity detected (${data.humidity}%)`);
+  if (!Number.isFinite(data.wind) || data.wind < 0 || data.wind > 200) throw new Error(`Invalid wind speed detected (${data.wind} km/h)`);
+  if (!Number.isFinite(data.chanceOfRain) || data.chanceOfRain < 0 || data.chanceOfRain > 100) throw new Error(`Invalid rain probability detected (${data.chanceOfRain}%)`);
   
   return {
     source: sourceName,
@@ -120,7 +120,7 @@ async function getOpenMeteoICON(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
 
   return normalizeAndValidate({
     temp: cur.temperature_2m, humidity: cur.relative_humidity_2m, wind: cur.wind_speed_10m,
-    precipNow: cur.precipitation > 0, chanceOfRain: calculateWindowRainProbability(next6),
+    precipNow: (cur.precipitation >= 0.2 && cur.weather_code >= 50), chanceOfRain: calculateWindowRainProbability(next6),
     isDay: cur.is_day === 1, high: data.daily ? data.daily.temperature_2m_max[0] : null,
     low: data.daily ? data.daily.temperature_2m_min[0] : null,
     validTime: cur.time, ageMinutes: Math.max(0, ageMinutes),
@@ -138,7 +138,7 @@ async function getOpenMeteoECMWF(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
 
   return normalizeAndValidate({
     temp: cur.temperature_2m, humidity: cur.relative_humidity_2m, wind: cur.wind_speed_10m,
-    precipNow: cur.precipitation > 0, chanceOfRain: calculateWindowRainProbability(next6),
+    precipNow: (cur.precipitation >= 0.2 && cur.weather_code >= 50), chanceOfRain: calculateWindowRainProbability(next6),
     validTime: cur.time, ageMinutes: Math.max(0, ageMinutes),
   }, "Open-Meteo ECMWF", "model");
 }
@@ -154,7 +154,7 @@ async function getOpenMeteoGFS(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
 
   return normalizeAndValidate({
     temp: cur.temperature_2m, humidity: cur.relative_humidity_2m, wind: cur.wind_speed_10m,
-    precipNow: cur.precipitation > 0, chanceOfRain: calculateWindowRainProbability(next6),
+    precipNow: (cur.precipitation >= 0.2 && cur.weather_code >= 50), chanceOfRain: calculateWindowRainProbability(next6),
     validTime: cur.time, ageMinutes: Math.max(0, ageMinutes),
   }, "Open-Meteo GFS", "model");
 }
@@ -166,8 +166,9 @@ async function getWeatherAPI(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   const data = await fetchWithTimeout(url);
   const cur = data.current;
   
+  const localHour = new Date(cur.last_updated.replace(" ", "T")).getHours();
   const hourlyProbs = data.forecast.forecastday[0].hour
-    .slice(new Date().getHours(), new Date().getHours() + 6)
+    .slice(localHour, localHour + 6)
     .map(h => h.chance_of_rain);
     
   const ageMinutes = Math.floor((Date.now() - new Date(cur.last_updated).getTime()) / 60000);
@@ -304,7 +305,13 @@ async function main() {
   console.log("\n--- Reconciled Weather Payload ---");
   console.log(JSON.stringify(reconciled, null, 2));
 
-  // Write standard weather payload
+  // Never overwrite a known-good weather.json with a failed payload.
+  if (reconciled.stale || !reconciled.sourcesUsed?.length) {
+    console.error("\n✗ No valid weather payload produced. Existing weather.json was preserved.");
+    process.exitCode = 1;
+    return;
+  }
+
   writeFileSync("weather.json", JSON.stringify(reconciled, null, 2));
   console.log("\n✓ weather.json updated successfully");
 
