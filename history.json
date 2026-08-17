@@ -20,5 +20,71 @@
     },
     "ensembleMean": 24.3,
     "condition": "cloudy"
+  },
+  {
+    "date": "2026-08-12",
+    "timestamp": "2026-08-12T00:04:00.524Z",
+    "observedTemp": 24,
+    "expectedTempRange": {
+      "min": 24,
+      "max": 24
+    },
+    "ensembleMean": 24,
+    "condition": "rainy"
+  },
+  {
+    "date": "2026-08-13",
+    "timestamp": "2026-08-13T05:23:18.271Z",
+    "observedTemp": 29,
+    "expectedTempRange": {
+      "min": 28,
+      "max": 29
+    },
+    "ensembleMean": 28.8,
+    "condition": "rainy"
+  },
+  {
+    "date": "2026-08-14",
+    "timestamp": "2026-08-14T05:16:36.878Z",
+    "observedTemp": 28,
+    "expectedTempRange": {
+      "min": 28,
+      "max": 28
+    },
+    "ensembleMean": 28.3,
+    "condition": "rainy"
+  },
+  {
+    "date": "2026-08-15",
+    "timestamp": "2026-08-15T03:08:01.335Z",
+    "observedTemp": 25,
+    "expectedTempRange": {
+      "min": 25,
+      "max": 26
+    },
+    "ensembleMean": 25.5,
+    "condition": "cloudy"
+  },
+  {
+    "date": "2026-08-16",
+    "timestamp": "2026-08-16T03:28:25.450Z",
+    "observedTemp": 25,
+    "expectedTempRange": {
+      "min": 25,
+      "max": 26
+    },
+    "ensembleMean": 25.5,
+    "condition": "cloudy"
+  },
+  {
+    "date": "2026-08-17",
+    "timestamp": "2026-08-17T03:29:18.349Z",
+    "observedTemp": 25,
+    "expectedTempRange": {
+      "min": 26,
+      "max": 27
+    },
+    "ensembleMean": 26.3,
+    "condition": "cloudy"
   }
 ]
