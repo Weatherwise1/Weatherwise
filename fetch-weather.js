@@ -1,4 +1,4 @@
-const fs = require('fs');
+import fs from 'fs';
 
 const LAT = 17.3850;
 const LON = 78.4867;
@@ -113,18 +113,19 @@ async function generateWeatherData() {
     const sourcesMeta = {};
     const results = [];
 
-    // 1. Fire all API requests safely
+    // 1. Wrap fetchers in safe functions to prevent Unhandled Promise Rejections
     const fetchers = [
-        { call: fetchOpenMeteoModel("icon_seamless"), name: "Open-Meteo ICON" },
-        { call: fetchOpenMeteoModel("ecmwf_ifs025"), name: "Open-Meteo ECMWF" },
-        { call: fetchOpenMeteoModel("gfs_seamless"), name: "Open-Meteo GFS" },
-        { call: fetchWeatherAPI(), name: "WeatherAPI" },
-        { call: fetchTomorrowIO(), name: "Tomorrow.io" }
+        { func: () => fetchOpenMeteoModel("icon_seamless"), name: "Open-Meteo ICON" },
+        { func: () => fetchOpenMeteoModel("ecmwf_ifs025"), name: "Open-Meteo ECMWF" },
+        { func: () => fetchOpenMeteoModel("gfs_seamless"), name: "Open-Meteo GFS" },
+        { func: () => fetchWeatherAPI(), name: "WeatherAPI" },
+        { func: () => fetchTomorrowIO(), name: "Tomorrow.io" }
     ];
 
-    for (const f of fetchers) {
+    // 2. Fire all API requests concurrently and safely catch any errors
+    const fetchPromises = fetchers.map(async (f) => {
         try {
-            const data = await f.call;
+            const data = await f.func();
             results.push(data);
             sourcesUsed.push(data.name);
             sourcesMeta[data.name] = {
@@ -134,15 +135,18 @@ async function generateWeatherData() {
             };
         } catch (error) {
             sourcesFailed.push(f.name);
+            console.error(`[${f.name}] Failed:`, error.message);
         }
-    }
+    });
+
+    await Promise.all(fetchPromises);
 
     if (results.length === 0) {
         console.error("CRITICAL: All weather APIs failed.");
         process.exit(1);
     }
 
-    // 2. Hardware vs Model Logic
+    // 3. Hardware vs Model Logic
     const hardware = results.filter(r => r.type === "hardware");
     const models = results.filter(r => r.type === "model");
 
@@ -153,6 +157,10 @@ async function generateWeatherData() {
 
     // Prioritize hardware observations for current conditions
     const primary = hardware.length > 0 ? hardware[0] : models[0];
+
+    // Safe bounds checking if models fail
+    const high = models.length > 0 ? Math.max(...models.map(m => m.high).filter(v => v !== undefined)) : null;
+    const low = models.length > 0 ? Math.min(...models.map(m => m.low).filter(v => v !== undefined)) : null;
 
     const payload = {
         city: CITY,
@@ -174,10 +182,10 @@ async function generateWeatherData() {
         humidity: Math.round(getMedian(results.map(r => r.humidity))),
         wind: Math.round(getMedian(results.map(r => r.wind))),
         chanceOfRain: Math.round((rainCount / results.length) * 100),
-        condition: primary.isRaining ? "rainy" : "cloudy", // Simplified; UI resolves final state
+        condition: primary.isRaining ? "rainy" : "cloudy", 
         isDay: primary.isDay !== null ? primary.isDay : true,
-        high: Math.max(...models.map(m => m.high).filter(v => v !== undefined)),
-        low: Math.min(...models.map(m => m.low).filter(v => v !== undefined)),
+        high: high,
+        low: low,
         confidence: results.length >= 3 && calculateSpread(allTemps) <= 2 ? "high" : "medium",
         rainAgreement: rainCount === results.length ? "all_wet" : rainCount === 0 ? "all_dry" : rainCount > results.length / 2 ? "mostly_wet" : "split",
         uv: Math.round(getMedian(results.map(r => r.uv))),
@@ -190,11 +198,11 @@ async function generateWeatherData() {
         generatedAt: new Date().toISOString()
     };
 
-    // 3. Write Main Weather File
+    // 4. Write Main Weather File
     fs.writeFileSync('./weather.json', JSON.stringify(payload, null, 2));
     console.log("✅ weather.json updated successfully.");
 
-    // 4. Update History Ledger
+    // 5. Update History Ledger
     updateHistory(payload);
 }
 
