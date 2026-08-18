@@ -86,5 +86,13 @@
     },
     "ensembleMean": 26.3,
     "condition": "cloudy"
+  },
+  {
+    "date": "2026-08-18",
+    "expectedTempRange": {
+      "min": 22,
+      "max": 24
+    },
+    "observedTemp": 24
   }
 ]
