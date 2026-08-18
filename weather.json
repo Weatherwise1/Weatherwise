@@ -1,64 +1,67 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 21,
+  "temp": 24,
   "expectedTempRange": {
-    "min": 27,
-    "max": 30
+    "min": 22,
+    "max": 24
   },
   "ensembleMetrics": {
-    "tempMean": 27.8,
-    "tempMedian": 30,
-    "tempSpread": 10,
-    "tempP10": 23.4,
-    "tempP25": 27,
-    "tempP75": 30.3,
-    "tempP90": 30.7
+    "tempMean": 23.6,
+    "tempMedian": 24.17,
+    "tempSpread": 3,
+    "tempP10": 22.4,
+    "tempP25": 24.1,
+    "tempP75": 24.3,
+    "tempP90": 24.3
   },
-  "humidity": 72,
-  "wind": 33,
-  "chanceOfRain": 41,
+  "humidity": 78,
+  "wind": 17,
+  "chanceOfRain": 0,
   "condition": "cloudy",
   "isDay": true,
-  "high": 31,
-  "low": 24,
-  "confidence": "low",
-  "rainAgreement": "split",
-  "tempSpread": 10,
-  "uv": 0.3,
-  "feelsLike": 16,
-  "airQuality": 12,
+  "high": 32.1,
+  "low": 23.6,
+  "confidence": "medium",
+  "rainAgreement": "all_dry",
+  "uv": 1,
+  "feelsLike": 24,
+  "airQuality": null,
   "sourcesUsed": [
-    "Open-Meteo ICON",
-    "Open-Meteo ECMWF",
+    "Tomorrow.io",
     "Open-Meteo GFS",
-    "WeatherAPI"
+    "WeatherAPI",
+    "Open-Meteo ECMWF",
+    "Open-Meteo ICON"
   ],
-  "sourcesFailed": [
-    "Tomorrow.io"
-  ],
+  "sourcesFailed": [],
   "sourcesMeta": {
-    "Open-Meteo ICON": {
-      "type": "model",
-      "validTime": "2026-08-17T17:15",
-      "ageMinutes": 12
-    },
-    "Open-Meteo ECMWF": {
-      "type": "model",
-      "validTime": "2026-08-17T17:15",
-      "ageMinutes": 12
+    "Tomorrow.io": {
+      "type": "hardware",
+      "validTime": "2026-08-18T01:39:00Z",
+      "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-08-17T17:15",
-      "ageMinutes": 12
+      "validTime": "2026-08-18T07:00",
+      "ageMinutes": 9
     },
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-08-17 17:15",
-      "ageMinutes": 0
+      "validTime": "2026-08-18 07:00",
+      "ageMinutes": 9
+    },
+    "Open-Meteo ECMWF": {
+      "type": "model",
+      "validTime": "2026-08-18T07:00",
+      "ageMinutes": 9
+    },
+    "Open-Meteo ICON": {
+      "type": "model",
+      "validTime": "2026-08-18T07:00",
+      "ageMinutes": 9
     }
   },
   "stale": false,
-  "generatedAt": "2026-08-17T11:57:07.063Z"
+  "generatedAt": "2026-08-18T01:39:13.176Z"
 }
