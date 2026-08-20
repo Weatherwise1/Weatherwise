@@ -1,37 +1,37 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 27,
+  "temp": 26,
   "expectedTempRange": {
-    "min": 28,
-    "max": 31
+    "min": 26,
+    "max": 28
   },
   "ensembleMetrics": {
-    "tempMean": 29.1,
-    "tempMedian": 29.45,
-    "tempSpread": 4.2,
-    "tempP10": 27.5,
-    "tempP25": 28.7,
-    "tempP75": 29.9,
-    "tempP90": 30.5
+    "tempMean": 27.1,
+    "tempMedian": 27.25,
+    "tempSpread": 2.7,
+    "tempP10": 25.9,
+    "tempP25": 26.5,
+    "tempP75": 27.8,
+    "tempP90": 28.1
   },
-  "humidity": 56,
-  "wind": 18,
+  "humidity": 65,
+  "wind": 12,
   "chanceOfRain": 0,
   "condition": "cloudy",
-  "isDay": true,
+  "isDay": false,
   "high": 32.2,
   "low": 23.3,
   "confidence": "medium",
   "rainAgreement": "all_dry",
   "uv": 4,
-  "feelsLike": 27,
-  "airQuality": 1,
+  "feelsLike": 26,
+  "airQuality": 2,
   "sourcesUsed": [
     "WeatherAPI",
+    "Open-Meteo GFS",
     "Open-Meteo ICON",
-    "Open-Meteo ECMWF",
-    "Open-Meteo GFS"
+    "Open-Meteo ECMWF"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
@@ -39,25 +39,25 @@
   "sourcesMeta": {
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-08-20 17:15",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ICON": {
-      "type": "model",
-      "validTime": "2026-08-20T17:30",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ECMWF": {
-      "type": "model",
-      "validTime": "2026-08-20T17:30",
+      "validTime": "2026-08-20 19:30",
       "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-08-20T17:30",
+      "validTime": "2026-08-20T19:45",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ICON": {
+      "type": "model",
+      "validTime": "2026-08-20T19:45",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ECMWF": {
+      "type": "model",
+      "validTime": "2026-08-20T19:45",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-08-20T12:01:53.316Z"
+  "generatedAt": "2026-08-20T14:19:31.741Z"
 }
