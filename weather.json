@@ -1,37 +1,37 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 22,
+  "temp": 24,
   "expectedTempRange": {
-    "min": 22,
-    "max": 24
+    "min": 24,
+    "max": 26
   },
   "ensembleMetrics": {
-    "tempMean": 23.6,
-    "tempMedian": 24.200000000000003,
-    "tempSpread": 2.9,
-    "tempP10": 22.3,
-    "tempP25": 23.5,
-    "tempP75": 24.3,
-    "tempP90": 24.4
+    "tempMean": 25.3,
+    "tempMedian": 25.65,
+    "tempSpread": 3,
+    "tempP10": 24.1,
+    "tempP25": 24.9,
+    "tempP75": 26,
+    "tempP90": 26.3
   },
-  "humidity": 78,
-  "wind": 19,
+  "humidity": 70,
+  "wind": 23,
   "chanceOfRain": 0,
   "condition": "cloudy",
-  "isDay": false,
+  "isDay": true,
   "high": 31.2,
-  "low": 23.9,
+  "low": 23.8,
   "confidence": "medium",
   "rainAgreement": "all_dry",
-  "uv": 4,
-  "feelsLike": 20,
+  "uv": 5,
+  "feelsLike": 21,
   "airQuality": 1,
   "sourcesUsed": [
     "WeatherAPI",
-    "Open-Meteo GFS",
+    "Open-Meteo ECMWF",
     "Open-Meteo ICON",
-    "Open-Meteo ECMWF"
+    "Open-Meteo GFS"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
@@ -39,25 +39,25 @@
   "sourcesMeta": {
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-08-22 05:15",
-      "ageMinutes": 0
-    },
-    "Open-Meteo GFS": {
-      "type": "model",
-      "validTime": "2026-08-22T05:15",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ICON": {
-      "type": "model",
-      "validTime": "2026-08-22T05:15",
+      "validTime": "2026-08-22 08:30",
       "ageMinutes": 0
     },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-08-22T05:15",
+      "validTime": "2026-08-22T08:30",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ICON": {
+      "type": "model",
+      "validTime": "2026-08-22T08:30",
+      "ageMinutes": 0
+    },
+    "Open-Meteo GFS": {
+      "type": "model",
+      "validTime": "2026-08-22T08:30",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-08-21T23:57:32.301Z"
+  "generatedAt": "2026-08-22T03:11:14.034Z"
 }
