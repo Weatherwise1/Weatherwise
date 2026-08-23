@@ -1,37 +1,37 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 24,
+  "temp": 21,
   "expectedTempRange": {
-    "min": 24,
-    "max": 27
+    "min": 22,
+    "max": 26
   },
   "ensembleMetrics": {
-    "tempMean": 25.6,
-    "tempMedian": 25.35,
-    "tempSpread": 3.6,
-    "tempP10": 24.1,
-    "tempP25": 24.3,
-    "tempP75": 26.6,
-    "tempP90": 27.2
+    "tempMean": 24.2,
+    "tempMedian": 24.45,
+    "tempSpread": 5.7,
+    "tempP10": 21.9,
+    "tempP25": 23.3,
+    "tempP75": 25.3,
+    "tempP90": 26.2
   },
-  "humidity": 78,
-  "wind": 9,
-  "chanceOfRain": 25,
-  "condition": "cloudy",
-  "isDay": true,
+  "humidity": 91,
+  "wind": 10,
+  "chanceOfRain": 50,
+  "condition": "rainy",
+  "isDay": false,
   "high": 28.6,
   "low": 23.2,
   "confidence": "medium",
   "rainAgreement": "split",
   "uv": 2,
-  "feelsLike": 23,
+  "feelsLike": 22,
   "airQuality": 1,
   "sourcesUsed": [
     "WeatherAPI",
-    "Open-Meteo ICON",
+    "Open-Meteo GFS",
     "Open-Meteo ECMWF",
-    "Open-Meteo GFS"
+    "Open-Meteo ICON"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
@@ -39,25 +39,25 @@
   "sourcesMeta": {
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-08-23 17:00",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ICON": {
-      "type": "model",
-      "validTime": "2026-08-23T17:15",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ECMWF": {
-      "type": "model",
-      "validTime": "2026-08-23T17:15",
+      "validTime": "2026-08-23 19:00",
       "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-08-23T17:15",
+      "validTime": "2026-08-23T19:15",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ECMWF": {
+      "type": "model",
+      "validTime": "2026-08-23T19:15",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ICON": {
+      "type": "model",
+      "validTime": "2026-08-23T19:15",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-08-23T11:53:52.909Z"
+  "generatedAt": "2026-08-23T13:47:57.618Z"
 }
