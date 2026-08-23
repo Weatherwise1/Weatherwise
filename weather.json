@@ -4,34 +4,34 @@
   "temp": 23,
   "expectedTempRange": {
     "min": 24,
-    "max": 26
+    "max": 27
   },
   "ensembleMetrics": {
-    "tempMean": 24.8,
-    "tempMedian": 25.2,
-    "tempSpread": 3.2,
-    "tempP10": 23.5,
-    "tempP25": 24.6,
-    "tempP75": 25.4,
-    "tempP90": 25.8
+    "tempMean": 25.8,
+    "tempMedian": 26.85,
+    "tempSpread": 4.2,
+    "tempP10": 23.9,
+    "tempP25": 25.8,
+    "tempP75": 26.9,
+    "tempP90": 26.9
   },
-  "humidity": 76,
-  "wind": 20,
+  "humidity": 73,
+  "wind": 19,
   "chanceOfRain": 0,
   "condition": "cloudy",
   "isDay": true,
-  "high": 27.7,
+  "high": 27.9,
   "low": 23.2,
   "confidence": "medium",
   "rainAgreement": "all_dry",
   "uv": 3,
-  "feelsLike": 21,
+  "feelsLike": 22,
   "airQuality": 1,
   "sourcesUsed": [
     "WeatherAPI",
+    "Open-Meteo GFS",
     "Open-Meteo ICON",
-    "Open-Meteo ECMWF",
-    "Open-Meteo GFS"
+    "Open-Meteo ECMWF"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
@@ -39,25 +39,25 @@
   "sourcesMeta": {
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-08-23 09:00",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ICON": {
-      "type": "model",
-      "validTime": "2026-08-23T09:00",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ECMWF": {
-      "type": "model",
-      "validTime": "2026-08-23T09:00",
+      "validTime": "2026-08-23 10:15",
       "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-08-23T09:00",
+      "validTime": "2026-08-23T10:30",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ICON": {
+      "type": "model",
+      "validTime": "2026-08-23T10:30",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ECMWF": {
+      "type": "model",
+      "validTime": "2026-08-23T10:30",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-08-23T03:32:04.027Z"
+  "generatedAt": "2026-08-23T05:05:18.813Z"
 }
