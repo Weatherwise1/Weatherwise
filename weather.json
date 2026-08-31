@@ -1,63 +1,63 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 24,
+  "temp": 26,
   "expectedTempRange": {
-    "min": 24,
-    "max": 25
+    "min": 25,
+    "max": 26
   },
   "ensembleMetrics": {
-    "tempMean": 24.7,
-    "tempMedian": 24.75,
-    "tempSpread": 1.3,
-    "tempP10": 24.2,
-    "tempP25": 24.5,
-    "tempP75": 25,
-    "tempP90": 25.2
+    "tempMean": 25.1,
+    "tempMedian": 24.950000000000003,
+    "tempSpread": 1.5,
+    "tempP10": 24.5,
+    "tempP25": 24.6,
+    "tempP75": 25.5,
+    "tempP90": 25.8
   },
-  "humidity": 80,
+  "humidity": 79,
   "wind": 9,
-  "chanceOfRain": 0,
-  "condition": "cloudy",
+  "chanceOfRain": 25,
+  "condition": "rainy",
   "isDay": false,
   "high": 29.5,
   "low": 23.7,
   "confidence": "high",
-  "rainAgreement": "all_dry",
+  "rainAgreement": "split",
   "uv": 1,
-  "feelsLike": 26,
+  "feelsLike": 28,
   "airQuality": 1,
   "sourcesUsed": [
-    "WeatherAPI",
-    "Open-Meteo ECMWF",
     "Open-Meteo ICON",
-    "Open-Meteo GFS"
+    "Open-Meteo ECMWF",
+    "Open-Meteo GFS",
+    "WeatherAPI"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
   ],
   "sourcesMeta": {
-    "WeatherAPI": {
-      "type": "hardware",
-      "validTime": "2026-08-31 23:30",
+    "Open-Meteo ICON": {
+      "type": "model",
+      "validTime": "2026-09-01T00:15",
       "ageMinutes": 0
     },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-08-31T23:45",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ICON": {
-      "type": "model",
-      "validTime": "2026-08-31T23:45",
+      "validTime": "2026-09-01T00:15",
       "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-08-31T23:45",
+      "validTime": "2026-09-01T00:15",
+      "ageMinutes": 0
+    },
+    "WeatherAPI": {
+      "type": "hardware",
+      "validTime": "2026-09-01 00:00",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-08-31T18:16:51.944Z"
+  "generatedAt": "2026-08-31T18:46:54.814Z"
 }
