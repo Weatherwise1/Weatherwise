@@ -1,16 +1,5 @@
 [
   {
-    "date": "2026-08-16",
-    "timestamp": "2026-08-16T03:28:25.450Z",
-    "observedTemp": 25,
-    "expectedTempRange": {
-      "min": 25,
-      "max": 26
-    },
-    "ensembleMean": 25.5,
-    "condition": "cloudy"
-  },
-  {
     "date": "2026-08-17",
     "timestamp": "2026-08-17T03:29:18.349Z",
     "observedTemp": 25,
@@ -111,6 +100,14 @@
   },
   {
     "date": "2026-08-30",
+    "expectedTempRange": {
+      "min": 22,
+      "max": 24
+    },
+    "observedTemp": 21
+  },
+  {
+    "date": "2026-08-31",
     "expectedTempRange": {
       "min": 22,
       "max": 24
