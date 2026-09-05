@@ -1,37 +1,37 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 25,
+  "temp": 23,
   "expectedTempRange": {
-    "min": 24,
-    "max": 26
+    "min": 23,
+    "max": 25
   },
   "ensembleMetrics": {
-    "tempMean": 25.1,
-    "tempMedian": 24.700000000000003,
-    "tempSpread": 2.4,
-    "tempP10": 24.3,
-    "tempP25": 24.3,
-    "tempP75": 25.5,
-    "tempP90": 26.2
+    "tempMean": 24.2,
+    "tempMedian": 23.85,
+    "tempSpread": 2.5,
+    "tempP10": 23.4,
+    "tempP25": 23.6,
+    "tempP75": 24.4,
+    "tempP90": 25.2
   },
-  "humidity": 74,
-  "wind": 6,
+  "humidity": 78,
+  "wind": 8,
   "chanceOfRain": 0,
   "condition": "cloudy",
   "isDay": false,
-  "high": 33.3,
+  "high": 33.5,
   "low": 23.7,
   "confidence": "medium",
   "rainAgreement": "all_dry",
   "uv": 4,
-  "feelsLike": 27,
-  "airQuality": 2,
+  "feelsLike": 24,
+  "airQuality": 1,
   "sourcesUsed": [
     "WeatherAPI",
-    "Open-Meteo GFS",
+    "Open-Meteo ICON",
     "Open-Meteo ECMWF",
-    "Open-Meteo ICON"
+    "Open-Meteo GFS"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
@@ -39,25 +39,25 @@
   "sourcesMeta": {
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-09-05 03:30",
-      "ageMinutes": 0
-    },
-    "Open-Meteo GFS": {
-      "type": "model",
-      "validTime": "2026-09-05T03:45",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ECMWF": {
-      "type": "model",
-      "validTime": "2026-09-05T03:45",
+      "validTime": "2026-09-05 05:45",
       "ageMinutes": 0
     },
     "Open-Meteo ICON": {
       "type": "model",
-      "validTime": "2026-09-05T03:45",
+      "validTime": "2026-09-05T05:45",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ECMWF": {
+      "type": "model",
+      "validTime": "2026-09-05T05:45",
+      "ageMinutes": 0
+    },
+    "Open-Meteo GFS": {
+      "type": "model",
+      "validTime": "2026-09-05T05:45",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-09-04T22:19:59.047Z"
+  "generatedAt": "2026-09-05T00:22:10.145Z"
 }
