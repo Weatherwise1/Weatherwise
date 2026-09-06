@@ -1,37 +1,37 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 29,
+  "temp": 28,
   "expectedTempRange": {
     "min": 29,
-    "max": 31
+    "max": 32
   },
   "ensembleMetrics": {
-    "tempMean": 30.4,
-    "tempMedian": 30.6,
-    "tempSpread": 2.8,
-    "tempP10": 29.1,
-    "tempP25": 29.8,
-    "tempP75": 31.2,
-    "tempP90": 31.4
+    "tempMean": 30.5,
+    "tempMedian": 31.15,
+    "tempSpread": 4.2,
+    "tempP10": 28.6,
+    "tempP25": 29.9,
+    "tempP75": 31.8,
+    "tempP90": 31.9
   },
-  "humidity": 54,
-  "wind": 11,
-  "chanceOfRain": 0,
-  "condition": "cloudy",
+  "humidity": 53,
+  "wind": 9,
+  "chanceOfRain": 25,
+  "condition": "rainy",
   "isDay": true,
   "high": 33.4,
-  "low": 23.9,
+  "low": 24.3,
   "confidence": "medium",
-  "rainAgreement": "all_dry",
-  "uv": 10,
-  "feelsLike": 30,
+  "rainAgreement": "split",
+  "uv": 5,
+  "feelsLike": 29,
   "airQuality": 1,
   "sourcesUsed": [
     "WeatherAPI",
+    "Open-Meteo GFS",
     "Open-Meteo ICON",
-    "Open-Meteo ECMWF",
-    "Open-Meteo GFS"
+    "Open-Meteo ECMWF"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
@@ -39,25 +39,25 @@
   "sourcesMeta": {
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-09-06 11:45",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ICON": {
-      "type": "model",
-      "validTime": "2026-09-06T11:45",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ECMWF": {
-      "type": "model",
-      "validTime": "2026-09-06T11:45",
+      "validTime": "2026-09-06 16:45",
       "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-09-06T11:45",
+      "validTime": "2026-09-06T16:45",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ICON": {
+      "type": "model",
+      "validTime": "2026-09-06T16:45",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ECMWF": {
+      "type": "model",
+      "validTime": "2026-09-06T16:45",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-09-06T06:29:36.470Z"
+  "generatedAt": "2026-09-06T11:19:48.828Z"
 }
