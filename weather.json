@@ -1,37 +1,37 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 28,
+  "temp": 27,
   "expectedTempRange": {
-    "min": 29,
-    "max": 32
+    "min": 28,
+    "max": 29
   },
   "ensembleMetrics": {
-    "tempMean": 30.5,
-    "tempMedian": 31.15,
-    "tempSpread": 4.2,
-    "tempP10": 28.6,
-    "tempP25": 29.9,
-    "tempP75": 31.8,
-    "tempP90": 31.9
+    "tempMean": 28.3,
+    "tempMedian": 28.7,
+    "tempSpread": 1.7,
+    "tempP10": 27.6,
+    "tempP25": 28.3,
+    "tempP75": 28.7,
+    "tempP90": 28.8
   },
-  "humidity": 53,
-  "wind": 9,
-  "chanceOfRain": 25,
-  "condition": "rainy",
-  "isDay": true,
-  "high": 33.4,
+  "humidity": 63,
+  "wind": 4,
+  "chanceOfRain": 0,
+  "condition": "cloudy",
+  "isDay": false,
+  "high": 32.8,
   "low": 24.3,
-  "confidence": "medium",
-  "rainAgreement": "split",
-  "uv": 5,
-  "feelsLike": 29,
+  "confidence": "high",
+  "rainAgreement": "all_dry",
+  "uv": 4,
+  "feelsLike": 28,
   "airQuality": 1,
   "sourcesUsed": [
     "WeatherAPI",
-    "Open-Meteo GFS",
     "Open-Meteo ICON",
-    "Open-Meteo ECMWF"
+    "Open-Meteo ECMWF",
+    "Open-Meteo GFS"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
@@ -39,25 +39,25 @@
   "sourcesMeta": {
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-09-06 16:45",
-      "ageMinutes": 0
-    },
-    "Open-Meteo GFS": {
-      "type": "model",
-      "validTime": "2026-09-06T16:45",
+      "validTime": "2026-09-06 19:45",
       "ageMinutes": 0
     },
     "Open-Meteo ICON": {
       "type": "model",
-      "validTime": "2026-09-06T16:45",
+      "validTime": "2026-09-06T19:45",
       "ageMinutes": 0
     },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-09-06T16:45",
+      "validTime": "2026-09-06T19:45",
+      "ageMinutes": 0
+    },
+    "Open-Meteo GFS": {
+      "type": "model",
+      "validTime": "2026-09-06T19:45",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-09-06T11:19:48.828Z"
+  "generatedAt": "2026-09-06T14:23:15.461Z"
 }
