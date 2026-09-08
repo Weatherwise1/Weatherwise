@@ -3,61 +3,61 @@
   "observationType": "hardware",
   "temp": 24,
   "expectedTempRange": {
-    "min": 24,
-    "max": 25
+    "min": 25,
+    "max": 29
   },
   "ensembleMetrics": {
-    "tempMean": 24.2,
-    "tempMedian": 24.25,
-    "tempSpread": 1.2,
-    "tempP10": 23.7,
-    "tempP25": 23.8,
-    "tempP75": 24.7,
-    "tempP90": 24.8
+    "tempMean": 27.5,
+    "tempMedian": 28.4,
+    "tempSpread": 4.7,
+    "tempP10": 25.4,
+    "tempP25": 27.2,
+    "tempP75": 28.8,
+    "tempP90": 28.9
   },
-  "humidity": 83,
-  "wind": 11,
+  "humidity": 64,
+  "wind": 16,
   "chanceOfRain": 0,
   "condition": "cloudy",
-  "isDay": false,
+  "isDay": true,
   "high": 32.8,
   "low": 23.6,
-  "confidence": "high",
+  "confidence": "medium",
   "rainAgreement": "all_dry",
-  "uv": 4,
-  "feelsLike": 25,
-  "airQuality": 1,
+  "uv": 7,
+  "feelsLike": 24,
+  "airQuality": 2,
   "sourcesUsed": [
-    "Open-Meteo GFS",
-    "Open-Meteo ECMWF",
+    "WeatherAPI",
     "Open-Meteo ICON",
-    "WeatherAPI"
+    "Open-Meteo ECMWF",
+    "Open-Meteo GFS"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
   ],
   "sourcesMeta": {
-    "Open-Meteo GFS": {
-      "type": "model",
-      "validTime": "2026-09-08T05:00",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ECMWF": {
-      "type": "model",
-      "validTime": "2026-09-08T05:00",
+    "WeatherAPI": {
+      "type": "hardware",
+      "validTime": "2026-09-08 09:45",
       "ageMinutes": 0
     },
     "Open-Meteo ICON": {
       "type": "model",
-      "validTime": "2026-09-08T05:00",
+      "validTime": "2026-09-08T09:45",
       "ageMinutes": 0
     },
-    "WeatherAPI": {
-      "type": "hardware",
-      "validTime": "2026-09-08 05:00",
+    "Open-Meteo ECMWF": {
+      "type": "model",
+      "validTime": "2026-09-08T09:45",
+      "ageMinutes": 0
+    },
+    "Open-Meteo GFS": {
+      "type": "model",
+      "validTime": "2026-09-08T09:45",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-09-07T23:44:49.166Z"
+  "generatedAt": "2026-09-08T04:29:10.007Z"
 }
