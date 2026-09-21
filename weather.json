@@ -1,63 +1,63 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 25,
+  "temp": 27,
   "expectedTempRange": {
-    "min": 24,
-    "max": 25
+    "min": 27,
+    "max": 30
   },
   "ensembleMetrics": {
-    "tempMean": 24.5,
-    "tempMedian": 24.5,
-    "tempSpread": 0.4,
-    "tempP10": 24.3,
-    "tempP25": 24.4,
-    "tempP75": 24.5,
-    "tempP90": 24.6
+    "tempMean": 28.7,
+    "tempMedian": 28.950000000000003,
+    "tempSpread": 2.8,
+    "tempP10": 27.4,
+    "tempP25": 28,
+    "tempP75": 29.7,
+    "tempP90": 29.7
   },
-  "humidity": 87,
-  "wind": 5,
-  "chanceOfRain": 0,
-  "condition": "cloudy",
-  "isDay": false,
+  "humidity": 61,
+  "wind": 6,
+  "chanceOfRain": 25,
+  "condition": "rainy",
+  "isDay": true,
   "high": 32.8,
   "low": 24.1,
-  "confidence": "high",
-  "rainAgreement": "all_dry",
-  "uv": 4,
+  "confidence": "medium",
+  "rainAgreement": "split",
+  "uv": 9,
   "feelsLike": 28,
-  "airQuality": 1,
+  "airQuality": 2,
   "sourcesUsed": [
+    "WeatherAPI",
     "Open-Meteo ICON",
     "Open-Meteo ECMWF",
-    "Open-Meteo GFS",
-    "WeatherAPI"
+    "Open-Meteo GFS"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
   ],
   "sourcesMeta": {
+    "WeatherAPI": {
+      "type": "hardware",
+      "validTime": "2026-09-21 10:15",
+      "ageMinutes": 0
+    },
     "Open-Meteo ICON": {
       "type": "model",
-      "validTime": "2026-09-21T05:30",
+      "validTime": "2026-09-21T10:15",
       "ageMinutes": 0
     },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-09-21T05:30",
+      "validTime": "2026-09-21T10:15",
       "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-09-21T05:30",
-      "ageMinutes": 0
-    },
-    "WeatherAPI": {
-      "type": "hardware",
-      "validTime": "2026-09-21 05:30",
+      "validTime": "2026-09-21T10:15",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-09-21T00:13:37.393Z"
+  "generatedAt": "2026-09-21T04:56:50.561Z"
 }
