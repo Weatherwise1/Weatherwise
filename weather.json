@@ -1,63 +1,63 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 30,
+  "temp": 28,
   "expectedTempRange": {
-    "min": 30,
-    "max": 32
+    "min": 28,
+    "max": 28
   },
   "ensembleMetrics": {
-    "tempMean": 31.1,
-    "tempMedian": 31.3,
-    "tempSpread": 2.7,
-    "tempP10": 29.8,
-    "tempP25": 30.3,
-    "tempP75": 32,
-    "tempP90": 32.1
+    "tempMean": 27.9,
+    "tempMedian": 27.9,
+    "tempSpread": 0.3,
+    "tempP10": 27.8,
+    "tempP25": 27.8,
+    "tempP75": 27.9,
+    "tempP90": 28
   },
-  "humidity": 54,
-  "wind": 14,
-  "chanceOfRain": 0,
-  "condition": "cloudy",
-  "isDay": true,
-  "high": 32.2,
-  "low": 24,
-  "confidence": "medium",
-  "rainAgreement": "all_dry",
-  "uv": 8,
-  "feelsLike": 31,
+  "humidity": 74,
+  "wind": 10,
+  "chanceOfRain": 50,
+  "condition": "rainy",
+  "isDay": false,
+  "high": 32.3,
+  "low": 23.5,
+  "confidence": "high",
+  "rainAgreement": "split",
+  "uv": 4,
+  "feelsLike": 32,
   "airQuality": 2,
   "sourcesUsed": [
-    "WeatherAPI",
     "Open-Meteo ECMWF",
     "Open-Meteo ICON",
-    "Open-Meteo GFS"
+    "Open-Meteo GFS",
+    "WeatherAPI"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
   ],
   "sourcesMeta": {
-    "WeatherAPI": {
-      "type": "hardware",
-      "validTime": "2026-09-22 13:00",
-      "ageMinutes": 0
-    },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-09-22T13:00",
+      "validTime": "2026-09-22T18:15",
       "ageMinutes": 0
     },
     "Open-Meteo ICON": {
       "type": "model",
-      "validTime": "2026-09-22T13:00",
+      "validTime": "2026-09-22T18:15",
       "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-09-22T13:00",
+      "validTime": "2026-09-22T18:15",
+      "ageMinutes": 0
+    },
+    "WeatherAPI": {
+      "type": "hardware",
+      "validTime": "2026-09-22 18:00",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-09-22T07:40:24.334Z"
+  "generatedAt": "2026-09-22T12:49:31.140Z"
 }
