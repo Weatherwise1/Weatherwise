@@ -1,36 +1,36 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 27,
+  "temp": 24,
   "expectedTempRange": {
     "min": 24,
-    "max": 27
+    "max": 25
   },
   "ensembleMetrics": {
-    "tempMean": 25.5,
-    "tempMedian": 25.65,
-    "tempSpread": 3.5,
-    "tempP10": 24.3,
-    "tempP25": 25.1,
-    "tempP75": 26.1,
-    "tempP90": 26.8
+    "tempMean": 24.7,
+    "tempMedian": 24.7,
+    "tempSpread": 1.4,
+    "tempP10": 24.1,
+    "tempP25": 24.3,
+    "tempP75": 25.1,
+    "tempP90": 25.3
   },
-  "humidity": 86,
-  "wind": 11,
-  "chanceOfRain": 75,
-  "condition": "rainy",
+  "humidity": 88,
+  "wind": 10,
+  "chanceOfRain": 0,
+  "condition": "cloudy",
   "isDay": false,
-  "high": 32.3,
-  "low": 23.3,
-  "confidence": "medium",
-  "rainAgreement": "mostly_wet",
-  "uv": 4,
-  "feelsLike": 31,
+  "high": 27.1,
+  "low": 22.9,
+  "confidence": "high",
+  "rainAgreement": "all_dry",
+  "uv": 2,
+  "feelsLike": 27,
   "airQuality": 2,
   "sourcesUsed": [
     "WeatherAPI",
-    "Open-Meteo ICON",
     "Open-Meteo ECMWF",
+    "Open-Meteo ICON",
     "Open-Meteo GFS"
   ],
   "sourcesFailed": [
@@ -39,25 +39,25 @@
   "sourcesMeta": {
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-09-22 23:00",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ICON": {
-      "type": "model",
-      "validTime": "2026-09-22T23:00",
+      "validTime": "2026-09-23 01:45",
       "ageMinutes": 0
     },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-09-22T23:00",
+      "validTime": "2026-09-23T01:45",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ICON": {
+      "type": "model",
+      "validTime": "2026-09-23T01:45",
       "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-09-22T23:00",
+      "validTime": "2026-09-23T01:45",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-09-22T17:37:16.678Z"
+  "generatedAt": "2026-09-22T20:27:59.246Z"
 }
