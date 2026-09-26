@@ -1,63 +1,63 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 22,
+  "temp": 28,
   "expectedTempRange": {
-    "min": 23,
-    "max": 24
+    "min": 28,
+    "max": 30
   },
   "ensembleMetrics": {
-    "tempMean": 23.4,
-    "tempMedian": 23.65,
-    "tempSpread": 1.7,
-    "tempP10": 22.7,
-    "tempP25": 23.3,
-    "tempP75": 23.8,
-    "tempP90": 23.9
+    "tempMean": 29.4,
+    "tempMedian": 29.85,
+    "tempSpread": 2.6,
+    "tempP10": 28.2,
+    "tempP25": 29,
+    "tempP75": 30.3,
+    "tempP90": 30.3
   },
-  "humidity": 78,
-  "wind": 17,
+  "humidity": 54,
+  "wind": 21,
   "chanceOfRain": 0,
   "condition": "cloudy",
   "isDay": true,
-  "high": 31.9,
+  "high": 32.3,
   "low": 23.3,
-  "confidence": "high",
+  "confidence": "medium",
   "rainAgreement": "all_dry",
-  "uv": 4,
-  "feelsLike": 22,
-  "airQuality": 1,
+  "uv": 9,
+  "feelsLike": 28,
+  "airQuality": 2,
   "sourcesUsed": [
-    "WeatherAPI",
-    "Open-Meteo ICON",
     "Open-Meteo ECMWF",
-    "Open-Meteo GFS"
+    "Open-Meteo ICON",
+    "Open-Meteo GFS",
+    "WeatherAPI"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
   ],
   "sourcesMeta": {
-    "WeatherAPI": {
-      "type": "hardware",
-      "validTime": "2026-09-26 06:45",
+    "Open-Meteo ECMWF": {
+      "type": "model",
+      "validTime": "2026-09-26T12:00",
       "ageMinutes": 0
     },
     "Open-Meteo ICON": {
       "type": "model",
-      "validTime": "2026-09-26T07:00",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ECMWF": {
-      "type": "model",
-      "validTime": "2026-09-26T07:00",
+      "validTime": "2026-09-26T12:00",
       "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-09-26T07:00",
+      "validTime": "2026-09-26T12:00",
+      "ageMinutes": 0
+    },
+    "WeatherAPI": {
+      "type": "hardware",
+      "validTime": "2026-09-26 12:00",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-09-26T01:30:12.117Z"
+  "generatedAt": "2026-09-26T06:35:54.997Z"
 }
