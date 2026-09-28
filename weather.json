@@ -3,61 +3,61 @@
   "observationType": "hardware",
   "temp": 25,
   "expectedTempRange": {
-    "min": 23,
+    "min": 24,
     "max": 25
   },
   "ensembleMetrics": {
-    "tempMean": 24.3,
-    "tempMedian": 24.3,
-    "tempSpread": 2.2,
-    "tempP10": 23.4,
-    "tempP25": 23.9,
-    "tempP75": 24.7,
-    "tempP90": 25.1
+    "tempMean": 24.2,
+    "tempMedian": 24.15,
+    "tempSpread": 2,
+    "tempP10": 23.5,
+    "tempP25": 23.7,
+    "tempP75": 24.6,
+    "tempP90": 25
   },
-  "humidity": 73,
-  "wind": 4,
+  "humidity": 75,
+  "wind": 3,
   "chanceOfRain": 0,
   "condition": "cloudy",
-  "isDay": false,
+  "isDay": true,
   "high": 33.3,
-  "low": 23,
-  "confidence": "medium",
+  "low": 22.9,
+  "confidence": "high",
   "rainAgreement": "all_dry",
   "uv": 4,
-  "feelsLike": 27,
-  "airQuality": 3,
+  "feelsLike": 28,
+  "airQuality": 2,
   "sourcesUsed": [
-    "Open-Meteo ECMWF",
-    "Open-Meteo GFS",
+    "WeatherAPI",
     "Open-Meteo ICON",
-    "WeatherAPI"
+    "Open-Meteo ECMWF",
+    "Open-Meteo GFS"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
   ],
   "sourcesMeta": {
-    "Open-Meteo ECMWF": {
-      "type": "model",
-      "validTime": "2026-09-28T04:00",
-      "ageMinutes": 0
-    },
-    "Open-Meteo GFS": {
-      "type": "model",
-      "validTime": "2026-09-28T04:00",
+    "WeatherAPI": {
+      "type": "hardware",
+      "validTime": "2026-09-28 06:30",
       "ageMinutes": 0
     },
     "Open-Meteo ICON": {
       "type": "model",
-      "validTime": "2026-09-28T04:00",
+      "validTime": "2026-09-28T06:30",
       "ageMinutes": 0
     },
-    "WeatherAPI": {
-      "type": "hardware",
-      "validTime": "2026-09-28 03:45",
+    "Open-Meteo ECMWF": {
+      "type": "model",
+      "validTime": "2026-09-28T06:30",
+      "ageMinutes": 0
+    },
+    "Open-Meteo GFS": {
+      "type": "model",
+      "validTime": "2026-09-28T06:30",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-09-27T22:32:38.078Z"
+  "generatedAt": "2026-09-28T01:10:03.427Z"
 }
