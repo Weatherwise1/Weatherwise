@@ -1,37 +1,37 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 24,
+  "temp": 29,
   "expectedTempRange": {
-    "min": 24,
-    "max": 24
+    "min": 30,
+    "max": 33
   },
   "ensembleMetrics": {
-    "tempMean": 24.1,
-    "tempMedian": 24.2,
-    "tempSpread": 1,
-    "tempP10": 23.7,
-    "tempP25": 24,
-    "tempP75": 24.3,
-    "tempP90": 24.4
+    "tempMean": 31.5,
+    "tempMedian": 32.2,
+    "tempSpread": 3.6,
+    "tempP10": 30,
+    "tempP25": 31.4,
+    "tempP75": 32.3,
+    "tempP90": 32.5
   },
-  "humidity": 77,
-  "wind": 3,
+  "humidity": 39,
+  "wind": 9,
   "chanceOfRain": 0,
   "condition": "cloudy",
   "isDay": true,
-  "high": 32.9,
+  "high": 33,
   "low": 23,
-  "confidence": "high",
+  "confidence": "medium",
   "rainAgreement": "all_dry",
-  "uv": 4,
-  "feelsLike": 27,
-  "airQuality": 3,
+  "uv": 9,
+  "feelsLike": 28,
+  "airQuality": 2,
   "sourcesUsed": [
     "WeatherAPI",
-    "Open-Meteo ECMWF",
+    "Open-Meteo ICON",
     "Open-Meteo GFS",
-    "Open-Meteo ICON"
+    "Open-Meteo ECMWF"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
@@ -39,25 +39,25 @@
   "sourcesMeta": {
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-09-29 06:30",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ECMWF": {
-      "type": "model",
-      "validTime": "2026-09-29T06:30",
-      "ageMinutes": 0
-    },
-    "Open-Meteo GFS": {
-      "type": "model",
-      "validTime": "2026-09-29T06:30",
+      "validTime": "2026-09-29 12:45",
       "ageMinutes": 0
     },
     "Open-Meteo ICON": {
       "type": "model",
-      "validTime": "2026-09-29T06:30",
+      "validTime": "2026-09-29T12:45",
+      "ageMinutes": 0
+    },
+    "Open-Meteo GFS": {
+      "type": "model",
+      "validTime": "2026-09-29T12:45",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ECMWF": {
+      "type": "model",
+      "validTime": "2026-09-29T12:45",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-09-29T01:14:46.283Z"
+  "generatedAt": "2026-09-29T07:29:41.356Z"
 }
