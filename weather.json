@@ -1,63 +1,63 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 32,
+  "temp": 23,
   "expectedTempRange": {
-    "min": 32,
-    "max": 34
+    "min": 23,
+    "max": 25
   },
   "ensembleMetrics": {
-    "tempMean": 32.6,
-    "tempMedian": 32.35,
-    "tempSpread": 1.9,
-    "tempP10": 31.8,
-    "tempP25": 31.8,
-    "tempP75": 33.1,
-    "tempP90": 33.5
+    "tempMean": 24.3,
+    "tempMedian": 24.5,
+    "tempSpread": 2.8,
+    "tempP10": 23.1,
+    "tempP25": 23.9,
+    "tempP75": 24.9,
+    "tempP90": 25.2
   },
-  "humidity": 30,
-  "wind": 15,
+  "humidity": 57,
+  "wind": 5,
   "chanceOfRain": 0,
   "condition": "cloudy",
-  "isDay": true,
-  "high": 33.7,
+  "isDay": false,
+  "high": 33.8,
   "low": 23.9,
-  "confidence": "high",
+  "confidence": "medium",
   "rainAgreement": "all_dry",
-  "uv": 6,
-  "feelsLike": 29,
+  "uv": 4,
+  "feelsLike": 22,
   "airQuality": 2,
   "sourcesUsed": [
-    "WeatherAPI",
-    "Open-Meteo ECMWF",
     "Open-Meteo ICON",
-    "Open-Meteo GFS"
+    "Open-Meteo ECMWF",
+    "Open-Meteo GFS",
+    "WeatherAPI"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
   ],
   "sourcesMeta": {
-    "WeatherAPI": {
-      "type": "hardware",
-      "validTime": "2026-10-05 15:00",
+    "Open-Meteo ICON": {
+      "type": "model",
+      "validTime": "2026-10-06T00:15",
       "ageMinutes": 0
     },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-10-05T15:00",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ICON": {
-      "type": "model",
-      "validTime": "2026-10-05T15:00",
+      "validTime": "2026-10-06T00:15",
       "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-10-05T15:00",
+      "validTime": "2026-10-06T00:15",
+      "ageMinutes": 0
+    },
+    "WeatherAPI": {
+      "type": "hardware",
+      "validTime": "2026-10-06 00:15",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-10-05T09:35:55.749Z"
+  "generatedAt": "2026-10-05T18:49:21.980Z"
 }
