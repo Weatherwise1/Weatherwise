@@ -1,37 +1,37 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 27,
+  "temp": 24,
   "expectedTempRange": {
-    "min": 27,
-    "max": 29
+    "min": 24,
+    "max": 25
   },
   "ensembleMetrics": {
-    "tempMean": 27.9,
-    "tempMedian": 28,
-    "tempSpread": 2.4,
-    "tempP10": 26.8,
-    "tempP25": 27.1,
-    "tempP75": 28.9,
-    "tempP90": 29
+    "tempMean": 24.1,
+    "tempMedian": 24.1,
+    "tempSpread": 1.4,
+    "tempP10": 23.6,
+    "tempP25": 23.8,
+    "tempP75": 24.5,
+    "tempP90": 24.7
   },
-  "humidity": 54,
-  "wind": 9,
+  "humidity": 72,
+  "wind": 5,
   "chanceOfRain": 0,
   "condition": "cloudy",
   "isDay": false,
-  "high": 33,
-  "low": 22.6,
-  "confidence": "medium",
+  "high": 33.5,
+  "low": 22.5,
+  "confidence": "high",
   "rainAgreement": "all_dry",
   "uv": 4,
-  "feelsLike": 27,
+  "feelsLike": 25,
   "airQuality": 2,
   "sourcesUsed": [
     "WeatherAPI",
-    "Open-Meteo ICON",
+    "Open-Meteo ECMWF",
     "Open-Meteo GFS",
-    "Open-Meteo ECMWF"
+    "Open-Meteo ICON"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
@@ -39,25 +39,25 @@
   "sourcesMeta": {
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-10-07 18:30",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ICON": {
-      "type": "model",
-      "validTime": "2026-10-07T18:30",
-      "ageMinutes": 0
-    },
-    "Open-Meteo GFS": {
-      "type": "model",
-      "validTime": "2026-10-07T18:30",
+      "validTime": "2026-10-08 00:45",
       "ageMinutes": 0
     },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-10-07T18:30",
+      "validTime": "2026-10-08T01:00",
+      "ageMinutes": 0
+    },
+    "Open-Meteo GFS": {
+      "type": "model",
+      "validTime": "2026-10-08T01:00",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ICON": {
+      "type": "model",
+      "validTime": "2026-10-08T01:00",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-10-07T13:14:44.768Z"
+  "generatedAt": "2026-10-07T19:30:59.158Z"
 }
