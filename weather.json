@@ -1,63 +1,63 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 32,
+  "temp": 27,
   "expectedTempRange": {
-    "min": 32,
-    "max": 33
+    "min": 28,
+    "max": 30
   },
   "ensembleMetrics": {
-    "tempMean": 32.1,
-    "tempMedian": 32.1,
-    "tempSpread": 0.9,
-    "tempP10": 31.8,
-    "tempP25": 31.9,
-    "tempP75": 32.3,
-    "tempP90": 32.5
+    "tempMean": 28.8,
+    "tempMedian": 28.9,
+    "tempSpread": 2.7,
+    "tempP10": 27.6,
+    "tempP25": 28.1,
+    "tempP75": 29.6,
+    "tempP90": 29.9
   },
-  "humidity": 40,
-  "wind": 11,
+  "humidity": 48,
+  "wind": 12,
   "chanceOfRain": 0,
   "condition": "cloudy",
-  "isDay": true,
+  "isDay": false,
   "high": 34,
   "low": 23.3,
-  "confidence": "high",
+  "confidence": "medium",
   "rainAgreement": "all_dry",
-  "uv": 8,
-  "feelsLike": 32,
+  "uv": 4,
+  "feelsLike": 28,
   "airQuality": 2,
   "sourcesUsed": [
-    "WeatherAPI",
-    "Open-Meteo ECMWF",
     "Open-Meteo ICON",
-    "Open-Meteo GFS"
+    "Open-Meteo GFS",
+    "Open-Meteo ECMWF",
+    "WeatherAPI"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
   ],
   "sourcesMeta": {
-    "WeatherAPI": {
-      "type": "hardware",
-      "validTime": "2026-10-09 11:15",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ECMWF": {
-      "type": "model",
-      "validTime": "2026-10-09T11:30",
-      "ageMinutes": 0
-    },
     "Open-Meteo ICON": {
       "type": "model",
-      "validTime": "2026-10-09T11:30",
+      "validTime": "2026-10-09T18:30",
       "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-10-09T11:30",
+      "validTime": "2026-10-09T18:30",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ECMWF": {
+      "type": "model",
+      "validTime": "2026-10-09T18:30",
+      "ageMinutes": 0
+    },
+    "WeatherAPI": {
+      "type": "hardware",
+      "validTime": "2026-10-09 18:30",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-10-09T06:02:24.090Z"
+  "generatedAt": "2026-10-09T13:10:01.403Z"
 }
