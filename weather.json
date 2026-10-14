@@ -1,63 +1,63 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 31,
+  "temp": 25,
   "expectedTempRange": {
-    "min": 31,
-    "max": 32
+    "min": 25,
+    "max": 27
   },
   "ensembleMetrics": {
-    "tempMean": 31.5,
-    "tempMedian": 31.6,
-    "tempSpread": 1.3,
-    "tempP10": 30.9,
-    "tempP25": 31.3,
-    "tempP75": 31.8,
-    "tempP90": 31.9
+    "tempMean": 25.9,
+    "tempMedian": 25.9,
+    "tempSpread": 2.2,
+    "tempP10": 24.9,
+    "tempP25": 25.2,
+    "tempP75": 26.5,
+    "tempP90": 26.8
   },
-  "humidity": 38,
-  "wind": 14,
+  "humidity": 63,
+  "wind": 12,
   "chanceOfRain": 0,
   "condition": "cloudy",
-  "isDay": true,
-  "high": 32.7,
-  "low": 21.1,
-  "confidence": "high",
+  "isDay": false,
+  "high": 33.3,
+  "low": 21,
+  "confidence": "medium",
   "rainAgreement": "all_dry",
-  "uv": 5,
-  "feelsLike": 31,
+  "uv": 4,
+  "feelsLike": 24,
   "airQuality": 2,
   "sourcesUsed": [
-    "Open-Meteo ICON",
+    "WeatherAPI",
     "Open-Meteo ECMWF",
-    "Open-Meteo GFS",
-    "WeatherAPI"
+    "Open-Meteo ICON",
+    "Open-Meteo GFS"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
   ],
   "sourcesMeta": {
-    "Open-Meteo ICON": {
-      "type": "model",
-      "validTime": "2026-10-14T16:00",
+    "WeatherAPI": {
+      "type": "hardware",
+      "validTime": "2026-10-14 20:45",
       "ageMinutes": 0
     },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-10-14T16:00",
+      "validTime": "2026-10-14T20:45",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ICON": {
+      "type": "model",
+      "validTime": "2026-10-14T20:45",
       "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-10-14T16:00",
-      "ageMinutes": 0
-    },
-    "WeatherAPI": {
-      "type": "hardware",
-      "validTime": "2026-10-14 16:00",
+      "validTime": "2026-10-14T20:45",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-10-14T10:35:25.095Z"
+  "generatedAt": "2026-10-14T15:27:56.631Z"
 }
