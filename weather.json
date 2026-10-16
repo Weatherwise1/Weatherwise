@@ -3,20 +3,20 @@
   "observationType": "hardware",
   "temp": 32,
   "expectedTempRange": {
-    "min": 31,
-    "max": 32
+    "min": 32,
+    "max": 33
   },
   "ensembleMetrics": {
-    "tempMean": 31.7,
-    "tempMedian": 31.7,
-    "tempSpread": 0.8,
-    "tempP10": 31.3,
-    "tempP25": 31.4,
-    "tempP75": 32,
-    "tempP90": 32.1
+    "tempMean": 32,
+    "tempMedian": 31.85,
+    "tempSpread": 1.5,
+    "tempP10": 31.5,
+    "tempP25": 31.6,
+    "tempP75": 32.2,
+    "tempP90": 32.6
   },
-  "humidity": 44,
-  "wind": 10,
+  "humidity": 39,
+  "wind": 14,
   "chanceOfRain": 0,
   "condition": "cloudy",
   "isDay": true,
@@ -24,13 +24,13 @@
   "low": 22.8,
   "confidence": "high",
   "rainAgreement": "all_dry",
-  "uv": 8,
-  "feelsLike": 32,
+  "uv": 4,
+  "feelsLike": 31,
   "airQuality": 2,
   "sourcesUsed": [
     "WeatherAPI",
-    "Open-Meteo ICON",
     "Open-Meteo ECMWF",
+    "Open-Meteo ICON",
     "Open-Meteo GFS"
   ],
   "sourcesFailed": [
@@ -39,25 +39,25 @@
   "sourcesMeta": {
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-10-16 11:00",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ICON": {
-      "type": "model",
-      "validTime": "2026-10-16T11:15",
+      "validTime": "2026-10-16 16:30",
       "ageMinutes": 0
     },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-10-16T11:15",
+      "validTime": "2026-10-16T16:45",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ICON": {
+      "type": "model",
+      "validTime": "2026-10-16T16:45",
       "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-10-16T11:15",
+      "validTime": "2026-10-16T16:45",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-10-16T05:48:18.485Z"
+  "generatedAt": "2026-10-16T11:15:52.754Z"
 }
