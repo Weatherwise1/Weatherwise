@@ -1,37 +1,37 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 22,
+  "temp": 21,
   "expectedTempRange": {
-    "min": 22,
-    "max": 24
+    "min": 21,
+    "max": 22
   },
   "ensembleMetrics": {
-    "tempMean": 22.8,
-    "tempMedian": 22.799999999999997,
-    "tempSpread": 2.2,
-    "tempP10": 22,
-    "tempP25": 22.4,
-    "tempP75": 23.1,
-    "tempP90": 23.6
+    "tempMean": 21.4,
+    "tempMedian": 21.299999999999997,
+    "tempSpread": 2,
+    "tempP10": 20.7,
+    "tempP25": 21,
+    "tempP75": 21.7,
+    "tempP90": 22.2
   },
-  "humidity": 48,
+  "humidity": 51,
   "wind": 10,
   "chanceOfRain": 0,
   "condition": "cloudy",
   "isDay": false,
-  "high": 32.8,
-  "low": 22.2,
-  "confidence": "medium",
+  "high": 32.3,
+  "low": 20,
+  "confidence": "high",
   "rainAgreement": "all_dry",
   "uv": 4,
-  "feelsLike": 20,
+  "feelsLike": 18,
   "airQuality": 2,
   "sourcesUsed": [
     "WeatherAPI",
-    "Open-Meteo GFS",
+    "Open-Meteo ECMWF",
     "Open-Meteo ICON",
-    "Open-Meteo ECMWF"
+    "Open-Meteo GFS"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
@@ -39,25 +39,25 @@
   "sourcesMeta": {
     "WeatherAPI": {
       "type": "hardware",
-      "validTime": "2026-10-25 23:00",
-      "ageMinutes": 0
-    },
-    "Open-Meteo GFS": {
-      "type": "model",
-      "validTime": "2026-10-25T23:15",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ICON": {
-      "type": "model",
-      "validTime": "2026-10-25T23:15",
+      "validTime": "2026-10-26 02:00",
       "ageMinutes": 0
     },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-10-25T23:15",
+      "validTime": "2026-10-26T02:15",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ICON": {
+      "type": "model",
+      "validTime": "2026-10-26T02:15",
+      "ageMinutes": 0
+    },
+    "Open-Meteo GFS": {
+      "type": "model",
+      "validTime": "2026-10-26T02:15",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-10-25T17:50:38.044Z"
+  "generatedAt": "2026-10-25T20:46:23.333Z"
 }
