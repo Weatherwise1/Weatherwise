@@ -1,63 +1,63 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 30,
+  "temp": 23,
   "expectedTempRange": {
-    "min": 30,
-    "max": 31
+    "min": 24,
+    "max": 27
   },
   "ensembleMetrics": {
-    "tempMean": 30,
-    "tempMedian": 29.85,
-    "tempSpread": 1.2,
-    "tempP10": 29.5,
-    "tempP25": 29.6,
-    "tempP75": 30.3,
-    "tempP90": 30.5
+    "tempMean": 25.7,
+    "tempMedian": 26.15,
+    "tempSpread": 3.9,
+    "tempP10": 24,
+    "tempP25": 25,
+    "tempP75": 26.8,
+    "tempP90": 27
   },
-  "humidity": 29,
-  "wind": 21,
+  "humidity": 40,
+  "wind": 14,
   "chanceOfRain": 0,
   "condition": "cloudy",
-  "isDay": true,
-  "high": 31.9,
+  "isDay": false,
+  "high": 32.1,
   "low": 19.5,
-  "confidence": "high",
+  "confidence": "medium",
   "rainAgreement": "all_dry",
-  "uv": 8,
-  "feelsLike": 25,
+  "uv": 4,
+  "feelsLike": 21,
   "airQuality": 2,
   "sourcesUsed": [
-    "Open-Meteo ECMWF",
     "Open-Meteo ICON",
-    "WeatherAPI",
-    "Open-Meteo GFS"
+    "Open-Meteo GFS",
+    "Open-Meteo ECMWF",
+    "WeatherAPI"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
   ],
   "sourcesMeta": {
-    "Open-Meteo ECMWF": {
-      "type": "model",
-      "validTime": "2026-10-26T11:30",
-      "ageMinutes": 0
-    },
     "Open-Meteo ICON": {
       "type": "model",
-      "validTime": "2026-10-26T11:30",
-      "ageMinutes": 0
-    },
-    "WeatherAPI": {
-      "type": "hardware",
-      "validTime": "2026-10-26 11:30",
+      "validTime": "2026-10-26T18:15",
       "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-10-26T11:30",
+      "validTime": "2026-10-26T18:15",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ECMWF": {
+      "type": "model",
+      "validTime": "2026-10-26T18:15",
+      "ageMinutes": 0
+    },
+    "WeatherAPI": {
+      "type": "hardware",
+      "validTime": "2026-10-26 18:00",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-10-26T06:06:40.689Z"
+  "generatedAt": "2026-10-26T12:52:10.905Z"
 }
