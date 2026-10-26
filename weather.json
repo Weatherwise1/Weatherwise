@@ -1,63 +1,63 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 23,
+  "temp": 20,
   "expectedTempRange": {
-    "min": 24,
-    "max": 27
+    "min": 20,
+    "max": 23
   },
   "ensembleMetrics": {
-    "tempMean": 25.7,
-    "tempMedian": 26.15,
-    "tempSpread": 3.9,
-    "tempP10": 24,
-    "tempP25": 25,
-    "tempP75": 26.8,
-    "tempP90": 27
+    "tempMean": 21.6,
+    "tempMedian": 22,
+    "tempSpread": 3.4,
+    "tempP10": 20.3,
+    "tempP25": 21.3,
+    "tempP75": 22.4,
+    "tempP90": 22.8
   },
-  "humidity": 40,
+  "humidity": 48,
   "wind": 14,
   "chanceOfRain": 0,
   "condition": "cloudy",
   "isDay": false,
-  "high": 32.1,
-  "low": 19.5,
+  "high": 31.6,
+  "low": 19.6,
   "confidence": "medium",
   "rainAgreement": "all_dry",
-  "uv": 4,
-  "feelsLike": 21,
+  "uv": 3,
+  "feelsLike": 16,
   "airQuality": 2,
   "sourcesUsed": [
-    "Open-Meteo ICON",
-    "Open-Meteo GFS",
+    "WeatherAPI",
     "Open-Meteo ECMWF",
-    "WeatherAPI"
+    "Open-Meteo ICON",
+    "Open-Meteo GFS"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
   ],
   "sourcesMeta": {
-    "Open-Meteo ICON": {
-      "type": "model",
-      "validTime": "2026-10-26T18:15",
-      "ageMinutes": 0
-    },
-    "Open-Meteo GFS": {
-      "type": "model",
-      "validTime": "2026-10-26T18:15",
+    "WeatherAPI": {
+      "type": "hardware",
+      "validTime": "2026-10-27 00:30",
       "ageMinutes": 0
     },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-10-26T18:15",
+      "validTime": "2026-10-27T00:30",
       "ageMinutes": 0
     },
-    "WeatherAPI": {
-      "type": "hardware",
-      "validTime": "2026-10-26 18:00",
+    "Open-Meteo ICON": {
+      "type": "model",
+      "validTime": "2026-10-27T00:30",
+      "ageMinutes": 0
+    },
+    "Open-Meteo GFS": {
+      "type": "model",
+      "validTime": "2026-10-27T00:30",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-10-26T12:52:10.905Z"
+  "generatedAt": "2026-10-26T19:14:09.584Z"
 }
