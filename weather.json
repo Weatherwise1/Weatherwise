@@ -1,63 +1,63 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 29,
+  "temp": 23,
   "expectedTempRange": {
-    "min": 28,
-    "max": 29
+    "min": 23,
+    "max": 25
   },
   "ensembleMetrics": {
-    "tempMean": 28.6,
-    "tempMedian": 28.45,
-    "tempSpread": 1.3,
-    "tempP10": 28.1,
-    "tempP25": 28.1,
-    "tempP75": 28.8,
-    "tempP90": 29.1
+    "tempMean": 23.7,
+    "tempMedian": 23.65,
+    "tempSpread": 1.9,
+    "tempP10": 22.7,
+    "tempP25": 22.8,
+    "tempP75": 24.5,
+    "tempP90": 24.6
   },
-  "humidity": 51,
-  "wind": 19,
-  "chanceOfRain": 25,
+  "humidity": 75,
+  "wind": 11,
+  "chanceOfRain": 0,
   "condition": "cloudy",
-  "isDay": true,
-  "high": 30.1,
+  "isDay": false,
+  "high": 29.8,
   "low": 20.8,
   "confidence": "high",
-  "rainAgreement": "split",
-  "uv": 7,
-  "feelsLike": 29,
+  "rainAgreement": "all_dry",
+  "uv": 3,
+  "feelsLike": 24,
   "airQuality": 1,
   "sourcesUsed": [
-    "Open-Meteo ICON",
-    "Open-Meteo GFS",
+    "WeatherAPI",
     "Open-Meteo ECMWF",
-    "WeatherAPI"
+    "Open-Meteo ICON",
+    "Open-Meteo GFS"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
   ],
   "sourcesMeta": {
-    "Open-Meteo ICON": {
-      "type": "model",
-      "validTime": "2026-11-03T12:00",
-      "ageMinutes": 0
-    },
-    "Open-Meteo GFS": {
-      "type": "model",
-      "validTime": "2026-11-03T12:00",
+    "WeatherAPI": {
+      "type": "hardware",
+      "validTime": "2026-11-03 20:00",
       "ageMinutes": 0
     },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-11-03T12:00",
+      "validTime": "2026-11-03T20:00",
       "ageMinutes": 0
     },
-    "WeatherAPI": {
-      "type": "hardware",
-      "validTime": "2026-11-03 12:00",
+    "Open-Meteo ICON": {
+      "type": "model",
+      "validTime": "2026-11-03T20:00",
+      "ageMinutes": 0
+    },
+    "Open-Meteo GFS": {
+      "type": "model",
+      "validTime": "2026-11-03T20:00",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-11-03T06:40:50.482Z"
+  "generatedAt": "2026-11-03T14:39:13.520Z"
 }
