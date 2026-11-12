@@ -1,63 +1,63 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 19,
+  "temp": 29,
   "expectedTempRange": {
-    "min": 17,
-    "max": 20
+    "min": 29,
+    "max": 30
   },
   "ensembleMetrics": {
-    "tempMean": 18.4,
-    "tempMedian": 18.65,
-    "tempSpread": 4.6,
-    "tempP10": 16.7,
-    "tempP25": 17.9,
-    "tempP75": 19.1,
-    "tempP90": 20
+    "tempMean": 29.8,
+    "tempMedian": 29.8,
+    "tempSpread": 0.9,
+    "tempP10": 29.4,
+    "tempP25": 29.5,
+    "tempP75": 30.1,
+    "tempP90": 30.1
   },
-  "humidity": 57,
-  "wind": 5,
+  "humidity": 32,
+  "wind": 14,
   "chanceOfRain": 0,
   "condition": "cloudy",
   "isDay": true,
-  "high": 30.4,
+  "high": 30.3,
   "low": 15.8,
-  "confidence": "medium",
+  "confidence": "high",
   "rainAgreement": "all_dry",
-  "uv": 4,
-  "feelsLike": 18,
-  "airQuality": 3,
+  "uv": 7,
+  "feelsLike": 27,
+  "airQuality": 2,
   "sourcesUsed": [
-    "WeatherAPI",
-    "Open-Meteo GFS",
+    "Open-Meteo ICON",
     "Open-Meteo ECMWF",
-    "Open-Meteo ICON"
+    "WeatherAPI",
+    "Open-Meteo GFS"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
   ],
   "sourcesMeta": {
-    "WeatherAPI": {
-      "type": "hardware",
-      "validTime": "2026-11-12 06:15",
-      "ageMinutes": 0
-    },
-    "Open-Meteo GFS": {
+    "Open-Meteo ICON": {
       "type": "model",
-      "validTime": "2026-11-12T06:15",
+      "validTime": "2026-11-12T13:30",
       "ageMinutes": 0
     },
     "Open-Meteo ECMWF": {
       "type": "model",
-      "validTime": "2026-11-12T06:15",
+      "validTime": "2026-11-12T13:30",
       "ageMinutes": 0
     },
-    "Open-Meteo ICON": {
+    "WeatherAPI": {
+      "type": "hardware",
+      "validTime": "2026-11-12 13:30",
+      "ageMinutes": 0
+    },
+    "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-11-12T06:15",
+      "validTime": "2026-11-12T13:30",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-11-12T00:58:42.079Z"
+  "generatedAt": "2026-11-12T08:14:42.008Z"
 }
