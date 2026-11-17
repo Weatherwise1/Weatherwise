@@ -1,63 +1,63 @@
 {
   "city": "Hyderabad",
   "observationType": "hardware",
-  "temp": 19,
+  "temp": 22,
   "expectedTempRange": {
-    "min": 20,
-    "max": 21
+    "min": 19,
+    "max": 23
   },
   "ensembleMetrics": {
-    "tempMean": 20.4,
-    "tempMedian": 20.75,
-    "tempSpread": 2,
-    "tempP10": 19.6,
-    "tempP25": 20.2,
-    "tempP75": 20.9,
-    "tempP90": 21
+    "tempMean": 21,
+    "tempMedian": 21.7,
+    "tempSpread": 5.7,
+    "tempP10": 18.7,
+    "tempP25": 20.5,
+    "tempP75": 22.2,
+    "tempP90": 22.8
   },
-  "humidity": 56,
-  "wind": 4,
+  "humidity": 51,
+  "wind": 5,
   "chanceOfRain": 0,
   "condition": "cloudy",
-  "isDay": false,
-  "high": 30.6,
-  "low": 16.5,
-  "confidence": "high",
+  "isDay": true,
+  "high": 31,
+  "low": 15.8,
+  "confidence": "medium",
   "rainAgreement": "all_dry",
   "uv": 4,
-  "feelsLike": 19,
+  "feelsLike": 21,
   "airQuality": 3,
   "sourcesUsed": [
-    "WeatherAPI",
-    "Open-Meteo ECMWF",
     "Open-Meteo ICON",
-    "Open-Meteo GFS"
+    "Open-Meteo GFS",
+    "Open-Meteo ECMWF",
+    "WeatherAPI"
   ],
   "sourcesFailed": [
     "Tomorrow.io"
   ],
   "sourcesMeta": {
-    "WeatherAPI": {
-      "type": "hardware",
-      "validTime": "2026-11-17 00:15",
-      "ageMinutes": 0
-    },
-    "Open-Meteo ECMWF": {
-      "type": "model",
-      "validTime": "2026-11-17T00:15",
-      "ageMinutes": 0
-    },
     "Open-Meteo ICON": {
       "type": "model",
-      "validTime": "2026-11-17T00:15",
+      "validTime": "2026-11-17T07:45",
       "ageMinutes": 0
     },
     "Open-Meteo GFS": {
       "type": "model",
-      "validTime": "2026-11-17T00:15",
+      "validTime": "2026-11-17T07:45",
+      "ageMinutes": 0
+    },
+    "Open-Meteo ECMWF": {
+      "type": "model",
+      "validTime": "2026-11-17T07:45",
+      "ageMinutes": 0
+    },
+    "WeatherAPI": {
+      "type": "hardware",
+      "validTime": "2026-11-17 07:45",
       "ageMinutes": 0
     }
   },
   "stale": false,
-  "generatedAt": "2026-11-16T18:53:30.023Z"
+  "generatedAt": "2026-11-17T02:26:40.892Z"
 }
