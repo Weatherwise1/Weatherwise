@@ -1,13 +1,5 @@
 [
   {
-    "date": "2026-11-08",
-    "expectedTempRange": {
-      "min": 29,
-      "max": 30
-    },
-    "observedTemp": 30
-  },
-  {
     "date": "2026-11-09",
     "expectedTempRange": {
       "min": 20,
@@ -110,5 +102,13 @@
       "max": 24
     },
     "observedTemp": 24
+  },
+  {
+    "date": "2026-11-22",
+    "expectedTempRange": {
+      "min": 30,
+      "max": 30
+    },
+    "observedTemp": 30
   }
 ]
